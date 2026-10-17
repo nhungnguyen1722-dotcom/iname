@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 210 40% 99%;
+  --foreground: 222 42% 12%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 42% 12%;
+  --primary: 221 70% 31%;
+  --primary-foreground: 210 40% 98%;
+  --primary-soft: 214 60% 95%;
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 221 47% 20%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 22% 44%;
+  --accent: 160 72% 32%;
+  --accent-foreground: 152 80% 97%;
+  --accent-soft: 158 55% 94%;
+  --destructive: 0 72% 47%;
+  --warning: 32 88% 42%;
+  --border: 214 32% 90%;
+  --ring: 221 70% 31%;
+  --radius: 0.75rem;
+  --gradient-hero: linear-gradient(135deg, hsl(221 72% 20%) 0%, hsl(221 62% 30%) 45%, hsl(199 82% 40%) 100%);
+  --gradient-primary: linear-gradient(135deg, hsl(221 70% 31%), hsl(199 89% 48%));
+  --gradient-subtle: linear-gradient(180deg, hsl(210 40% 99%), hsl(214 45% 96%));
+  --gradient-mesh: radial-gradient(circle at 15% 20%, hsl(199 89% 48% / 0.18), transparent 45%),
+    radial-gradient(circle at 85% 10%, hsl(160 72% 40% / 0.16), transparent 40%),
+    radial-gradient(circle at 50% 95%, hsl(221 70% 31% / 0.14), transparent 50%);
+  --shadow-elegant: 0 18px 40px -20px hsl(221 70% 31% / 0.35);
+  --shadow-glow: 0 1px 0 0 hsl(0 0% 100% / 0.6) inset, 0 26px 60px -32px hsl(199 89% 40% / 0.55);
+  --shadow-card: 0 1px 2px hsl(222 42% 12% / 0.05), 0 14px 34px -24px hsl(222 42% 12% / 0.22);
+  --font-body: "Be Vietnam Pro", sans-serif;
+  --font-heading: "Plus Jakarta Sans", sans-serif;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-body), "Be Vietnam Pro", sans-serif;
+  line-height: 1.6;
+}
+h1, h2, h3, h4, h5, h6, .font-display {
+  font-family: var(--font-heading), var(--font-body), "Be Vietnam Pro", sans-serif;
+  line-height: 1.2;
+}
+a { color: inherit; text-decoration: none; }
+button, input, select, textarea { font-family: inherit; }
+
+.section-shell { margin-inline: auto; width: 100%; max-width: 72rem; padding-inline: 1rem; }
+@media (min-width: 640px) { .section-shell { padding-inline: 1.5rem; } }
+.bg-hero-gradient { background: var(--gradient-hero); }
+.bg-primary-gradient { background: var(--gradient-primary); }
+.bg-subtle-gradient { background: var(--gradient-subtle); }
+.bg-mesh { background-image: var(--gradient-mesh); }
+.shadow-card { box-shadow: var(--shadow-card); }
+.shadow-elegant { box-shadow: var(--shadow-elegant); }
+.shadow-glow { box-shadow: var(--shadow-glow); }
+.hover-lift { transition: transform .25s ease, box-shadow .25s ease; }
+.hover-lift:hover { transform: translateY(-4px); }
+.prose-content h2 { margin: 1.5rem 0 .75rem; font-size: 1.5rem; font-weight: 800; }
+.prose-content p { margin: 0 0 1rem; color: hsl(var(--foreground) / .9); }
+.prose-content ul { margin: 0 0 1rem; padding-left: 1.25rem; }
+.prose-content li { margin: .35rem 0; }
+.grid-lines {
+  background-image: linear-gradient(hsl(0 0% 100% / .08) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(0 0% 100% / .08) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.animate-float { animation: float-y 5s ease-in-out infinite; }

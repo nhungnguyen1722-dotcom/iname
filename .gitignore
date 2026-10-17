@@ -1,0 +1,11 @@
+node_modules
+.next
+out
+.env
+.env.local
+public/uploads/*
+!public/uploads/.gitkeep
+scripts/extracted.txt
+scripts/i18n-print.txt
+*.log
+tsconfig.tsbuildinfo

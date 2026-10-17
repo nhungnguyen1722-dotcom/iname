@@ -1,0 +1,28 @@
+{
+  "nn": {
+    "hotline": "1900 6868",
+    "hotlineHref": "tel:19006868",
+    "email": "hotro@anvietoffice.vn",
+    "emailHref": "mailto:hotro@anvietoffice.vn",
+    "taxCode": "0107xxxxxx",
+    "zaloUrl": "https://zalo.me/19006868"
+  },
+  "IA": [
+    {
+      "id": "hanoi",
+      "labelKey": "common.labels.headOffice",
+      "address": "Tầng 8, Tòa nhà Sunrise, 68 Trần Duy Hưng, Cầu Giấy, Hà Nội",
+      "phone": "024 7300 6868",
+      "phoneHref": "tel:02473006868",
+      "mapUrl": "https://www.google.com/maps/search/?api=1&query=68%20Tr%E1%BA%A7n%20Duy%20H%C6%B0ng%2C%20C%E1%BA%A7u%20Gi%E1%BA%A5y%2C%20H%C3%A0%20N%E1%BB%99i"
+    },
+    {
+      "id": "hcm",
+      "labelKey": "common.labels.branch",
+      "address": "Tầng 12, Tòa nhà Bitexco, 2 Hải Triều, Quận 1, TP. Hồ Chí Minh",
+      "phone": "028 7300 6868",
+      "phoneHref": "tel:02873006868",
+      "mapUrl": "https://www.google.com/maps/search/?api=1&query=2%20H%E1%BA%A3i%20Tri%E1%BB%81u%2C%20Qu%E1%BA%ADn%201%2C%20TP.%20H%E1%BB%93%20Ch%C3%AD%20Minh"
+    }
+  ]
+}
