@@ -421,7 +421,8 @@ async function uploadImageAsset(value: FormDataEntryValue | null, alt: string) {
   const name = `${Date.now()}-${randomBytes(4).toString("hex")}.${detected.ext}`;
   let url: string;
   if (process.env.VERCEL || process.env.BLOB_READ_WRITE_TOKEN) {
-    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    const hasBlobCredentials = process.env.BLOB_READ_WRITE_TOKEN || (process.env.VERCEL_OIDC_TOKEN && process.env.BLOB_STORE_ID);
+    if (!hasBlobCredentials) {
       throw new Error("Chưa kết nối Vercel Blob. Hãy tạo Blob Store trong mục Storage của dự án Vercel rồi thử lại.");
     }
     const blob = await put(`uploads/${name}`, buffer, {
