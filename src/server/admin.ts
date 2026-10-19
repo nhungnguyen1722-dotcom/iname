@@ -4,6 +4,7 @@ import { randomBytes } from "crypto";
 import fs from "fs/promises";
 import path from "path";
 import bcrypt from "bcryptjs";
+import { put } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { parseJson, sql } from "@/lib/db";
@@ -403,7 +404,7 @@ export async function saveSettingsForm(formData: FormData) {
 }
 
 function imageType(buffer: Buffer) {
-  if (buffer.length < 12 || buffer.length > 5 * 1024 * 1024) return null;
+  if (buffer.length < 12 || buffer.length > 4 * 1024 * 1024) return null;
   if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) return { mime: "image/png", ext: "png" };
   if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return { mime: "image/jpeg", ext: "jpg" };
   if (buffer.toString("ascii", 0, 3) === "GIF") return { mime: "image/gif", ext: "gif" };
@@ -413,13 +414,27 @@ function imageType(buffer: Buffer) {
 
 async function uploadImageAsset(value: FormDataEntryValue | null, alt: string) {
   if (!(value instanceof File) || value.size === 0) return "";
+  if (value.size > 4 * 1024 * 1024) throw new Error("Ảnh tải lên tối đa 4MB.");
   const buffer = Buffer.from(await value.arrayBuffer());
   const detected = imageType(buffer);
-  if (!detected) throw new Error("Ảnh phải là PNG, JPEG, WEBP hoặc GIF, tối đa 5MB.");
+  if (!detected) throw new Error("Ảnh phải là PNG, JPEG, WEBP hoặc GIF, tối đa 4MB.");
   const name = `${Date.now()}-${randomBytes(4).toString("hex")}.${detected.ext}`;
-  await fs.mkdir(path.join(process.cwd(), "public", "uploads"), { recursive: true });
-  await fs.writeFile(path.join(process.cwd(), "public", "uploads", name), buffer);
-  const url = `/uploads/${name}`;
+  let url: string;
+  if (process.env.VERCEL || process.env.BLOB_READ_WRITE_TOKEN) {
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      throw new Error("Chưa kết nối Vercel Blob. Hãy tạo Blob Store trong mục Storage của dự án Vercel rồi thử lại.");
+    }
+    const blob = await put(`uploads/${name}`, buffer, {
+      access: "public",
+      contentType: detected.mime,
+      addRandomSuffix: false,
+    });
+    url = blob.url;
+  } else {
+    await fs.mkdir(path.join(process.cwd(), "public", "uploads"), { recursive: true });
+    await fs.writeFile(path.join(process.cwd(), "public", "uploads", name), buffer);
+    url = `/uploads/${name}`;
+  }
   await sql(
     "INSERT INTO media_assets (url, alt, mime_type, file_name) VALUES ($1,$2,$3,$4) ON CONFLICT (url) DO NOTHING",
     [url, alt, detected.mime, name],

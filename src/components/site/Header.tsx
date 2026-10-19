@@ -40,8 +40,8 @@ export const Header = memo(function Header({
         <div className="section-shell flex h-16 items-center justify-between gap-4 lg:h-20">
           <Link href="/" aria-label={settings.brand_name || "Iname"} className="flex shrink-0 items-center">
             {settings.logo_url ? (
-              <span className="relative block h-10 w-10 overflow-hidden rounded-xl lg:h-11 lg:w-11">
-                <CmsImage src={settings.logo_url} alt={settings.logo_alt || settings.brand_name} className="object-contain" sizes="44px" />
+              <span className="relative block h-10 w-32 lg:h-11 lg:w-36">
+                <CmsImage src={settings.logo_url} alt={settings.logo_alt || settings.brand_name} className="object-contain object-left" sizes="144px" />
               </span>
             ) : (
               <span className="bg-primary-gradient flex size-10 items-center justify-center rounded-xl text-primary-foreground shadow-card lg:size-11" aria-hidden="true">

@@ -22,7 +22,7 @@ export function Footer({
                 <div className="flex items-center">
                   {settings.logo_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={settings.logo_url} alt={settings.logo_alt || settings.brand_name || "Iname"} className="size-11 rounded-xl object-contain" />
+                    <img src={settings.logo_url} alt={settings.logo_alt || settings.brand_name || "Iname"} className="h-14 w-36 object-contain object-left" />
                   ) : (
                     <span role="img" aria-label="Iname" className="bg-primary-gradient flex size-11 items-center justify-center rounded-xl text-primary-foreground shadow-card">
                       <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">

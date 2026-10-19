@@ -210,7 +210,7 @@ const settings = {
   brand_tagline: t("common.brand.tagline"),
   company_name: "CÔNG TY TNHH CÔNG NGHỆ INAME",
   company_address: "Phòng Co-founder, Tầng 1, Tòa nhà N01-T2 Khu Đoàn Ngoại Giao, Đường Hoàng Minh Thảo, Phường Xuân Đỉnh, TP Hà Nội, Việt Nam",
-  logo_url: "/iname-icon.svg",
+  logo_url: "/logo-iname.png",
   logo_alt: t("common.brand.name"),
   header_visible: "true",
   header_cta_label: t("common.actions.consult"),
