@@ -41,12 +41,7 @@ for (const file of migrationFiles) {
   await client.query("BEGIN");
   try {
     for (const statement of statements) {
-      try {
-        await client.query(statement);
-      } catch (error) {
-        if (error && error.code === "42P07") continue;
-        throw error;
-      }
+      await client.query(statement);
     }
     await client.query("INSERT INTO schema_migrations (migration) VALUES ($1)", [file]);
     await client.query("COMMIT");

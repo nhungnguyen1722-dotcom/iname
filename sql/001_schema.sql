@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS page_sections (
   UNIQUE (page_id, section_key)
 );
 
-CREATE INDEX page_sections_page_sort_idx
+CREATE INDEX IF NOT EXISTS page_sections_page_sort_idx
   ON page_sections (page_id, sort_order);
 
 CREATE TABLE IF NOT EXISTS navigation_items (
@@ -141,7 +141,7 @@ CREATE TABLE IF NOT EXISTS articles (
   updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX articles_status_idx ON articles (status, published_at);
+CREATE INDEX IF NOT EXISTS articles_status_idx ON articles (status, published_at);
 
 CREATE TABLE IF NOT EXISTS contact_requests (
   id SERIAL PRIMARY KEY,
@@ -159,7 +159,7 @@ CREATE TABLE IF NOT EXISTS contact_requests (
   updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX contact_requests_status_idx
+CREATE INDEX IF NOT EXISTS contact_requests_status_idx
   ON contact_requests (status, created_at);
 
 CREATE TABLE IF NOT EXISTS media_assets (
