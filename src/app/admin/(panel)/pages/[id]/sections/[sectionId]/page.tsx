@@ -4,6 +4,7 @@ import { saveSection } from "@/server/admin";
 import { parseJson, sql } from "@/lib/db";
 import { getMediaAssets } from "@/lib/content";
 import { ImageField } from "@/components/admin/ImageField";
+import { CmsImage } from "@/components/site/CmsImage";
 import { iconOptions } from "@/components/site/IconMark";
 
 type Item = Record<string, unknown>;
