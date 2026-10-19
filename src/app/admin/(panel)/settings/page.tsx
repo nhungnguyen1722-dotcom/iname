@@ -6,7 +6,7 @@ export default async function SettingsAdmin({ searchParams }: { searchParams: Pr
   const query = await searchParams;
   const settings = await getSettings();
   const offices = officesFromSettings(settings);
-  const fields = ["brand_name", "brand_tagline", "hotline", "hotline_href", "email", "email_href", "zalo_label", "zalo_url", "tax_code", "hours_summary", "hours_saturday_summary", "not_found_title", "not_found_description"];
+  const fields = ["brand_name", "brand_tagline", "company_name", "company_address", "hotline", "hotline_href", "email", "email_href", "zalo_label", "zalo_url", "sticky_phone_label", "sticky_phone_href", "sticky_zalo_url", "sticky_messenger_url", "sticky_facebook_url", "tax_code", "hours_summary", "hours_saturday_summary", "not_found_title", "not_found_description"];
   return (
     <div>
       <h1 className="font-display text-3xl font-extrabold">Thiết lập website</h1>
@@ -19,6 +19,12 @@ export default async function SettingsAdmin({ searchParams }: { searchParams: Pr
             <input name={field} defaultValue={settings[field] || ""} className={inputClass} />
           </label>
         ))}
+        <fieldset className="space-y-3 rounded-lg border border-border p-4">
+          <legend className="px-2 text-sm font-bold">Widget liên hệ nổi</legend>
+          {["sticky_contacts_visible", "sticky_phone_visible", "sticky_zalo_visible", "sticky_messenger_visible", "sticky_facebook_visible"].map((flag) => (
+            <label key={flag} className="flex items-center gap-2 text-sm"><input type="checkbox" name={flag} defaultChecked={settings[flag] !== "false" && (flag === "sticky_messenger_visible" || flag === "sticky_facebook_visible" ? settings[flag] === "true" : true)} />{flag}</label>
+          ))}
+        </fieldset>
         {offices.map((office, index) => (
           <div key={office.id} className="grid gap-2 rounded-lg bg-secondary/40 p-3">
             <input type="hidden" name={`office_id_${index}`} value={office.id} />

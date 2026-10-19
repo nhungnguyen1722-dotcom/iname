@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
 import { Notice, buttonClass, inputClass, secondaryButtonClass } from "@/components/admin/AdminShell";
-import { CmsImage } from "@/components/site/CmsImage";
 import { saveSection } from "@/server/admin";
 import { parseJson, sql } from "@/lib/db";
+import { getMediaAssets } from "@/lib/content";
+import { ImageField } from "@/components/admin/ImageField";
+import { iconOptions } from "@/components/site/IconMark";
 
 type Item = Record<string, unknown>;
 
@@ -19,10 +21,10 @@ export default async function SectionEditor({
     id: number; page_id: number; section_type: string; admin_name: string; eyebrow: string | null; title: string | null;
     subtitle: string | null; description: string | null; image_url: string | null; image_alt: string | null;
     button_label: string | null; button_url: string | null; secondary_button_label: string | null; secondary_button_url: string | null;
-    items_json: string | null; gallery_json: string | null; visible: boolean; status: string;
+    items_json: string | null; gallery_json: string | null; config_json: string | null; visible: boolean; status: string;
   }>(
     `SELECT id, page_id, section_type, admin_name, eyebrow, title, subtitle, description, image_url, image_alt,
-            button_label, button_url, secondary_button_label, secondary_button_url, items_json, gallery_json, visible, status
+            button_label, button_url, secondary_button_label, secondary_button_url, items_json, gallery_json, config_json, visible, status
      FROM page_sections WHERE id = $1 AND page_id = $2 AND deleted_at IS NULL`,
     [Number(sectionId), Number(id)],
   );
@@ -30,6 +32,8 @@ export default async function SectionEditor({
   if (!section) notFound();
   const items = parseJson<Item[]>(section.items_json, []);
   const gallery = parseJson<{ url: string; alt: string; caption?: string }[]>(section.gallery_json, []);
+  const config = parseJson<Record<string, unknown>>(section.config_json, {});
+  const media = await getMediaAssets();
   return (
     <div>
       <h1 className="font-display text-3xl font-extrabold">{section.admin_name}</h1>
@@ -44,9 +48,10 @@ export default async function SectionEditor({
         <label className="block text-sm font-semibold">Tiêu đề<input name="title" defaultValue={section.title || ""} className={inputClass} /></label>
         <label className="block text-sm font-semibold">Tiêu đề phụ<input name="subtitle" defaultValue={section.subtitle || ""} className={inputClass} /></label>
         <label className="block text-sm font-semibold">Mô tả<textarea name="description" defaultValue={section.description || ""} rows={4} className={inputClass} /></label>
-        <label className="block text-sm font-semibold">URL ảnh chính<input name="imageUrl" defaultValue={section.image_url || ""} className={inputClass} /></label>
-        {section.image_url ? <span className="relative block h-40 w-full overflow-hidden rounded-lg bg-secondary"><CmsImage src={section.image_url} alt={section.image_alt || ""} className="object-contain" sizes="640px" /></span> : null}
+        <ImageField name="imageUrl" value={section.image_url || ""} media={media} label="Ảnh banner / ảnh chính" />
         <label className="block text-sm font-semibold">Văn bản thay thế<input name="imageAlt" defaultValue={section.image_alt || ""} className={inputClass} /></label>
+        {section.section_type === "page-hero" ? <label className="block text-sm font-semibold">Biểu tượng banner<select name="configIcon" defaultValue={String(config.icon || "building")} className={inputClass}>{iconOptions.map((icon) => <option key={icon} value={icon}>{icon}</option>)}</select></label> : null}
+        {section.section_type === "pricing" ? <div className="grid gap-3 sm:grid-cols-2"><label className="text-sm font-semibold">Phụ đề Văn phòng ảo<input name="officeSubtitle" defaultValue={String(config.officeSubtitle || "")} className={inputClass} /></label><label className="text-sm font-semibold">Phụ đề Dịch vụ kế toán<input name="accountingSubtitle" defaultValue={String(config.accountingSubtitle || "")} className={inputClass} /></label></div> : null}
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="text-sm font-semibold">Nút chính<input name="buttonLabel" defaultValue={section.button_label || ""} className={inputClass} /></label>
           <label className="text-sm font-semibold">URL nút chính<input name="buttonUrl" defaultValue={section.button_url || ""} className={inputClass} /></label>
@@ -66,7 +71,7 @@ export default async function SectionEditor({
           {gallery.map((image, index) => (
             <div key={`${image.url}-${index}`} className="grid gap-2 rounded-lg bg-secondary/50 p-3">
               {image.url ? <span className="relative block h-32 w-full overflow-hidden rounded-md bg-background"><CmsImage src={image.url} alt={image.alt || ""} className="object-contain" sizes="480px" /></span> : null}
-              <input name={`gallery_url_${index}`} defaultValue={image.url} className={inputClass} placeholder="URL ảnh" />
+              <ImageField name={`gallery_url_${index}`} uploadName={`gallery_file_${index}`} value={image.url} media={media} label="Ảnh" />
               <input name={`gallery_alt_${index}`} defaultValue={image.alt} className={inputClass} placeholder="Văn bản thay thế" />
               <input name={`gallery_caption_${index}`} defaultValue={image.caption || ""} className={inputClass} placeholder="Chú thích" />
               <div className="flex gap-2">
@@ -76,7 +81,7 @@ export default async function SectionEditor({
               </div>
             </div>
           ))}
-          <input name="new_gallery_url" className={inputClass} placeholder="URL ảnh mới" />
+          <ImageField name="new_gallery_url" uploadName="new_gallery_file" media={media} label="Ảnh mới" />
           <input name="new_gallery_alt" className={inputClass} placeholder="Văn bản thay thế" />
           <input name="new_gallery_caption" className={inputClass} placeholder="Chú thích" />
           <button className={secondaryButtonClass} name="intent" value="add-gallery" type="submit">Thêm ảnh</button>
@@ -119,6 +124,8 @@ function ItemFields({ type, items }: { type: string; items: Item[] }) {
               <textarea name={`item_quote_${index}`} defaultValue={String(item.quote || "")} className={inputClass} />
               <input name={`item_author_${index}`} defaultValue={String(item.author || "")} className={inputClass} />
               <input name={`item_company_${index}`} defaultValue={String(item.company || "")} className={inputClass} />
+              <input name={`item_avatar_${index}`} defaultValue={String(item.avatar || "")} className={inputClass} placeholder="Chữ viết tắt avatar" />
+              <label className="block text-sm font-semibold">Số sao<select name={`item_rating_${index}`} defaultValue={String(item.rating || 5)} className={inputClass}>{[5, 4, 3, 2, 1].map((rating) => <option key={rating} value={rating}>{rating} sao</option>)}</select></label>
             </>
           ) : null}
           {type === "stats" ? (
@@ -151,6 +158,7 @@ function ItemFields({ type, items }: { type: string; items: Item[] }) {
             <>
               <input name={`item_title_${index}`} defaultValue={String(item.title || "")} className={inputClass} placeholder="Tiêu đề" />
               <textarea name={`item_description_${index}`} defaultValue={String(item.description || "")} className={inputClass} />
+              <label className="block text-sm font-semibold">Biểu tượng<select name={`item_icon_${index}`} defaultValue={String(item.icon || "building")} className={inputClass}>{iconOptions.map((icon) => <option key={icon} value={icon}>{icon}</option>)}</select></label>
               {type === "pillars" ? <textarea name={`item_points_${index}`} defaultValue={Array.isArray(item.points) ? item.points.join("\n") : ""} className={inputClass} placeholder="Mỗi dòng một ý" /> : null}
               <input name={`item_href_${index}`} defaultValue={String(item.href || "")} className={inputClass} placeholder="Liên kết" />
               <input name={`item_cta_${index}`} defaultValue={String(item.cta || "")} className={inputClass} placeholder="Nhãn nút" />

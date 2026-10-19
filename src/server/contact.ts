@@ -19,7 +19,7 @@ export type ContactState = { ok: boolean; message: string };
 
 export async function submitContact(_prev: ContactState, formData: FormData): Promise<ContactState> {
   if (String(formData.get("website") || "").trim()) {
-    return { ok: true, message: "Đã gửi yêu cầu. Chuyên viên An Việt sẽ liên hệ với bạn trong giờ làm việc." };
+    return { ok: true, message: "Đã gửi yêu cầu. Chuyên viên Iname sẽ liên hệ với bạn trong giờ làm việc." };
   }
   const parsed = schema.safeParse({
     fullName: formData.get("fullName"),
@@ -68,5 +68,5 @@ export async function submitContact(_prev: ContactState, formData: FormData): Pr
   } catch {
     return { ok: false, message: "Không gửi được yêu cầu. Vui lòng thử lại hoặc gọi hotline để được hỗ trợ ngay." };
   }
-  return { ok: true, message: "Đã gửi yêu cầu. Chuyên viên An Việt sẽ liên hệ với bạn trong giờ làm việc." };
+  return { ok: true, message: "Đã gửi yêu cầu. Chuyên viên Iname sẽ liên hệ với bạn trong giờ làm việc." };
 }

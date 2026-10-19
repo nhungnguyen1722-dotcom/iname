@@ -1,9 +1,12 @@
 import { notFound } from "next/navigation";
 import { buttonClass, inputClass } from "@/components/admin/AdminShell";
 import { deleteService, saveService } from "@/server/admin";
+import { getMediaAssets } from "@/lib/content";
 import { sql } from "@/lib/db";
+import { ImageField } from "./ImageField";
 
 export async function ServiceEditor({ id }: { id: number | null }) {
+  const media = await getMediaAssets();
   const rows = id
     ? await sql<{ id: number; name: string; slug: string; summary: string | null; description: string | null; image_url: string | null; image_alt: string | null; button_label: string | null; button_url: string | null; category: string; visible: boolean; sort_order: number }>(
         "SELECT id, name, slug, summary, description, image_url, image_alt, button_label, button_url, category, visible, sort_order FROM services WHERE id = $1 AND deleted_at IS NULL",
@@ -19,7 +22,7 @@ export async function ServiceEditor({ id }: { id: number | null }) {
       <input name="slug" defaultValue={service?.slug || ""} className={inputClass} placeholder="Slug" />
       <textarea name="summary" defaultValue={service?.summary || ""} className={inputClass} rows={3} />
       <textarea name="description" defaultValue={service?.description || ""} className={inputClass} rows={4} />
-      <input name="imageUrl" defaultValue={service?.image_url || ""} className={inputClass} placeholder="URL ảnh" />
+      <ImageField name="imageUrl" uploadName="service_image_file" value={service?.image_url || ""} media={media} label="Ảnh dịch vụ" />
       <input name="imageAlt" defaultValue={service?.image_alt || ""} className={inputClass} placeholder="Văn bản thay thế" />
       <input name="buttonLabel" defaultValue={service?.button_label || ""} className={inputClass} />
       <input name="buttonUrl" defaultValue={service?.button_url || ""} className={inputClass} />

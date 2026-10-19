@@ -1,6 +1,7 @@
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { ConsultProvider } from "@/components/site/ConsultProvider";
+import { StickyContactWidget } from "@/components/site/StickyContactWidget";
 import { getPublicChrome, officesFromSettings } from "@/lib/content";
 
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
@@ -12,6 +13,7 @@ export default async function PublicLayout({ children }: { children: React.React
         <Header settings={settings} navigation={navigation} />
         {children}
         <Footer settings={settings} groups={groups} offices={offices} />
+        <StickyContactWidget settings={settings} />
       </div>
     </ConsultProvider>
   );

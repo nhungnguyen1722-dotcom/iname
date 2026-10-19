@@ -4,6 +4,8 @@ const options: sanitizeHtml.IOptions = {
   allowedTags: ["p", "br", "strong", "em", "ul", "ol", "li", "h2", "h3", "blockquote", "a"],
   allowedAttributes: {
     a: ["href", "rel", "target"],
+    h2: ["id"],
+    h3: ["id"],
   },
   allowedSchemes: ["http", "https", "mailto", "tel"],
   transformTags: {

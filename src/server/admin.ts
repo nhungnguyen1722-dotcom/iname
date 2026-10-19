@@ -6,7 +6,7 @@ import path from "path";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { sql } from "@/lib/db";
+import { parseJson, sql } from "@/lib/db";
 import { clearContentCache } from "@/lib/content";
 import { requireAdmin } from "@/lib/auth";
 import { createSessionToken } from "@/lib/session";
@@ -86,13 +86,13 @@ function readItems(type: string, formData: FormData) {
   for (let i = 0; i < count; i++) {
     if (type === "faq") items.push({ question: text(formData, `item_question_${i}`, 500), answer: text(formData, `item_answer_${i}`) });
     else if (type === "team") items.push({ name: text(formData, `item_name_${i}`, 255), role: text(formData, `item_role_${i}`, 255), credential: text(formData, `item_credential_${i}`), initials: text(formData, `item_initials_${i}`, 8) });
-    else if (type === "testimonials") items.push({ quote: text(formData, `item_quote_${i}`), author: text(formData, `item_author_${i}`, 255), company: text(formData, `item_company_${i}`, 255) });
+    else if (type === "testimonials") items.push({ quote: text(formData, `item_quote_${i}`), author: text(formData, `item_author_${i}`, 255), company: text(formData, `item_company_${i}`, 255), avatar: text(formData, `item_avatar_${i}`, 8), rating: Math.min(5, Math.max(1, Number(formData.get(`item_rating_${i}`) || 5))) });
     else if (type === "stats") items.push({ value: text(formData, `item_value_${i}`, 80), label: text(formData, `item_label_${i}`, 255) });
     else if (type === "addons") items.push({ name: text(formData, `item_name_${i}`, 255), price: text(formData, `item_price_${i}`, 80) });
     else if (type === "notes" || type === "hero" || type === "page-hero") items.push({ label: text(formData, `item_label_${i}`, 255), text: text(formData, `item_text_${i}`) });
     else if (type === "comparison") items.push({ label: text(formData, `item_label_${i}`, 255), values: [0, 1, 2].map((col) => text(formData, `item_value_${i}_${col}`, 255)) });
-    else if (type === "pillars") items.push({ title: text(formData, `item_title_${i}`, 255), description: text(formData, `item_description_${i}`), href: safeHref(text(formData, `item_href_${i}`, 500)), cta: text(formData, `item_cta_${i}`, 80), points: text(formData, `item_points_${i}`).split("\n").map((line) => line.trim()).filter(Boolean) });
-    else items.push({ title: text(formData, `item_title_${i}`, 255), description: text(formData, `item_description_${i}`), href: safeHref(text(formData, `item_href_${i}`, 500)), cta: text(formData, `item_cta_${i}`, 80) });
+    else if (type === "pillars") items.push({ title: text(formData, `item_title_${i}`, 255), description: text(formData, `item_description_${i}`), href: safeHref(text(formData, `item_href_${i}`, 500)), cta: text(formData, `item_cta_${i}`, 80), icon: text(formData, `item_icon_${i}`, 64), points: text(formData, `item_points_${i}`).split("\n").map((line) => line.trim()).filter(Boolean) });
+    else items.push({ title: text(formData, `item_title_${i}`, 255), description: text(formData, `item_description_${i}`), href: safeHref(text(formData, `item_href_${i}`, 500)), cta: text(formData, `item_cta_${i}`, 80), icon: text(formData, `item_icon_${i}`, 64) });
   }
   return items;
 }
@@ -100,23 +100,25 @@ function readItems(type: string, formData: FormData) {
 function blankItem(type: string) {
   if (type === "faq") return { question: "", answer: "" };
   if (type === "team") return { name: "", role: "", credential: "", initials: "" };
-  if (type === "testimonials") return { quote: "", author: "", company: "" };
+  if (type === "testimonials") return { quote: "", author: "", company: "", avatar: "", rating: 5 };
   if (type === "comparison") return { label: "", values: ["", "", ""] };
   if (type === "stats") return { value: "", label: "" };
   if (type === "addons") return { name: "", price: "" };
   if (type === "notes" || type === "hero" || type === "page-hero") return { label: "", text: "" };
-  if (type === "pillars") return { title: "", description: "", href: "", cta: "", points: [] };
-  return { title: "", description: "", href: "", cta: "" };
+  if (type === "pillars") return { title: "", description: "", href: "", cta: "", icon: "building", points: [] };
+  return { title: "", description: "", href: "", cta: "", icon: "building" };
 }
 
-function readGallery(formData: FormData) {
+async function readGallery(formData: FormData) {
   const count = Number(formData.get("gallery_count") || 0);
   const images: { url: string; alt: string; caption: string }[] = [];
   for (let i = 0; i < count; i++) {
+    const alt = text(formData, `gallery_alt_${i}`, 300);
+    const uploaded = await uploadImageAsset(formData.get(`gallery_file_${i}`), alt);
     const raw = text(formData, `gallery_url_${i}`, 1000);
-    const url = raw ? safeImageUrl(raw) : "";
+    const url = uploaded || (raw ? safeImageUrl(raw) : "");
     if (raw && !url) throw new Error("URL ảnh không hợp lệ. Chỉ dùng đường dẫn nội bộ hoặc HTTPS.");
-    images.push({ url, alt: text(formData, `gallery_alt_${i}`, 300), caption: text(formData, `gallery_caption_${i}`, 300) });
+    images.push({ url, alt, caption: text(formData, `gallery_caption_${i}`, 300) });
   }
   return images;
 }
@@ -134,7 +136,7 @@ export async function saveSection(formData: FormData) {
   let items = readItems(current.section_type, formData);
   let gallery: { url: string; alt: string; caption: string }[] = [];
   try {
-    gallery = readGallery(formData);
+    gallery = await readGallery(formData);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Ảnh không hợp lệ.";
     redirect(`/admin/pages/${current.page_id}/sections/${id}?error=` + encodeURIComponent(message));
@@ -152,9 +154,18 @@ export async function saveSection(formData: FormData) {
     }
   }
   if (intent === "add-gallery") {
-    const url = safeImageUrl(text(formData, "new_gallery_url", 1000));
+    const alt = text(formData, "new_gallery_alt", 300);
+    let uploaded = "";
+    try {
+      uploaded = await uploadImageAsset(formData.get("new_gallery_file"), alt);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Ảnh không hợp lệ.";
+      redirect(`/admin/pages/${current.page_id}/sections/${id}?error=` + encodeURIComponent(message));
+    }
+    const raw = text(formData, "new_gallery_url", 1000);
+    const url = uploaded || (raw ? safeImageUrl(raw) : "");
     if (!url) redirect(`/admin/pages/${current.page_id}/sections/${id}?error=` + encodeURIComponent("URL ảnh mới không hợp lệ."));
-    gallery.push({ url, alt: text(formData, "new_gallery_alt", 300), caption: text(formData, "new_gallery_caption", 300) });
+    gallery.push({ url, alt, caption: text(formData, "new_gallery_caption", 300) });
   }
   if (intent.startsWith("remove-gallery:")) gallery.splice(Number(intent.split(":")[1]), 1);
   if (intent.startsWith("move-gallery:")) {
@@ -168,19 +179,30 @@ export async function saveSection(formData: FormData) {
     }
   }
   const rawImage = text(formData, "imageUrl", 1000);
-  const imageUrl = rawImage ? safeImageUrl(rawImage) : "";
+  let uploadedImage = "";
+  try {
+    uploadedImage = await uploadImageAsset(formData.get("image_file"), text(formData, "imageAlt", 300));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Ảnh không hợp lệ.";
+    redirect(`/admin/pages/${current.page_id}/sections/${id}?error=` + encodeURIComponent(message));
+  }
+  const imageUrl = uploadedImage || (rawImage ? safeImageUrl(rawImage) : "");
   if (rawImage && !imageUrl) {
     redirect(`/admin/pages/${current.page_id}/sections/${id}?error=` + encodeURIComponent("URL ảnh chính không hợp lệ."));
   }
   const status = intent === "draft" ? "draft" : intent === "publish" ? "published" : (text(formData, "status", 32) === "draft" ? "draft" : "published");
   const visible = intent === "hide" ? false : intent === "show" || intent === "publish" ? true : formData.get("visible") === "on";
+  const config = parseJson<Record<string, unknown>>(current.config_json, {});
+  if (formData.has("configIcon")) config.icon = text(formData, "configIcon", 64);
+  if (formData.has("officeSubtitle")) config.officeSubtitle = text(formData, "officeSubtitle");
+  if (formData.has("accountingSubtitle")) config.accountingSubtitle = text(formData, "accountingSubtitle");
   await sql(
     `UPDATE page_sections SET
       admin_name = $1, eyebrow = $2, title = $3, subtitle = $4, description = $5,
       image_url = $6, image_alt = $7, button_label = $8, button_url = $9,
       secondary_button_label = $10, secondary_button_url = $11,
-      items_json = $12, gallery_json = $13, visible = $14, status = $15, updated_at = NOW()
-     WHERE id = $16`,
+      items_json = $12, gallery_json = $13, config_json = $14, visible = $15, status = $16, updated_at = NOW()
+     WHERE id = $17`,
     [
       text(formData, "adminName", 255) || "Section",
       text(formData, "eyebrow", 255) || null,
@@ -195,6 +217,7 @@ export async function saveSection(formData: FormData) {
       safeHref(text(formData, "secondaryButtonUrl", 500)) || null,
       JSON.stringify(items),
       JSON.stringify(gallery.filter((image) => image.url)),
+      JSON.stringify(config),
       visible,
       status,
       id,
@@ -340,8 +363,8 @@ async function upsertSetting(key: string, value: string) {
 export async function saveSettingsForm(formData: FormData) {
   const user = await requireAdmin();
   const keys = [
-    "brand_name", "brand_tagline", "logo_alt", "header_cta_label", "header_cta_url", "hotline", "hotline_href",
-    "email", "email_href", "zalo_url", "zalo_label", "tax_code", "hours_weekday_label", "hours_weekday",
+    "brand_name", "brand_tagline", "company_name", "company_address", "logo_alt", "header_cta_label", "header_cta_url", "hotline", "hotline_href",
+    "email", "email_href", "zalo_url", "zalo_label", "sticky_phone_label", "sticky_phone_href", "sticky_zalo_url", "sticky_messenger_url", "sticky_facebook_url", "tax_code", "hours_weekday_label", "hours_weekday",
     "hours_saturday_label", "hours_saturday", "hours_sunday_label", "hours_sunday", "hours_summary",
     "hours_saturday_summary", "footer_description", "copyright", "legal_note", "not_found_title", "not_found_description",
   ];
@@ -354,8 +377,8 @@ export async function saveSettingsForm(formData: FormData) {
       await upsertSetting(key, value);
     }
   }
-  for (const flag of ["header_visible", "header_show_phone", "topbar_visible"]) {
-    if (formData.has("flags")) await upsertSetting(flag, formData.get(flag) === "on" ? "true" : "false");
+  for (const flag of ["sticky_contacts_visible", "sticky_phone_visible", "sticky_zalo_visible", "sticky_messenger_visible", "sticky_facebook_visible"]) {
+    await upsertSetting(flag, formData.get(flag) === "on" ? "true" : "false");
   }
   if (formData.has("office_count")) {
     const count = Number(formData.get("office_count"));
@@ -380,7 +403,7 @@ export async function saveSettingsForm(formData: FormData) {
 }
 
 function imageType(buffer: Buffer) {
-  if (buffer.length < 12 || buffer.length > 2 * 1024 * 1024) return null;
+  if (buffer.length < 12 || buffer.length > 5 * 1024 * 1024) return null;
   if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) return { mime: "image/png", ext: "png" };
   if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return { mime: "image/jpeg", ext: "jpg" };
   if (buffer.toString("ascii", 0, 3) === "GIF") return { mime: "image/gif", ext: "gif" };
@@ -388,26 +411,36 @@ function imageType(buffer: Buffer) {
   return null;
 }
 
+async function uploadImageAsset(value: FormDataEntryValue | null, alt: string) {
+  if (!(value instanceof File) || value.size === 0) return "";
+  const buffer = Buffer.from(await value.arrayBuffer());
+  const detected = imageType(buffer);
+  if (!detected) throw new Error("Ảnh phải là PNG, JPEG, WEBP hoặc GIF, tối đa 5MB.");
+  const name = `${Date.now()}-${randomBytes(4).toString("hex")}.${detected.ext}`;
+  await fs.mkdir(path.join(process.cwd(), "public", "uploads"), { recursive: true });
+  await fs.writeFile(path.join(process.cwd(), "public", "uploads", name), buffer);
+  const url = `/uploads/${name}`;
+  await sql(
+    "INSERT INTO media_assets (url, alt, mime_type, file_name) VALUES ($1,$2,$3,$4) ON CONFLICT (url) DO NOTHING",
+    [url, alt, detected.mime, name],
+  );
+  return url;
+}
+
 export async function saveLogo(formData: FormData) {
   const user = await requireAdmin();
   const alt = text(formData, "logo_alt", 255) || "Logo";
-  const file = formData.get("file");
   let logoUrl = safeImageUrl(text(formData, "logo_url", 1000));
+  const file = formData.get("file");
   if (text(formData, "logo_url", 1000) && !logoUrl && !(file instanceof File && file.size > 0)) {
     redirect("/admin/logo?error=" + encodeURIComponent("URL logo không hợp lệ."));
   }
   if (file instanceof File && file.size > 0) {
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const detected = imageType(buffer);
-    if (!detected) redirect("/admin/logo?error=" + encodeURIComponent("Chỉ nhận PNG, JPEG, WEBP hoặc GIF tối đa 2MB."));
-    const name = `${Date.now()}-${randomBytes(4).toString("hex")}.${detected.ext}`;
-    await fs.mkdir(path.join(process.cwd(), "public", "uploads"), { recursive: true });
-    await fs.writeFile(path.join(process.cwd(), "public", "uploads", name), buffer);
-    logoUrl = `/uploads/${name}`;
-    await sql(
-      "INSERT INTO media_assets (url, alt, mime_type, file_name) VALUES ($1,$2,$3,$4)",
-      [logoUrl, alt, detected.mime, name],
-    );
+    try {
+      logoUrl = await uploadImageAsset(file, alt);
+    } catch (error) {
+      redirect("/admin/logo?error=" + encodeURIComponent(error instanceof Error ? error.message : "Ảnh logo không hợp lệ."));
+    }
   }
   if (formData.get("clear") === "on") logoUrl = "";
   await upsertSetting("logo_url", logoUrl);
@@ -448,12 +481,21 @@ export async function saveService(formData: FormData) {
   const name = text(formData, "name", 255);
   const slug = slugify(text(formData, "slug", 180) || name);
   if (!name || !slug) redirect("/admin/services?error=" + encodeURIComponent("Tên dịch vụ là bắt buộc."));
+  const rawImage = text(formData, "imageUrl", 1000);
+  let uploadedImage = "";
+  try {
+    uploadedImage = await uploadImageAsset(formData.get("service_image_file"), text(formData, "imageAlt", 300));
+  } catch (error) {
+    redirect("/admin/services?error=" + encodeURIComponent(error instanceof Error ? error.message : "Ảnh dịch vụ không hợp lệ."));
+  }
+  const imageUrl = uploadedImage || (rawImage ? safeImageUrl(rawImage) : "");
+  if (rawImage && !imageUrl) redirect("/admin/services?error=" + encodeURIComponent("URL ảnh không hợp lệ."));
   const values = [
     name,
     slug,
     text(formData, "summary"),
     text(formData, "description"),
-    safeImageUrl(text(formData, "imageUrl", 1000)) || null,
+    imageUrl || null,
     text(formData, "imageAlt", 300) || null,
     text(formData, "buttonLabel", 120) || null,
     safeHref(text(formData, "buttonUrl", 500)) || null,
@@ -524,7 +566,16 @@ export async function saveArticle(formData: FormData) {
   if (!title || !slug) redirect("/admin/articles?error=" + encodeURIComponent("Tiêu đề bài viết là bắt buộc."));
   const content = sanitizeRichText(String(formData.get("content") || ""));
   const categoryId = Number(formData.get("categoryId") || 0) || null;
-  const values = [categoryId, title, slug, text(formData, "excerpt"), content, safeImageUrl(text(formData, "coverUrl", 1000)) || null, text(formData, "coverAlt", 300) || null, text(formData, "seoTitle", 255) || null, text(formData, "seoDescription", 500) || null, status, Number(formData.get("readMinutes") || 0) || null];
+  const rawCover = text(formData, "coverUrl", 1000);
+  let uploadedCover = "";
+  try {
+    uploadedCover = await uploadImageAsset(formData.get("article_image_file"), text(formData, "coverAlt", 300));
+  } catch (error) {
+    redirect("/admin/articles?error=" + encodeURIComponent(error instanceof Error ? error.message : "Ảnh bài viết không hợp lệ."));
+  }
+  const coverUrl = uploadedCover || (rawCover ? safeImageUrl(rawCover) : "");
+  if (rawCover && !coverUrl) redirect("/admin/articles?error=" + encodeURIComponent("URL ảnh bài viết không hợp lệ."));
+  const values = [categoryId, title, slug, text(formData, "excerpt"), content, coverUrl || null, text(formData, "coverAlt", 300) || null, text(formData, "seoTitle", 255) || null, text(formData, "seoDescription", 500) || null, status, Number(formData.get("readMinutes") || 0) || null];
   if (id) {
     await sql(
       `UPDATE articles SET category_id=$1, title=$2, slug=$3, excerpt=$4, content=$5, cover_url=$6, cover_alt=$7, seo_title=$8, seo_description=$9, status=$10, read_minutes=$11,
@@ -551,6 +602,33 @@ export async function deleteArticle(formData: FormData) {
   await audit(user.id, "soft-delete", "article", String(id));
   refresh();
   redirect("/admin/articles?saved=1");
+}
+
+export async function saveArticleCategory(formData: FormData) {
+  const user = await requireAdmin();
+  const id = Number(formData.get("id") || 0);
+  const name = text(formData, "name", 255);
+  const slug = slugify(text(formData, "slug", 180) || name);
+  if (!name || !slug) redirect("/admin/categories?error=" + encodeURIComponent("Tên chuyên mục là bắt buộc."));
+  const values = [name, slug, text(formData, "description"), Number(formData.get("sortOrder") || 0)];
+  if (id) {
+    await sql("UPDATE article_categories SET name=$1, slug=$2, description=$3, sort_order=$4 WHERE id=$5", [...values, id]);
+  } else {
+    await sql("INSERT INTO article_categories (name, slug, description, sort_order) VALUES ($1,$2,$3,$4)", values);
+  }
+  await audit(user.id, id ? "update" : "create", "article-category", slug);
+  refresh();
+  redirect("/admin/categories?saved=1");
+}
+
+export async function deleteArticleCategory(formData: FormData) {
+  const user = await requireAdmin();
+  const id = Number(formData.get("id"));
+  await sql("UPDATE articles SET category_id=NULL, updated_at=NOW() WHERE category_id=$1", [id]);
+  await sql("DELETE FROM article_categories WHERE id=$1", [id]);
+  await audit(user.id, "delete", "article-category", String(id));
+  refresh();
+  redirect("/admin/categories?saved=1");
 }
 
 export async function saveContactRequest(formData: FormData) {

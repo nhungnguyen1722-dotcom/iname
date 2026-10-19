@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "db:migrate": "node scripts/migrate.mjs",
     "db:seed": "node scripts/seed.mjs",
-    "db:setup": "node scripts/migrate.mjs && node scripts/seed.mjs"
+    "db:setup": "node scripts/migrate.mjs && node scripts/seed.mjs",
+    "db:dump": "node scripts/dump-database.mjs"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

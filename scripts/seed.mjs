@@ -5,8 +5,9 @@ import bcrypt from "bcryptjs";
 import { pgConfig } from "./pg-config.mjs";
 
 function loadEnv() {
-  const envPath = path.join(process.cwd(), ".env");
-  if (!fs.existsSync(envPath)) return;
+  for (const envFile of [".env.local", ".env"]) {
+  const envPath = path.join(process.cwd(), envFile);
+  if (!fs.existsSync(envPath)) continue;
   for (const line of fs.readFileSync(envPath, "utf8").split(/\r?\n/)) {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith("#")) continue;
@@ -21,6 +22,7 @@ function loadEnv() {
       value = value.slice(1, -1);
     }
     if (!process.env[key]) process.env[key] = value;
+  }
   }
 }
 
@@ -61,10 +63,17 @@ function steps(prefix) {
 }
 
 function cards(prefix, count = 8) {
+  const iconsByGroup = {
+    "home.why": ["pin", "badge", "file", "timer"],
+    "vo.benefits": ["piggy", "calendar", "building", "mail", "shield", "handshake"],
+    "ac.commitments": ["calendar", "lock", "wallet", "message"],
+    "ac.credentials": ["badge", "shield", "file", "calculator"],
+  };
+  const icons = iconsByGroup[prefix] || [];
   return numbered(prefix, count, (i) => {
     const title = t(`${prefix}.item${i}.title`);
     if (!title) return null;
-    return { title, description: t(`${prefix}.item${i}.description`) };
+    return { title, description: t(`${prefix}.item${i}.description`), icon: icons[i - 1] || "file" };
   });
 }
 
@@ -199,19 +208,31 @@ const offices = contact.IA.map((office) => ({
 const settings = {
   brand_name: t("common.brand.name"),
   brand_tagline: t("common.brand.tagline"),
-  logo_url: "",
+  company_name: "CÔNG TY TNHH CÔNG NGHỆ INAME",
+  company_address: "Phòng Co-founder, Tầng 1, Tòa nhà N01-T2 Khu Đoàn Ngoại Giao, Đường Hoàng Minh Thảo, Phường Xuân Đỉnh, TP Hà Nội, Việt Nam",
+  logo_url: "/iname-icon.svg",
   logo_alt: t("common.brand.name"),
   header_visible: "true",
   header_cta_label: t("common.actions.consult"),
   header_cta_url: "#tu-van",
   header_show_phone: "true",
   topbar_visible: "true",
-  hotline: contact.nn.hotline,
-  hotline_href: contact.nn.hotlineHref,
+  hotline: "0981988357",
+  hotline_href: "tel:0981988357",
   email: contact.nn.email,
   email_href: contact.nn.emailHref,
-  zalo_url: contact.nn.zaloUrl,
+  zalo_url: "https://zalo.me/0981988357",
   zalo_label: t("contact.channels.zaloValue"),
+  sticky_contacts_visible: "true",
+  sticky_phone_visible: "true",
+  sticky_phone_label: "Gọi 0981988357",
+  sticky_phone_href: "tel:0981988357",
+  sticky_zalo_visible: "true",
+  sticky_zalo_url: "https://zalo.me/0981988357",
+  sticky_messenger_visible: "false",
+  sticky_messenger_url: "",
+  sticky_facebook_visible: "false",
+  sticky_facebook_url: "",
   tax_code: contact.nn.taxCode,
   hours_weekday_label: t("contact.hours.weekdaysLabel"),
   hours_weekday: t("contact.hours.weekdaysValue"),
@@ -224,7 +245,13 @@ const settings = {
   footer_description: t("footer.description"),
   copyright: t("footer.copyright"),
   legal_note: `Mã số thuế: ${contact.nn.taxCode} — ${t("footer.license")}`,
-  offices: JSON.stringify(offices),
+  offices: JSON.stringify(offices.map((office, index) => index === 0 ? {
+    ...office,
+    label: "Trụ sở Hà Nội",
+    address: "Phòng Co-founder, Tầng 1, Tòa nhà N01-T2 Khu Đoàn Ngoại Giao, Đường Hoàng Minh Thảo, Phường Xuân Đỉnh, TP Hà Nội, Việt Nam",
+    phone: "0981988357",
+    phoneHref: "tel:0981988357",
+  } : office)),
   not_found_title: t("notFound.title") || "Không tìm thấy trang",
   not_found_description: t("notFound.description") || "Trang bạn tìm không tồn tại hoặc đã được chuyển.",
 };
@@ -236,7 +263,7 @@ const nav = [
   [t("common.nav.virtualOffice"), "/van-phong-ao"],
   [t("common.nav.accounting"), "/ke-toan"],
   [t("common.nav.pricing"), "/bang-gia"],
-  [t("common.nav.blog"), "/kien-thuc"],
+  [t("common.nav.blog"), "/tin-tuc"],
   [t("common.nav.contact"), "/lien-he"],
 ];
 for (let i = 0; i < nav.length; i++) {
@@ -292,7 +319,7 @@ const pageDefs = [
   ["van-phong-ao", "/van-phong-ao", "Văn phòng ảo", t("vo.hero.title"), t("vo.hero.subtitle"), 2],
   ["ke-toan", "/ke-toan", "Dịch vụ kế toán", t("ac.hero.title"), t("ac.hero.subtitle"), 3],
   ["bang-gia", "/bang-gia", "Bảng giá", t("pricing.hero.title"), t("pricing.hero.subtitle"), 4],
-  ["kien-thuc", "/kien-thuc", "Kiến thức", t("blog.hero.title"), t("blog.hero.subtitle"), 5],
+  ["tin-tuc", "/tin-tuc", "Tin tức", t("blog.hero.title"), t("blog.hero.subtitle"), 5],
   ["lien-he", "/lien-he", "Liên hệ", t("contact.hero.title"), t("contact.hero.subtitle"), 6],
 ];
 const pageIds = {};
@@ -347,7 +374,7 @@ await section("trang-chu", {
   title: t("home.hero.title"),
   description: t("home.hero.subtitle"),
   imageUrl: HERO,
-  imageAlt: t("home.hero.imageAlt") || "Không gian làm việc hiện đại tại An Việt Office",
+  imageAlt: t("home.hero.imageAlt") || "Không gian làm việc hiện đại tại Iname",
   buttonLabel: t("common.actions.consult"),
   buttonUrl: "#tu-van",
   secondaryButtonLabel: t("common.actions.viewPricing"),
@@ -374,6 +401,7 @@ await section("trang-chu", {
     {
       title: t("home.services.virtualOffice.title"),
       description: t("home.services.virtualOffice.description"),
+      icon: "building",
       points: points("home.services.virtualOffice"),
       href: "/van-phong-ao",
       cta: t("common.actions.details"),
@@ -381,6 +409,7 @@ await section("trang-chu", {
     {
       title: t("home.services.accounting.title"),
       description: t("home.services.accounting.description"),
+      icon: "calculator",
       points: points("home.services.accounting"),
       href: "/ke-toan",
       cta: t("common.actions.details"),
@@ -391,7 +420,7 @@ await section("trang-chu", {
 await section("trang-chu", {
   key: "home-why",
   type: "cards",
-  adminName: "Vì sao chọn An Việt",
+  adminName: "Vì sao chọn Iname",
   eyebrow: t("home.why.eyebrow"),
   title: t("home.why.title"),
   description: t("home.why.subtitle"),
@@ -403,8 +432,8 @@ await section("trang-chu", {
   key: "home-process",
   type: "steps",
   adminName: "Quy trình làm việc",
-  eyebrow: t("home.process.eyebrow"),
-  title: t("home.process.title"),
+  eyebrow: "— QUY TRÌNH HỢP TÁC —",
+  title: "Bắt đầu chỉ trong 4 bước",
   description: t("home.process.subtitle"),
   items: steps("home.process"),
 });
@@ -481,17 +510,20 @@ await section("van-phong-ao", {
   eyebrow: t("vo.hero.eyebrow"),
   title: t("vo.hero.title"),
   description: t("vo.hero.subtitle"),
+  imageUrl: RECEPTION,
+  imageAlt: "Văn phòng tiếp khách tại Hà Nội",
   buttonLabel: t("common.actions.consult"),
   buttonUrl: "#tu-van",
   secondaryButtonLabel: t("common.actions.viewPricing"),
   secondaryButtonUrl: "/bang-gia",
+  config: { icon: "building" },
   items: [t("home.hero.badge1"), t("home.hero.badge2"), t("home.hero.badge3")].filter(Boolean).map((label) => ({ label })),
 });
 
 await section("van-phong-ao", {
   key: "vo-intro",
   type: "media",
-  adminName: "Văn phòng ảo của An Việt gồm những gì?",
+  adminName: "Văn phòng ảo của Iname gồm những gì?",
   title: t("vo.intro.title"),
   description: t("vo.intro.description"),
   imageUrl: RECEPTION,
@@ -590,10 +622,13 @@ await section("ke-toan", {
   eyebrow: t("ac.hero.eyebrow"),
   title: t("ac.hero.title"),
   description: t("ac.hero.subtitle"),
+  imageUrl: TEAM,
+  imageAlt: "Đội ngũ tư vấn kế toán Iname",
   buttonLabel: t("common.actions.consult"),
   buttonUrl: "#tu-van",
   secondaryButtonLabel: t("common.actions.viewPricing"),
   secondaryButtonUrl: "/bang-gia",
+  config: { icon: "calculator" },
 });
 
 await section("ke-toan", {
@@ -684,18 +719,25 @@ await section("bang-gia", {
   eyebrow: t("pricing.hero.eyebrow"),
   title: t("pricing.hero.title"),
   description: t("pricing.hero.subtitle"),
+  imageUrl: HERO,
+  imageAlt: "Không gian làm việc chuyên nghiệp",
   items: [{ label: t("home.hero.badge2") }].filter((item) => item.label),
   buttonLabel: t("common.labels.consultFree"),
   buttonUrl: "#tu-van",
   secondaryButtonLabel: t("common.nav.contact"),
   secondaryButtonUrl: "/lien-he",
+  config: { icon: "wallet" },
 });
 
 await section("bang-gia", {
   key: "price-plans",
   type: "pricing",
   adminName: "Bảng giá dịch vụ",
-  config: { mode: "stacked" },
+  config: {
+    mode: "stacked",
+    officeSubtitle: "Gói địa chỉ và dịch vụ văn phòng, hợp đồng tối thiểu 6 tháng.",
+    accountingSubtitle: "Phí theo quy mô chứng từ, hợp đồng theo năm và được báo giá lại mỗi kỳ.",
+  },
 });
 
 await section("bang-gia", {
@@ -754,23 +796,26 @@ await section("bang-gia", {
   secondaryButtonUrl: "/lien-he",
 });
 
-await section("kien-thuc", {
+await section("tin-tuc", {
   key: "blog-hero",
   type: "page-hero",
   adminName: "Hero kiến thức",
   eyebrow: t("blog.hero.eyebrow"),
   title: t("blog.hero.title"),
   description: t("blog.hero.subtitle"),
+  imageUrl: TEAM,
+  imageAlt: "Không gian làm việc và đội ngũ Iname",
+  config: { icon: "file" },
 });
 
-await section("kien-thuc", {
+await section("tin-tuc", {
   key: "blog-list",
   type: "articles",
   adminName: "Danh sách bài viết",
   config: { source: "articles" },
 });
 
-await section("kien-thuc", {
+await section("tin-tuc", {
   key: "blog-cta",
   type: "cta",
   adminName: "Kêu gọi hỗ trợ hồ sơ",
@@ -809,10 +854,10 @@ await section("lien-he", {
 });
 
 const serviceGroups = [
-  ["office", "vo.services", "/van-phong-ao", 6],
-  ["accounting", "ac.services", "/ke-toan", 7],
+  ["office", "vo.services", "/van-phong-ao", 6, ["pin", "building", "monitor", "mail", "message", "file"]],
+  ["accounting", "ac.services", "/ke-toan", 7, ["calculator", "receipt", "file", "search", "badge", "file", "scale"]],
 ];
-for (const [category, prefix, href, count] of serviceGroups) {
+for (const [category, prefix, href, count, icons] of serviceGroups) {
   for (let i = 1; i <= count; i++) {
     const name = t(`${prefix}.item${i}.title`);
     if (!name) continue;
@@ -886,7 +931,7 @@ for (const post of posts) {
 }
 
 for (const asset of [
-  { url: HERO, alt: t("home.hero.imageAlt") || "Không gian làm việc hiện đại tại An Việt Office" },
+  { url: HERO, alt: t("home.hero.imageAlt") || "Không gian làm việc hiện đại tại Iname" },
   { url: RECEPTION, alt: t("vo.gallery.image2Caption") },
   { url: TEAM, alt: "Dịch vụ tư vấn và hỗ trợ kế toán" },
 ]) {

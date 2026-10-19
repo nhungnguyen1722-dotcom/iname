@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { getPageByPath } from "@/lib/content";
 import { renderContentPage } from "@/components/site/render-page";
 
-const paths = new Set(["/van-phong-ao", "/ke-toan", "/bang-gia", "/kien-thuc", "/lien-he"]);
+const paths = new Set(["/van-phong-ao", "/ke-toan", "/bang-gia", "/tin-tuc", "/lien-he"]);
 
 export async function generateMetadata({
   params,
@@ -11,8 +12,10 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
+  if (slug === "kien-thuc") redirect("/tin-tuc");
   const path = `/${slug}`;
-  const data = await getPageByPath(path, false);
+  const data = await getPageByPath(path, false)
+    || (path === "/tin-tuc" ? await getPageByPath("/kien-thuc", false) : null);
   if (!data) return { title: "Không tìm thấy trang" };
   return {
     title: data.page.seo_title || data.page.title,
@@ -33,6 +36,7 @@ export default async function ContentPage({
   searchParams: Promise<{ preview?: string; q?: string; category?: string; page?: string }>;
 }) {
   const { slug } = await params;
+  if (slug === "kien-thuc") redirect("/tin-tuc");
   const path = `/${slug}`;
   if (!paths.has(path)) notFound();
   const query = await searchParams;

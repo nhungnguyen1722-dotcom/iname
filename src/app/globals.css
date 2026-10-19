@@ -52,6 +52,10 @@ a { color: inherit; text-decoration: none; }
 button, input, select, textarea { font-family: inherit; }
 
 .section-shell { margin-inline: auto; width: 100%; max-width: 72rem; padding-inline: 1rem; }
+.process-track { position: relative; }
+@media (min-width: 1024px) { .process-track::before { content: ""; position: absolute; top: 1.65rem; left: 10%; right: 10%; border-top: 2px dashed hsl(var(--border)); } }
+.testimonial-track { scrollbar-width: none; }
+.testimonial-track::-webkit-scrollbar { display: none; }
 @media (min-width: 640px) { .section-shell { padding-inline: 1.5rem; } }
 .bg-hero-gradient { background: var(--gradient-hero); }
 .bg-primary-gradient { background: var(--gradient-primary); }

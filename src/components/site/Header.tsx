@@ -38,7 +38,7 @@ export const Header = memo(function Header({
       ) : null}
       <header className="border-b border-border/70 bg-background/90 shadow-card backdrop-blur-md">
         <div className="section-shell flex h-16 items-center justify-between gap-4 lg:h-20">
-          <Link href="/" className="flex shrink-0 items-center gap-3">
+          <Link href="/" aria-label={settings.brand_name || "Iname"} className="flex shrink-0 items-center">
             {settings.logo_url ? (
               <span className="relative block h-10 w-10 overflow-hidden rounded-xl lg:h-11 lg:w-11">
                 <CmsImage src={settings.logo_url} alt={settings.logo_alt || settings.brand_name} className="object-contain" sizes="44px" />
@@ -48,10 +48,6 @@ export const Header = memo(function Header({
                 <BuildingIcon />
               </span>
             )}
-            <span className="flex flex-col leading-tight">
-              <span className="whitespace-nowrap font-display text-base font-extrabold lg:text-lg">{settings.brand_name}</span>
-              <span className="hidden whitespace-nowrap text-xs text-muted-foreground xl:block">{settings.brand_tagline}</span>
-            </span>
           </Link>
           <nav className="hidden flex-1 items-center justify-center gap-1 lg:flex" aria-label="Chính">
             {desktop.map((item) => {

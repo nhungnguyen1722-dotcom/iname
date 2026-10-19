@@ -4,6 +4,8 @@ import { ConsultButton } from "./ConsultProvider";
 import { FaqList } from "./FaqList";
 import { PricingBlock } from "./PricingBlock";
 import { ContactForm } from "./ContactForm";
+import { IconMark } from "./IconMark";
+import { TestimonialCarousel } from "./TestimonialCarousel";
 import type { ArticleCard, FooterGroup, Office, PricingPlan, PublicSection, ServiceRecord } from "@/lib/content";
 
 const primaryButton = "inline-flex h-11 items-center justify-center rounded-md bg-background px-6 text-base font-semibold text-foreground shadow-elegant hover:bg-background/90";
@@ -42,6 +44,7 @@ export function PageSections({
   offices,
   articles,
   categories,
+  popularArticles,
   query,
 }: {
   sections: PublicSection[];
@@ -56,6 +59,7 @@ export function PageSections({
     pages: number;
   };
   categories?: { name: string; slug: string }[];
+  popularArticles?: ArticleCard[];
   query?: { q?: string; category?: string };
 }) {
   return (
@@ -77,7 +81,7 @@ export function PageSections({
         if (section.section_type === "stats") return <Stats key={section.id} section={section} />;
         if (section.section_type === "addons") return <Addons key={section.id} section={section} />;
         if (section.section_type === "notes") return <Notes key={section.id} section={section} />;
-        if (section.section_type === "articles") return <ArticleList key={section.id} articles={articles} categories={categories || []} query={query} />;
+        if (section.section_type === "articles") return <ArticleList key={section.id} articles={articles} categories={categories || []} query={query} popularArticles={popularArticles || []} />;
         if (section.section_type === "contact") return <ContactSection key={section.id} section={section} settings={settings} offices={offices} plans={plans} />;
         return null;
       })}
@@ -152,11 +156,16 @@ function Hero({ section }: { section: PublicSection }) {
 }
 
 function PageHero({ section }: { section: PublicSection }) {
+  const configuredIcon = text(section.config.icon);
+  const title = section.title || "";
+  const icon = configuredIcon || (/kế toán/i.test(title) ? "calculator" : /giá/i.test(title) ? "wallet" : /tin tức|kiến thức/i.test(title) ? "file" : "building");
   return (
     <section className="relative overflow-hidden border-b border-border bg-subtle-gradient">
+      {section.image_url ? <div className="absolute inset-0 opacity-20"><CmsImage src={section.image_url} alt="" className="object-cover" sizes="100vw" /></div> : null}
       <div className="bg-mesh pointer-events-none absolute inset-0 opacity-90" />
       <div className="section-shell relative py-14 sm:py-16 lg:py-20">
         {section.eyebrow ? <div className="mb-4 inline-flex rounded-full bg-primary-soft px-2.5 py-0.5 text-xs font-semibold text-primary">{section.eyebrow}</div> : null}
+        <IconMark name={icon} className="mb-4 size-14" />
         <h1 className="max-w-4xl font-display text-3xl font-extrabold sm:text-4xl lg:text-5xl">{section.title}</h1>
         {section.description ? <p className="mt-5 max-w-3xl text-base leading-relaxed text-muted-foreground sm:text-lg">{section.description}</p> : null}
         {section.items.length ? (
@@ -182,6 +191,7 @@ function Pillars({ section }: { section: PublicSection }) {
       <div className="mt-10 grid gap-6 lg:grid-cols-2">
         {section.items.map((item) => (
           <article key={text(item.title)} className="hover-lift rounded-2xl border border-border bg-card p-7 shadow-card">
+            <IconMark name={text(item.icon) || "building"} className="mb-5" />
             <h3 className="font-display text-2xl font-bold">{text(item.title)}</h3>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{text(item.description)}</p>
             <ul className="mt-5 space-y-2 text-sm">
@@ -204,6 +214,7 @@ function Cards({ section, services }: { section: PublicSection; services: Servic
         description: service.summary || "",
         href: service.button_url || "",
         cta: service.button_label || "",
+        icon: service.icon || "file",
       }))
     : section.items;
   const columns = Number(section.config.columns || 3);
@@ -214,8 +225,9 @@ function Cards({ section, services }: { section: PublicSection; services: Servic
       <div className="section-shell py-16 lg:py-20">
         <Heading section={section} />
         <div className={`mt-10 grid gap-5 ${grid}`}>
-          {items.map((item) => (
+          {items.map((item, index) => (
             <article key={text(item.title)} className="hover-lift rounded-xl border border-border bg-card p-6 shadow-card">
+              <IconMark name={text(item.icon) || ["pin", "building", "monitor", "mail", "message", "file", "calculator"][index % 7]} className="mb-4" />
               <h3 className="font-display text-lg font-bold">{text(item.title)}</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{text(item.description)}</p>
               {text(item.href) ? <Link href={text(item.href)} className="mt-4 inline-flex text-sm font-semibold text-primary">{text(item.cta) || "Xem chi tiết"}</Link> : null}
@@ -233,12 +245,12 @@ function Steps({ section }: { section: PublicSection }) {
     <section className={soft ? "border-y border-border bg-secondary/40" : ""}>
       <div className="section-shell py-16 lg:py-20">
         <Heading section={section} />
-        <ol className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+        <ol className="process-track mt-10 grid gap-7 md:grid-cols-2 lg:grid-cols-4">
           {section.items.map((item, index) => (
-            <li key={text(item.title)} className="rounded-xl border border-border bg-card p-5 shadow-card">
-              <p className="font-display text-sm font-extrabold text-accent">{String(index + 1).padStart(2, "0")}</p>
-              <h3 className="mt-2 font-display text-lg font-bold">{text(item.title)}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{text(item.description)}</p>
+            <li key={text(item.title)} className="relative text-center">
+              <span className={`relative z-10 mx-auto flex size-14 items-center justify-center rounded-full font-display text-lg font-extrabold text-primary-foreground shadow-card ${index === 0 ? "bg-red-500" : "bg-primary"}`}>{String(index + 1).padStart(2, "0")}</span>
+              <h3 className="mt-5 font-display text-lg font-bold">{text(item.title)}</h3>
+              <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground">{text(item.description)}</p>
             </li>
           ))}
         </ol>
@@ -253,7 +265,7 @@ function PricingSection({ section, plans }: { section: PublicSection; plans: Pri
       <div className="section-shell py-16 lg:py-20">
         <Heading section={section} />
         <div className="mt-8">
-          <PricingBlock plans={plans} mode={text(section.config.mode) || "stacked"} note={text(section.config.note)} />
+          <PricingBlock plans={plans} mode={text(section.config.mode) || "stacked"} note={text(section.config.note)} subtitles={{ office: text(section.config.officeSubtitle), accounting: text(section.config.accountingSubtitle) }} />
         </div>
         {section.button_label ? (
           <div className="mt-8">
@@ -294,17 +306,7 @@ function Testimonials({ section }: { section: PublicSection }) {
           {section.eyebrow ? <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-accent">{section.eyebrow}</p> : null}
           {section.title ? <h2 className="font-display text-2xl font-extrabold sm:text-3xl lg:text-4xl">{section.title}</h2> : null}
         </div>
-        <div className="mt-10 grid gap-5 lg:grid-cols-3">
-          {section.items.map((item) => (
-            <figure key={text(item.author)} className="flex h-full flex-col rounded-xl border border-border bg-card p-6 shadow-card">
-              <blockquote className="flex-1 text-sm leading-relaxed">{text(item.quote)}</blockquote>
-              <figcaption className="mt-5 text-sm">
-                <span className="block font-semibold">{text(item.author)}</span>
-                <span className="text-xs text-muted-foreground">{text(item.company)}</span>
-              </figcaption>
-            </figure>
-          ))}
-        </div>
+        <TestimonialCarousel items={section.items.map((item) => ({ quote: text(item.quote), author: text(item.author), company: text(item.company), avatar: text(item.avatar), rating: Number(item.rating || 5) }))} />
         {section.description ? <p className="mt-8 text-center text-sm font-medium text-muted-foreground">{section.description}</p> : null}
       </div>
     </section>
@@ -366,9 +368,10 @@ function MediaSplit({ section }: { section: PublicSection }) {
       {section.config.list ? (
         <ul className="mt-8 space-y-5">
           {section.items.map((item) => (
-            <li key={text(item.title)}>
-              <h3 className="font-display text-base font-bold">{text(item.title)}</h3>
-              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{text(item.description)}</p>
+            <li key={text(item.title)} className="flex items-start gap-3">
+              <IconMark name={text(item.icon) || "badge"} className="size-10 rounded-lg" />
+              <div><h3 className="font-display text-base font-bold">{text(item.title)}</h3>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{text(item.description)}</p></div>
             </li>
           ))}
         </ul>
@@ -464,11 +467,13 @@ function Addons({ section }: { section: PublicSection }) {
 
 function Notes({ section }: { section: PublicSection }) {
   return (
-    <section className="section-shell pb-16">
-      <h2 className="font-display text-2xl font-extrabold">{section.title}</h2>
-      <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
-        {section.items.map((item) => <li key={text(item.text)}>• {text(item.text)}</li>)}
-      </ul>
+    <section className="border-y border-border bg-secondary/50 py-12">
+      <div className="section-shell rounded-2xl border border-border bg-card p-6 shadow-card sm:p-8">
+        <h2 className="flex items-center gap-2 font-display text-xl font-extrabold"><span className="flex size-7 items-center justify-center rounded-full bg-primary-soft text-primary">i</span>{section.title}</h2>
+        <ul className="mt-4 space-y-2 text-sm leading-relaxed text-muted-foreground">
+          {section.items.map((item) => <li key={text(item.text)} className="flex gap-2"><span className="font-bold text-accent">•</span><span>{text(item.text)}</span></li>)}
+        </ul>
+      </div>
     </section>
   );
 }
@@ -477,54 +482,72 @@ function ArticleList({
   articles,
   categories,
   query,
+  popularArticles,
 }: {
   articles?: { items: ArticleCard[]; total: number; page: number; pages: number };
   categories: { name: string; slug: string }[];
   query?: { q?: string; category?: string };
+  popularArticles: ArticleCard[];
 }) {
   if (!articles) return null;
   const category = query?.category || "all";
   return (
-    <section className="section-shell py-12 lg:py-16">
-      <form className="flex flex-col gap-3 sm:flex-row" action="/kien-thuc">
-        <input name="q" defaultValue={query?.q || ""} placeholder="Tìm bài viết" className="h-11 flex-1 rounded-lg border border-border px-3" />
-        {category !== "all" ? <input type="hidden" name="category" value={category} /> : null}
-        <button className="h-11 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground" type="submit">Tìm kiếm</button>
-      </form>
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Link href="/kien-thuc" className={`rounded-full px-3 py-1 text-sm ${category === "all" ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>Tất cả</Link>
-        {categories.map((item) => (
-          <Link key={item.slug} href={`/kien-thuc?category=${item.slug}`} className={`rounded-full px-3 py-1 text-sm ${category === item.slug ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>{item.name}</Link>
-        ))}
-      </div>
-      {articles.items.length === 0 ? <p className="mt-10 text-muted-foreground">Chưa có bài viết phù hợp.</p> : null}
-      <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-        {articles.items.map((article) => (
-          <article key={article.id} className="hover-lift flex h-full flex-col rounded-xl border border-border bg-card p-6 shadow-card">
-            <p className="text-xs font-semibold uppercase tracking-wide text-accent">{article.category_name}</p>
-            <h2 className="mt-2 font-display text-xl font-bold">
-              <Link href={`/kien-thuc/${article.slug}`}>{article.title}</Link>
-            </h2>
-            <p className="mt-3 flex-1 text-sm leading-relaxed text-muted-foreground">{article.excerpt}</p>
-            <p className="mt-4 text-xs text-muted-foreground">{article.published_at ? new Date(article.published_at).toLocaleDateString("vi-VN") : ""} · {article.read_minutes || 0} phút đọc</p>
-            <Link href={`/kien-thuc/${article.slug}`} className="mt-4 text-sm font-semibold text-primary">Đọc tiếp</Link>
-          </article>
-        ))}
-      </div>
-      {articles.pages > 1 ? (
-        <div className="mt-8 flex gap-2">
-          {Array.from({ length: articles.pages }, (_, index) => {
-            const page = index + 1;
-            const params = new URLSearchParams();
-            if (query?.q) params.set("q", query.q);
-            if (category !== "all") params.set("category", category);
-            if (page > 1) params.set("page", String(page));
-            return (
-              <Link key={page} href={`/kien-thuc?${params.toString()}`} className={`rounded-md px-3 py-1 text-sm ${page === articles.page ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>{page}</Link>
-            );
-          })}
+    <section className="section-shell py-10 lg:py-14">
+      <div className="mb-6 flex items-center gap-2 text-xs text-muted-foreground"><Link href="/">Trang chủ</Link><span>›</span><span className="font-semibold text-foreground">Tin tức</span></div>
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_18rem]">
+        <div>
+          <form className="flex flex-col gap-3 sm:flex-row" action="/tin-tuc">
+            <input name="q" defaultValue={query?.q || ""} placeholder="Tìm bài viết..." className="h-11 flex-1 rounded-lg border border-border bg-card px-3" />
+            {category !== "all" ? <input type="hidden" name="category" value={category} /> : null}
+            <button className="h-11 rounded-md bg-accent px-5 text-sm font-semibold text-accent-foreground" type="submit">Tìm</button>
+          </form>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Link href="/tin-tuc" className={`rounded-full px-3 py-1 text-xs ${category === "all" ? "bg-accent text-accent-foreground" : "bg-secondary"}`}>Tất cả</Link>
+            {categories.map((item) => (
+              <Link key={item.slug} href={`/tin-tuc?category=${item.slug}`} className={`rounded-full px-3 py-1 text-xs ${category === item.slug ? "bg-accent text-accent-foreground" : "bg-secondary"}`}>{item.name}</Link>
+            ))}
+          </div>
+          {articles.items.length === 0 ? <p className="mt-10 text-muted-foreground">Chưa có bài viết phù hợp.</p> : null}
+          <div className="mt-7 grid gap-5 sm:grid-cols-2">
+            {articles.items.map((article) => (
+              <article key={article.id} className="hover-lift flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-card">
+                <Link href={`/tin-tuc/${article.slug}`} aria-label={article.title} className="relative block aspect-[16/9] bg-secondary">
+                  {article.cover_url ? <CmsImage src={article.cover_url} alt={article.cover_alt || article.title} className="object-cover" sizes="(min-width: 1024px) 30vw, 90vw" /> : <span className="absolute inset-0 bg-mesh" />}
+                </Link>
+                <div className="flex flex-1 flex-col p-5">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-accent">{article.category_name}</p>
+                  <h2 className="mt-2 font-display text-lg font-bold"><Link href={`/tin-tuc/${article.slug}`}>{article.title}</Link></h2>
+                  <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">{article.excerpt}</p>
+                  <p className="mt-4 text-xs text-muted-foreground">{article.published_at ? new Date(article.published_at).toLocaleDateString("vi-VN") : ""} · {article.read_minutes || 0} phút đọc</p>
+                  <Link href={`/tin-tuc/${article.slug}`} className="mt-3 text-sm font-semibold text-primary">Đọc thêm →</Link>
+                </div>
+              </article>
+            ))}
+          </div>
+          {articles.pages > 1 ? (
+            <div className="mt-8 flex gap-2">
+              {Array.from({ length: articles.pages }, (_, index) => {
+                const page = index + 1;
+                const params = new URLSearchParams();
+                if (query?.q) params.set("q", query.q);
+                if (category !== "all") params.set("category", category);
+                if (page > 1) params.set("page", String(page));
+                return <Link key={page} href={`/tin-tuc?${params.toString()}`} className={`rounded-md px-3 py-1 text-sm ${page === articles.page ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>{page}</Link>;
+              })}
+            </div>
+          ) : null}
         </div>
-      ) : null}
+        <aside className="space-y-5">
+          <section className="rounded-xl border border-border bg-card p-5 shadow-card">
+            <h2 className="font-display font-bold">Bài viết phổ biến</h2>
+            <ul className="mt-3 space-y-3">{popularArticles.map((article) => <li key={article.id} className="border-b border-border pb-3 last:border-0 last:pb-0"><Link href={`/tin-tuc/${article.slug}`} className="text-sm font-semibold leading-relaxed hover:text-primary">{article.title}</Link><span className="mt-1 block text-xs text-muted-foreground">{article.category_name}</span></li>)}</ul>
+          </section>
+          <section className="rounded-xl border border-border bg-card p-5 shadow-card">
+            <h2 className="font-display font-bold">Chuyên mục</h2>
+            <ul className="mt-3 space-y-2">{categories.map((item) => <li key={item.slug}><Link href={`/tin-tuc?category=${item.slug}`} className="text-sm text-muted-foreground hover:text-primary">{item.name}</Link></li>)}</ul>
+          </section>
+        </aside>
+      </div>
     </section>
   );
 }

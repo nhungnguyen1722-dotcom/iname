@@ -22,7 +22,7 @@ const PlanCard = memo(function PlanCard({ plan }: { plan: PricingPlan }) {
       </div>
       <ul className="mt-6 flex-1 space-y-3 text-sm">
         {plan.features.map((feature) => (
-          <li key={feature} className="flex gap-2"><span className="mt-0.5 text-accent">✓</span><span>{feature}</span></li>
+          <li key={feature} className="flex items-start gap-2"><span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-bold text-accent">✓</span><span>{feature}</span></li>
         ))}
       </ul>
       {plan.button_url === "#tu-van" || !plan.button_url ? (
@@ -38,10 +38,12 @@ export const PricingBlock = memo(function PricingBlock({
   plans,
   mode,
   note,
+  subtitles,
 }: {
   plans: PricingPlan[];
   mode: string;
   note?: string;
+  subtitles?: Record<string, string>;
 }) {
   const [active, setActive] = useState(groups[0].key);
   const plansByCategory = useMemo(() => {
@@ -72,7 +74,7 @@ export const PricingBlock = memo(function PricingBlock({
           if (!groupPlans.length) return null;
           return (
             <div key={group.key}>
-              {mode !== "tabs" ? <h3 className="font-display text-2xl font-extrabold">{group.label}</h3> : null}
+              {mode !== "tabs" ? <><h3 className="font-display text-3xl font-extrabold">{group.label}</h3>{subtitles?.[group.key] ? <p className="mt-2 text-lg text-muted-foreground">{subtitles[group.key]}</p> : null}</> : null}
               <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {groupPlans.map((plan) => (
                   <PlanCard key={plan.id} plan={plan} />

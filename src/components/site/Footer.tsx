@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { CmsImage } from "./CmsImage";
 import type { FooterGroup, Office } from "@/lib/content";
 
 export function Footer({
@@ -20,13 +19,12 @@ export function Footer({
           if (group.group_key === "brand") {
             return (
               <div key={group.id} className="lg:col-span-4">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center">
                   {settings.logo_url ? (
-                    <span className="relative block size-11 overflow-hidden rounded-xl">
-                      <CmsImage src={settings.logo_url} alt={settings.logo_alt || settings.brand_name} className="object-contain" sizes="44px" />
-                    </span>
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={settings.logo_url} alt={settings.logo_alt || settings.brand_name || "Iname"} className="size-11 rounded-xl object-contain" />
                   ) : (
-                    <span className="bg-primary-gradient flex size-11 items-center justify-center rounded-xl text-primary-foreground shadow-card">
+                    <span role="img" aria-label="Iname" className="bg-primary-gradient flex size-11 items-center justify-center rounded-xl text-primary-foreground shadow-card">
                       <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                         <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" />
                         <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" />
@@ -35,15 +33,11 @@ export function Footer({
                       </svg>
                     </span>
                   )}
-                  <span>
-                    <span className="block font-display text-lg font-extrabold">{settings.brand_name}</span>
-                    <span className="text-xs text-muted-foreground">{settings.brand_tagline}</span>
-                  </span>
                 </div>
                 <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{group.body || settings.footer_description}</p>
                 <div className="mt-5 space-y-2 text-sm">
-                  <a href={settings.hotline_href} className="block font-semibold">Hotline: {settings.hotline}</a>
-                  <a href={settings.email_href} className="block text-muted-foreground hover:text-foreground">{settings.email}</a>
+                  <a href={settings.hotline_href} className="flex items-center gap-2 font-semibold"><span aria-hidden="true">☎</span> Hotline: {settings.hotline}</a>
+                  <a href={settings.email_href} className="flex items-center gap-2 text-muted-foreground hover:text-foreground"><span aria-hidden="true">✉</span> {settings.email}</a>
                 </div>
               </div>
             );
@@ -55,12 +49,12 @@ export function Footer({
                 <ul className="mt-4 space-y-4 text-sm">
                   {offices.map((office) => (
                     <li key={office.id}>
-                      <p className="font-semibold">{office.label}</p>
+                      <p className="flex items-start gap-2 font-semibold"><span className="text-accent" aria-hidden="true">⌖</span>{office.label}</p>
                       <p className="text-muted-foreground">{office.address}</p>
                     </li>
                   ))}
                   <li>
-                    <p className="font-semibold">Giờ làm việc</p>
+                    <p className="flex items-center gap-2 font-semibold"><span className="text-accent" aria-hidden="true">◷</span>Giờ làm việc</p>
                     <p className="text-muted-foreground">{settings.hours_summary}</p>
                     <p className="text-muted-foreground">{settings.hours_saturday_summary}</p>
                   </li>
@@ -84,9 +78,13 @@ export function Footer({
         })}
       </div>
       <div className="border-t border-border">
-        <div className="section-shell flex flex-col gap-2 py-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <p>{(settings.copyright || "").replace("{{year}}", String(year))}</p>
-          <p>{settings.legal_note}</p>
+        <div className="section-shell py-5 text-xs text-muted-foreground">
+          <p className="font-semibold text-foreground">{settings.company_name}</p>
+          <p className="mt-1">{settings.company_address}</p>
+          <div className="mt-3 flex flex-col gap-2 border-t border-border/70 pt-3 sm:flex-row sm:items-center sm:justify-between">
+            <p>{(settings.copyright || "").replace("{{year}}", String(year))}</p>
+            <p>{settings.legal_note}</p>
+          </div>
         </div>
       </div>
     </footer>

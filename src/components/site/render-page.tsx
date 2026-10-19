@@ -4,6 +4,7 @@ import {
   canPreview,
   getCategories,
   getPageByPath,
+  getPopularArticles,
   getPublicChrome,
   getPublishedArticles,
   officesFromSettings,
@@ -14,20 +15,22 @@ export async function renderContentPage(path: string, previewRequested: boolean,
   category?: string;
   page?: string;
 }) {
-  const articleQuery = path === "/kien-thuc"
+  const articleQuery = path === "/tin-tuc"
     ? getPublishedArticles({
         q: extra?.q,
         category: extra?.category,
         page: Number(extra?.page || 1),
       })
     : Promise.resolve(undefined);
-  const [preview, chrome, categories, articles] = await Promise.all([
+  const [preview, chrome, categories, popularArticles, articles] = await Promise.all([
     previewRequested ? canPreview() : Promise.resolve(false),
     getPublicChrome(),
-    path === "/kien-thuc" ? getCategories() : Promise.resolve([]),
+    path === "/tin-tuc" ? getCategories() : Promise.resolve([]),
+    path === "/tin-tuc" ? getPopularArticles() : Promise.resolve([]),
     articleQuery,
   ]);
-  const data = await getPageByPath(path, preview);
+  const data = await getPageByPath(path, preview)
+    || (path === "/tin-tuc" ? await getPageByPath("/kien-thuc", preview) : null);
   if (!data) notFound();
   return (
     <PageSections
@@ -38,6 +41,7 @@ export async function renderContentPage(path: string, previewRequested: boolean,
       offices={officesFromSettings(chrome.settings)}
       articles={articles}
       categories={categories}
+      popularArticles={popularArticles}
       query={{ q: extra?.q, category: extra?.category }}
     />
   );

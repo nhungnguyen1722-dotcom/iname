@@ -19,8 +19,8 @@ const headingFont = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   title: {
-    default: "An Việt Office",
-    template: "%s | An Việt Office",
+    default: "Iname",
+    template: "%s | Iname",
   },
   description: "Văn phòng ảo và dịch vụ kế toán, thuế cho doanh nghiệp.",
 };

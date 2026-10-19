@@ -17,7 +17,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: page.updated_at,
     })),
     ...articles.map((article) => ({
-      url: `${base}/kien-thuc/${article.slug}`,
+      url: `${base}/tin-tuc/${article.slug}`,
       lastModified: article.updated_at,
     })),
   ];

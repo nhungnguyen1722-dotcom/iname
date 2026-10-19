@@ -1,11 +1,12 @@
 import { notFound } from "next/navigation";
 import { buttonClass, inputClass } from "@/components/admin/AdminShell";
 import { deleteArticle, saveArticle } from "@/server/admin";
-import { getCategories } from "@/lib/content";
+import { getCategories, getMediaAssets } from "@/lib/content";
 import { sql } from "@/lib/db";
+import { ImageField } from "./ImageField";
 
 export async function ArticleForm({ id }: { id: string }) {
-  const categories = await getCategories();
+  const [categories, media] = await Promise.all([getCategories(), getMediaAssets()]);
   const rows = id === "new" ? [] : await sql<{ id: number; category_id: number | null; title: string; slug: string; excerpt: string | null; content: string | null; cover_url: string | null; cover_alt: string | null; seo_title: string | null; seo_description: string | null; status: string; read_minutes: number | null }>(
     "SELECT id, category_id, title, slug, excerpt, content, cover_url, cover_alt, seo_title, seo_description, status, read_minutes FROM articles WHERE id = $1 AND deleted_at IS NULL",
     [Number(id)],
@@ -23,7 +24,7 @@ export async function ArticleForm({ id }: { id: string }) {
       </select>
       <textarea name="excerpt" defaultValue={article?.excerpt || ""} className={inputClass} rows={3} />
       <textarea name="content" defaultValue={article?.content || ""} className={inputClass} rows={12} />
-      <input name="coverUrl" defaultValue={article?.cover_url || ""} className={inputClass} placeholder="Ảnh đại diện" />
+      <ImageField name="coverUrl" uploadName="article_image_file" value={article?.cover_url || ""} media={media} label="Ảnh banner và ảnh đại diện" />
       <input name="coverAlt" defaultValue={article?.cover_alt || ""} className={inputClass} />
       <input name="seoTitle" defaultValue={article?.seo_title || ""} className={inputClass} placeholder="SEO title" />
       <textarea name="seoDescription" defaultValue={article?.seo_description || ""} className={inputClass} />

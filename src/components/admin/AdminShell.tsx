@@ -11,6 +11,7 @@ const links = [
   ["Dịch vụ", "/admin/services"],
   ["Bảng giá", "/admin/pricing"],
   ["Bài viết", "/admin/articles"],
+  ["Chuyên mục", "/admin/categories"],
   ["Yêu cầu liên hệ", "/admin/contact-requests"],
   ["Thiết lập", "/admin/settings"],
 ];

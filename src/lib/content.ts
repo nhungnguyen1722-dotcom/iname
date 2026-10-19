@@ -95,6 +95,7 @@ export type ServiceRecord = {
   description: string | null;
   image_url: string | null;
   image_alt: string | null;
+  icon: string | null;
   button_label: string | null;
   button_url: string | null;
   category: string;
@@ -201,7 +202,13 @@ async function loadPublicChrome() {
          ORDER BY sort_order, id
        ) p) AS plans,
       (SELECT COALESCE(json_agg(row_to_json(sv)), '[]'::json) FROM (
-         SELECT id, name, slug, summary, description, image_url, image_alt, button_label, button_url, category, visible, sort_order
+         SELECT id, name, slug, summary, description, image_url, image_alt,
+                CASE category
+                  WHEN 'office' THEN CASE sort_order WHEN 1 THEN 'pin' WHEN 2 THEN 'building' WHEN 3 THEN 'monitor' WHEN 4 THEN 'mail' WHEN 5 THEN 'message' ELSE 'file' END
+                  WHEN 'accounting' THEN CASE sort_order WHEN 1 THEN 'calculator' WHEN 2 THEN 'receipt' WHEN 3 THEN 'file' WHEN 4 THEN 'search' WHEN 5 THEN 'badge' WHEN 6 THEN 'file' ELSE 'scale' END
+                  ELSE 'file'
+                END AS icon,
+                button_label, button_url, category, visible, sort_order
          FROM services
          WHERE deleted_at IS NULL AND visible = TRUE
          ORDER BY sort_order, id
@@ -247,7 +254,13 @@ export const getFooterGroups = cache(async () => {
 
 export const getServices = cache(async (publicOnly = true) => {
   const rows = await sql<ServiceRecord>(
-    `SELECT id, name, slug, summary, description, image_url, image_alt, button_label, button_url, category, visible, sort_order
+    `SELECT id, name, slug, summary, description, image_url, image_alt,
+            CASE category
+              WHEN 'office' THEN CASE sort_order WHEN 1 THEN 'pin' WHEN 2 THEN 'building' WHEN 3 THEN 'monitor' WHEN 4 THEN 'mail' WHEN 5 THEN 'message' ELSE 'file' END
+              WHEN 'accounting' THEN CASE sort_order WHEN 1 THEN 'calculator' WHEN 2 THEN 'receipt' WHEN 3 THEN 'file' WHEN 4 THEN 'search' WHEN 5 THEN 'badge' WHEN 6 THEN 'file' ELSE 'scale' END
+              ELSE 'file'
+            END AS icon,
+            button_label, button_url, category, visible, sort_order
      FROM services WHERE deleted_at IS NULL ORDER BY sort_order, id`,
   );
   return publicOnly ? rows.filter((row) => row.visible) : rows;
@@ -301,12 +314,12 @@ export function officesFromSettings(settings: Record<string, string>): Office[] 
   return parseJson<Office[]>(settings.offices, []);
 }
 
-export async function getPublishedArticles(filters: {
+export const getPublishedArticles = cache(async (filters: {
   q?: string;
   category?: string;
   page?: number;
   pageSize?: number;
-}) {
+}) => {
   const pageSize = filters.pageSize ?? 6;
   const page = Math.max(1, filters.page ?? 1);
   const params: unknown[] = [];
@@ -345,7 +358,7 @@ export async function getPublishedArticles(filters: {
   const total = Number(rows[0]?.total ?? 0);
   const items = asList<ArticleCard>(rows[0]?.items);
   return { items, total, page, pageSize, pages: Math.max(1, Math.ceil(total / pageSize)) };
-}
+});
 
 export const getArticleBySlug = cache(async (slug: string, preview = false) => {
   const rows = await sql<ArticleCard>(
@@ -361,13 +374,13 @@ export const getArticleBySlug = cache(async (slug: string, preview = false) => {
   return article;
 });
 
-export async function getCategories() {
-  return sql<{ id: number; name: string; slug: string; description: string | null }>(
-    "SELECT id, name, slug, description FROM article_categories ORDER BY sort_order, id",
+export const getCategories = cache(async () => {
+  return sql<{ id: number; name: string; slug: string; description: string | null; sort_order: number }>(
+    "SELECT id, name, slug, description, sort_order FROM article_categories ORDER BY sort_order, id",
   );
-}
+});
 
-export async function getRelatedArticles(slug: string, categorySlug: string | null) {
+export const getRelatedArticles = cache(async (slug: string, categorySlug: string | null) => {
   return sql<ArticleCard>(
     `SELECT a.id, a.title, a.slug, a.excerpt, a.cover_url, a.cover_alt, a.seo_title, a.seo_description,
             a.status, a.read_minutes, a.published_at::text, c.name AS category_name, c.slug AS category_slug
@@ -378,4 +391,17 @@ export async function getRelatedArticles(slug: string, categorySlug: string | nu
      LIMIT 3`,
     [slug, categorySlug],
   );
-}
+});
+
+export const getPopularArticles = cache(async () => sql<ArticleCard>(
+  `SELECT a.id, a.title, a.slug, a.excerpt, a.cover_url, a.cover_alt, a.seo_title, a.seo_description,
+          a.status, a.read_minutes, a.published_at::text, c.name AS category_name, c.slug AS category_slug
+   FROM articles a LEFT JOIN article_categories c ON c.id = a.category_id
+   WHERE a.deleted_at IS NULL AND a.status = 'published'
+   ORDER BY a.published_at DESC NULLS LAST, a.id DESC
+   LIMIT 5`,
+));
+
+export const getMediaAssets = cache(async () => sql<{ url: string; alt: string | null; file_name: string | null }>(
+  "SELECT url, alt, file_name FROM media_assets ORDER BY created_at DESC, id DESC LIMIT 120",
+));
