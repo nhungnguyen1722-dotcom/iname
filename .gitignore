@@ -5,6 +5,12 @@ out
 .env.local
 public/uploads/*
 !public/uploads/.gitkeep
+!public/uploads/locations/
+public/uploads/locations/*
+!public/uploads/locations/*.jpg
+!public/uploads/gallery/
+public/uploads/gallery/*
+!public/uploads/gallery/*.jpg
 scripts/extracted.txt
 scripts/i18n-print.txt
 /doc/

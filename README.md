@@ -19,6 +19,8 @@ npm run dev
 
 Migration `005_office_locations.sql` bổ sung dữ liệu quản lý sáu địa điểm văn phòng ảo và chỉ mục tra cứu bài viết. Migration `006_article_covers.sql` chỉ bổ sung ảnh đại diện còn thiếu cho sáu bài viết ban đầu, không thay đổi nội dung bài. `db:sync-neon` sẽ áp dụng các migration còn thiếu trên Neon trước khi đồng bộ. Ảnh chi nhánh được tải lên từ Quản trị → Văn phòng ảo.
 
+Các ảnh JPG trong `public/uploads/locations` và `public/uploads/gallery` được giữ trong Git vì database sử dụng URL `/uploads/...` cho ảnh văn phòng ảo. Ảnh mới tải lên trên Vercel được lưu trong Vercel Blob; cần kết nối Blob Store với dự án Vercel.
+
 Website: http://localhost:3000  
 Quản trị: http://localhost:3000/admin/login
 
