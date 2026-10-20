@@ -516,8 +516,7 @@ await section("van-phong-ao", {
   buttonUrl: "#tu-van",
   secondaryButtonLabel: t("common.actions.viewPricing"),
   secondaryButtonUrl: "/bang-gia",
-  config: { icon: "building" },
-  items: [t("home.hero.badge1"), t("home.hero.badge2"), t("home.hero.badge3")].filter(Boolean).map((label) => ({ label })),
+  items: [],
 });
 
 await section("van-phong-ao", {
@@ -641,7 +640,7 @@ await section("ke-toan", {
 await section("ke-toan", {
   key: "ac-services",
   type: "cards",
-  adminName: "Bảy nhóm dịch vụ kế toán",
+  adminName: "Các dịch vụ kế toán",
   title: t("ac.services.title"),
   description: t("ac.services.subtitle"),
   config: { columns: 3, source: "services", category: "accounting" },
@@ -834,6 +833,8 @@ await section("lien-he", {
   eyebrow: t("contact.hero.eyebrow"),
   title: t("contact.hero.title"),
   description: t("contact.hero.subtitle"),
+  imageUrl: "/uploads/contact-hero.jpg",
+  imageAlt: "Trao đổi với chuyên viên Iname",
 });
 
 await section("lien-he", {

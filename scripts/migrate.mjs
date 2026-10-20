@@ -30,6 +30,7 @@ await client.query(`CREATE TABLE IF NOT EXISTS schema_migrations (
   applied_at TIMESTAMP NOT NULL DEFAULT NOW()
  )`);
 const migrationFiles = fs.readdirSync(path.join(process.cwd(), "sql")).filter((file) => /^\d+_.+\.sql$/.test(file)).sort();
+let appliedCount = 0;
 for (const file of migrationFiles) {
   const applied = await client.query("SELECT 1 FROM schema_migrations WHERE migration = $1", [file]);
   if (applied.rowCount) continue;
@@ -49,6 +50,11 @@ for (const file of migrationFiles) {
     await client.query("ROLLBACK");
     throw error;
   }
+  appliedCount += 1;
 }
 await client.end();
-console.log(`Applied ${migrationFiles.length} available database migrations.`);
+console.log(
+  appliedCount
+    ? `Applied ${appliedCount} pending database migrations.`
+    : "No pending database migrations.",
+);

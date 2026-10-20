@@ -11,7 +11,8 @@
     "db:migrate": "node scripts/migrate.mjs",
     "db:seed": "node scripts/seed.mjs",
     "db:setup": "node scripts/migrate.mjs && node scripts/seed.mjs",
-    "db:dump": "node scripts/dump-database.mjs"
+    "db:dump": "node scripts/dump-database.mjs",
+    "db:sync-neon": "node scripts/sync-neon.mjs"
   },
   "dependencies": {
     "@vercel/blob": "^2.8.2",

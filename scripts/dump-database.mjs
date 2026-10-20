@@ -27,7 +27,7 @@ const client = new pg.Client(pgConfig(process.env.DATABASE_URL));
 await client.connect();
 const tablesResult = await client.query("SELECT tablename FROM pg_tables WHERE schemaname = 'public'");
 const existing = new Set(tablesResult.rows.map((row) => row.tablename));
-const preferredOrder = ["admin_users", "pages", "site_settings", "navigation_items", "services", "pricing_plans", "article_categories", "articles", "page_sections", "footer_groups", "media_assets", "contact_requests", "audit_logs", "schema_migrations"];
+const preferredOrder = ["admin_users", "pages", "site_settings", "navigation_items", "services", "pricing_plans", "article_categories", "articles", "page_sections", "footer_groups", "media_assets", "contact_requests", "audit_logs", "schema_migrations", "office_locations"];
 const tables = [...preferredOrder.filter((name) => existing.has(name)), ...[...existing].filter((name) => !preferredOrder.includes(name)).sort()];
 let output = [
   "-- Iname database export. Run against an empty PostgreSQL database.",

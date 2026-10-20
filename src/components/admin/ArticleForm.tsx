@@ -5,7 +5,7 @@ import { getCategories, getMediaAssets } from "@/lib/content";
 import { sql } from "@/lib/db";
 import { ImageField } from "./ImageField";
 
-export async function ArticleForm({ id }: { id: string }) {
+export async function ArticleForm({ id, initialCategoryId }: { id: string; initialCategoryId?: string }) {
   const [categories, media] = await Promise.all([getCategories(), getMediaAssets()]);
   const rows = id === "new" ? [] : await sql<{ id: number; category_id: number | null; title: string; slug: string; excerpt: string | null; content: string | null; cover_url: string | null; cover_alt: string | null; seo_title: string | null; seo_description: string | null; status: string; read_minutes: number | null }>(
     "SELECT id, category_id, title, slug, excerpt, content, cover_url, cover_alt, seo_title, seo_description, status, read_minutes FROM articles WHERE id = $1 AND deleted_at IS NULL",
@@ -18,7 +18,7 @@ export async function ArticleForm({ id }: { id: string }) {
       <input type="hidden" name="id" value={article?.id || ""} />
       <input name="title" required defaultValue={article?.title || ""} className={inputClass} placeholder="Tiêu đề" />
       <input name="slug" defaultValue={article?.slug || ""} className={inputClass} placeholder="Slug" />
-      <select name="categoryId" defaultValue={article?.category_id || ""} className={inputClass}>
+      <select name="categoryId" defaultValue={article?.category_id || initialCategoryId || ""} className={inputClass}>
         <option value="">Không chuyên mục</option>
         {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
       </select>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Notice, buttonClass, inputClass } from "@/components/admin/AdminShell";
 import { sql } from "@/lib/db";
+import { CmsImage } from "@/components/site/CmsImage";
 
 export default async function ArticlesAdmin({ searchParams }: { searchParams: Promise<{ saved?: string; error?: string; q?: string; status?: string; page?: string }> }) {
   const query = await searchParams;
@@ -12,8 +13,8 @@ export default async function ArticlesAdmin({ searchParams }: { searchParams: Pr
   const totalRows = await sql<{ n: string }>(`SELECT COUNT(*)::text AS n FROM articles WHERE ${where.join(" AND ")}`, params);
   const total = Number(totalRows[0]?.n || 0);
   params.push(10, (page - 1) * 10);
-  const articles = await sql<{ id: number; title: string; slug: string; status: string }>(
-    `SELECT id, title, slug, status FROM articles WHERE ${where.join(" AND ")} ORDER BY updated_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
+  const articles = await sql<{ id: number; title: string; slug: string; status: string; cover_url: string | null; cover_alt: string | null }>(
+    `SELECT id, title, slug, status, cover_url, cover_alt FROM articles WHERE ${where.join(" AND ")} ORDER BY updated_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
     params,
   );
   const pages = Math.max(1, Math.ceil(total / 10));
@@ -28,8 +29,13 @@ export default async function ArticlesAdmin({ searchParams }: { searchParams: Pr
       </form>
       <ul className="mt-4 space-y-2">
         {articles.map((article) => (
-          <li key={article.id} className="flex justify-between rounded-xl border border-border bg-card p-4">
-            <span>{article.title} <em className="text-xs text-muted-foreground">{article.status}</em></span>
+          <li key={article.id} className="flex items-center justify-between gap-4 rounded-xl border border-border bg-card p-4">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="relative size-16 shrink-0 overflow-hidden rounded-md bg-secondary">
+                {article.cover_url ? <CmsImage src={article.cover_url} alt={article.cover_alt || article.title} className="object-cover" sizes="64px" /> : <span className="flex h-full items-center justify-center px-1 text-center text-[10px] text-muted-foreground">Chưa có ảnh</span>}
+              </div>
+              <span className="min-w-0">{article.title} <em className="text-xs text-muted-foreground">{article.status}</em></span>
+            </div>
             <Link className="text-sm font-semibold text-primary" href={`/admin/articles/${article.id}`}>Sửa</Link>
           </li>
         ))}
@@ -38,4 +44,3 @@ export default async function ArticlesAdmin({ searchParams }: { searchParams: Pr
     </div>
   );
 }
-

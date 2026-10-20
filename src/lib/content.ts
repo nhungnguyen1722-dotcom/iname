@@ -76,6 +76,23 @@ export type Office = {
   mapUrl: string;
 };
 
+export type OfficeLocation = {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  content: string | null;
+  address: string;
+  price_label: string;
+  cover_url: string | null;
+  cover_alt: string | null;
+  banner_url: string | null;
+  banner_alt: string | null;
+  gallery: GalleryImage[];
+  amenities: string[];
+  sort_order: number;
+};
+
 export type FooterGroup = {
   id: number;
   group_key: string;
@@ -173,10 +190,18 @@ type ChromeRow = {
 };
 
 let chromeCache: { at: number; data: Awaited<ReturnType<typeof loadPublicChrome>> } | null = null;
-const CHROME_TTL_MS = 15_000;
+const CHROME_TTL_MS = 60_000;
+
+type PageData = { page: PageRecord; sections: PublicSection[] };
+const pageCache = new Map<string, { at: number; data: PageData }>();
+let locationsCache: { at: number; data: OfficeLocation[] } | null = null;
+let categoriesCache: { at: number; data: { id: number; name: string; slug: string; description: string | null; sort_order: number }[] } | null = null;
 
 export function clearContentCache() {
   chromeCache = null;
+  pageCache.clear();
+  locationsCache = null;
+  categoriesCache = null;
 }
 
 async function loadPublicChrome() {
@@ -281,6 +306,13 @@ export const getPricingPlans = cache(async (publicOnly = true) => {
 type PageBundleRow = PageRecord & { sections: SectionRecord[] | string | null };
 
 export const getPageByPath = cache(async (path: string, preview = false) => {
+  if (!preview) {
+    const cached = pageCache.get(path);
+    if (cached && Date.now() - cached.at < CHROME_TTL_MS) {
+      return cached.data;
+    }
+  }
+
   const pages = await sql<PageBundleRow>(
     `SELECT p.id, p.slug, p.path, p.title, p.seo_title, p.seo_description, p.og_image, p.status, p.is_system,
             p.updated_at::text AS updated_at,
@@ -305,7 +337,11 @@ export const getPageByPath = cache(async (path: string, preview = false) => {
   const sections = asList<SectionRecord>(page.sections)
     .filter((section) => (preview ? true : section.visible && section.status === "published"))
     .map(mapSection);
-  return { page, sections };
+  const result: PageData = { page, sections };
+  if (!preview) {
+    pageCache.set(path, { at: Date.now(), data: result });
+  }
+  return result;
 });
 
 export const canPreview = cache(async () => Boolean(await getCurrentAdmin()));
@@ -313,6 +349,51 @@ export const canPreview = cache(async () => Boolean(await getCurrentAdmin()));
 export function officesFromSettings(settings: Record<string, string>): Office[] {
   return parseJson<Office[]>(settings.offices, []);
 }
+
+export const getPublicOfficeLocations = cache(async () => {
+  if (locationsCache && Date.now() - locationsCache.at < CHROME_TTL_MS) {
+    return locationsCache.data;
+  }
+
+  const rows = await sql<Omit<OfficeLocation, "gallery" | "amenities"> & {
+    gallery_json: string | null;
+    amenities_json: string | null;
+  }>(
+    `SELECT id, title, slug, excerpt, content, address, price_label, cover_url, cover_alt, banner_url, banner_alt,
+            gallery_json::text AS gallery_json, amenities_json::text AS amenities_json, sort_order
+     FROM office_locations
+     WHERE deleted_at IS NULL AND visible = TRUE AND status = 'published'
+     ORDER BY sort_order, id`,
+  );
+  const data = rows.map((location) => ({
+    ...location,
+    gallery: parseJson<GalleryImage[]>(location.gallery_json, []),
+    amenities: parseJson<string[]>(location.amenities_json, []),
+  }));
+  locationsCache = { at: Date.now(), data };
+  return data;
+});
+
+export const getOfficeLocationBySlug = cache(async (slug: string, includeHidden = false) => {
+  const rows = await sql<Omit<OfficeLocation, "gallery" | "amenities"> & {
+    gallery_json: string | null;
+    amenities_json: string | null;
+  }>(
+    `SELECT id, title, slug, excerpt, content, address, price_label, cover_url, cover_alt, banner_url, banner_alt,
+            gallery_json::text AS gallery_json, amenities_json::text AS amenities_json, sort_order
+     FROM office_locations
+     WHERE slug = $1 AND deleted_at IS NULL${includeHidden ? "" : " AND visible = TRUE AND status = 'published'"}
+     LIMIT 1`,
+    [slug],
+  );
+  const location = rows[0];
+  if (!location) return null;
+  return {
+    ...location,
+    gallery: parseJson<GalleryImage[]>(location.gallery_json, []),
+    amenities: parseJson<string[]>(location.amenities_json, []),
+  };
+});
 
 export const getPublishedArticles = cache(async (filters: {
   q?: string;
@@ -333,30 +414,25 @@ export const getPublishedArticles = cache(async (filters: {
     where.push(`c.slug = $${params.length}`);
   }
   const whereSql = where.join(" AND ");
-  const limitIdx = params.length + 1;
-  const offsetIdx = params.length + 2;
-  params.push(pageSize, (page - 1) * pageSize);
-  const rows = await sql<{ total: number; items: ArticleCard[] | string | null }>(
-    `WITH filtered AS (
-       SELECT a.id, a.title, a.slug, a.excerpt, a.cover_url, a.cover_alt, a.seo_title, a.seo_description,
+  const listParams = [...params, pageSize, (page - 1) * pageSize];
+  const [countRows, items] = await Promise.all([
+    sql<{ total: number }>(
+      `SELECT COUNT(*)::int AS total
+       FROM articles a LEFT JOIN article_categories c ON c.id = a.category_id
+       WHERE ${whereSql}`,
+      params,
+    ),
+    sql<ArticleCard>(
+      `SELECT a.id, a.title, a.slug, a.excerpt, a.cover_url, a.cover_alt, a.seo_title, a.seo_description,
               a.status, a.read_minutes, a.published_at::text AS published_at, c.name AS category_name, c.slug AS category_slug
        FROM articles a LEFT JOIN article_categories c ON c.id = a.category_id
        WHERE ${whereSql}
-     )
-     SELECT
-       (SELECT COUNT(*)::int FROM filtered) AS total,
-       (
-         SELECT COALESCE(json_agg(row_to_json(x)), '[]'::json)
-         FROM (
-           SELECT * FROM filtered
-           ORDER BY published_at DESC NULLS LAST, id DESC
-           LIMIT $${limitIdx} OFFSET $${offsetIdx}
-         ) x
-       ) AS items`,
-    params,
-  );
-  const total = Number(rows[0]?.total ?? 0);
-  const items = asList<ArticleCard>(rows[0]?.items);
+       ORDER BY a.published_at DESC NULLS LAST, a.id DESC
+       LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+      listParams,
+    ),
+  ]);
+  const total = Number(countRows[0]?.total ?? 0);
   return { items, total, page, pageSize, pages: Math.max(1, Math.ceil(total / pageSize)) };
 });
 
@@ -375,9 +451,14 @@ export const getArticleBySlug = cache(async (slug: string, preview = false) => {
 });
 
 export const getCategories = cache(async () => {
-  return sql<{ id: number; name: string; slug: string; description: string | null; sort_order: number }>(
+  if (categoriesCache && Date.now() - categoriesCache.at < CHROME_TTL_MS) {
+    return categoriesCache.data;
+  }
+  const data = await sql<{ id: number; name: string; slug: string; description: string | null; sort_order: number }>(
     "SELECT id, name, slug, description, sort_order FROM article_categories ORDER BY sort_order, id",
   );
+  categoriesCache = { at: Date.now(), data };
+  return data;
 });
 
 export const getRelatedArticles = cache(async (slug: string, categorySlug: string | null) => {

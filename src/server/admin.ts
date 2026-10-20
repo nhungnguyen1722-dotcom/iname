@@ -620,6 +620,28 @@ export async function deleteArticle(formData: FormData) {
   redirect("/admin/articles?saved=1");
 }
 
+export async function toggleArticleStatus(formData: FormData) {
+  const user = await requireAdmin();
+  const id = Number(formData.get("id"));
+  const rows = await sql<{ status: string; slug: string }>(
+    "SELECT status, slug FROM articles WHERE id = $1 AND deleted_at IS NULL",
+    [id],
+  );
+  const article = rows[0];
+  if (!article) redirect("/admin/articles?error=" + encodeURIComponent("Không tìm thấy bài viết."));
+  const status = article.status === "published" ? "draft" : "published";
+  await sql(
+    `UPDATE articles SET status=$1,
+       published_at=CASE WHEN $1='published' THEN COALESCE(published_at, NOW()) ELSE published_at END,
+       updated_at=NOW()
+     WHERE id=$2 AND deleted_at IS NULL`,
+    [status, id],
+  );
+  await audit(user.id, status === "published" ? "publish" : "draft", "article", article.slug);
+  refresh();
+  redirect("/admin/articles?saved=1");
+}
+
 export async function saveArticleCategory(formData: FormData) {
   const user = await requireAdmin();
   const id = Number(formData.get("id") || 0);
@@ -645,6 +667,133 @@ export async function deleteArticleCategory(formData: FormData) {
   await audit(user.id, "delete", "article-category", String(id));
   refresh();
   redirect("/admin/categories?saved=1");
+}
+
+export async function saveOfficeLocation(formData: FormData) {
+  const user = await requireAdmin();
+  const id = Number(formData.get("id") || 0);
+  const title = text(formData, "title", 255);
+  const slug = slugify(text(formData, "slug", 180) || title);
+  const address = text(formData, "address", 1000);
+  if (!title || !slug || !address) {
+    redirect("/admin/office-locations?error=" + encodeURIComponent("Tên, đường dẫn và địa chỉ là bắt buộc."));
+  }
+
+  const coverAlt = text(formData, "coverAlt", 300);
+  const rawCover = text(formData, "coverUrl", 1000);
+  let uploadedCover = "";
+  try {
+    uploadedCover = await uploadImageAsset(formData.get("cover_file"), coverAlt);
+  } catch (error) {
+    redirect("/admin/office-locations?error=" + encodeURIComponent(error instanceof Error ? error.message : "Ảnh văn phòng không hợp lệ."));
+  }
+  const coverUrl = uploadedCover || (rawCover ? safeImageUrl(rawCover) : "");
+  if (rawCover && !coverUrl) redirect("/admin/office-locations?error=" + encodeURIComponent("URL ảnh đại diện không hợp lệ."));
+
+  const bannerAlt = text(formData, "bannerAlt", 300);
+  const rawBanner = text(formData, "bannerUrl", 1000);
+  let uploadedBanner = "";
+  try {
+    uploadedBanner = await uploadImageAsset(formData.get("banner_file"), bannerAlt);
+  } catch (error) {
+    redirect("/admin/office-locations?error=" + encodeURIComponent(error instanceof Error ? error.message : "Ảnh banner không hợp lệ."));
+  }
+  const bannerUrl = uploadedBanner || (rawBanner ? safeImageUrl(rawBanner) : "");
+  if (rawBanner && !bannerUrl) redirect("/admin/office-locations?error=" + encodeURIComponent("URL ảnh banner không hợp lệ."));
+
+  const galleryUrls = text(formData, "galleryUrls", 8000)
+    .split(/\r?\n/)
+    .map((url) => url.trim())
+    .filter(Boolean);
+  const gallery: { url: string; alt: string; caption: string }[] = [];
+  for (const rawUrl of galleryUrls) {
+    const url = safeImageUrl(rawUrl);
+    if (!url) redirect("/admin/office-locations?error=" + encodeURIComponent("Có URL trong thư viện ảnh không hợp lệ."));
+    gallery.push({ url, alt: title, caption: "" });
+  }
+  try {
+    for (const file of formData.getAll("galleryFiles")) {
+      const url = await uploadImageAsset(file, title);
+      if (url) gallery.push({ url, alt: title, caption: "" });
+    }
+  } catch (error) {
+    redirect("/admin/office-locations?error=" + encodeURIComponent(error instanceof Error ? error.message : "Ảnh thư viện không hợp lệ."));
+  }
+
+  const amenities = text(formData, "amenities", 500)
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, 12);
+  const status = text(formData, "status", 32) === "published" ? "published" : "draft";
+  const visible = formData.get("visible") === "on";
+  const values = [
+    title,
+    slug,
+    text(formData, "excerpt", 1000) || null,
+    text(formData, "content", 12000) || null,
+    address,
+    text(formData, "priceLabel", 120) || "Từ 350K/tháng",
+    coverUrl || null,
+    coverAlt || null,
+    bannerUrl || null,
+    bannerAlt || null,
+    JSON.stringify(gallery),
+    JSON.stringify(amenities),
+    status,
+    visible,
+    Number(formData.get("sortOrder") || 0),
+  ];
+  if (id) {
+    await sql(
+      `UPDATE office_locations
+       SET title=$1, slug=$2, excerpt=$3, content=$4, address=$5, price_label=$6,
+           cover_url=$7, cover_alt=$8, banner_url=$9, banner_alt=$10, gallery_json=$11, amenities_json=$12,
+           status=$13, visible=$14, sort_order=$15, updated_at=NOW()
+       WHERE id=$16 AND deleted_at IS NULL`,
+      [...values, id],
+    );
+  } else {
+    await sql(
+      `INSERT INTO office_locations
+       (title, slug, excerpt, content, address, price_label, cover_url, cover_alt, banner_url, banner_alt, gallery_json, amenities_json, status, visible, sort_order)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
+      values,
+    );
+  }
+  await audit(user.id, id ? "update" : "create", "office-location", slug);
+  refresh();
+  redirect("/admin/office-locations?saved=1");
+}
+
+export async function toggleOfficeLocation(formData: FormData) {
+  const user = await requireAdmin();
+  const id = Number(formData.get("id"));
+  const rows = await sql<{ visible: boolean; status: string; slug: string }>(
+    "SELECT visible, status, slug FROM office_locations WHERE id=$1 AND deleted_at IS NULL",
+    [id],
+  );
+  const location = rows[0];
+  if (!location) redirect("/admin/office-locations?error=" + encodeURIComponent("Không tìm thấy địa điểm."));
+  const enabled = !(location.visible && location.status === "published");
+  await sql(
+    "UPDATE office_locations SET visible=$1, status=$2, updated_at=NOW() WHERE id=$3",
+    [enabled, enabled ? "published" : "draft", id],
+  );
+  await audit(user.id, enabled ? "publish" : "draft", "office-location", location.slug);
+  refresh();
+  redirect("/admin/office-locations?saved=1");
+}
+
+export async function deleteOfficeLocation(formData: FormData) {
+  const user = await requireAdmin();
+  const id = Number(formData.get("id"));
+  const rows = await sql<{ slug: string }>("SELECT slug FROM office_locations WHERE id=$1 AND deleted_at IS NULL", [id]);
+  if (!rows[0]) redirect("/admin/office-locations?error=" + encodeURIComponent("Không tìm thấy địa điểm."));
+  await sql("UPDATE office_locations SET deleted_at=NOW(), visible=FALSE, updated_at=NOW() WHERE id=$1", [id]);
+  await audit(user.id, "soft-delete", "office-location", rows[0].slug);
+  refresh();
+  redirect("/admin/office-locations?saved=1");
 }
 
 export async function saveContactRequest(formData: FormData) {

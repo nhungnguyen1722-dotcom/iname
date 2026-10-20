@@ -55,7 +55,6 @@ export default async function NewsArticle({ params, searchParams }: {
   return (
     <main className="flex-1">
       <header className="relative isolate overflow-hidden bg-primary text-primary-foreground">
-        {article.cover_url ? <div className="absolute inset-0 -z-20 opacity-35"><CmsImage src={article.cover_url} alt="" className="object-cover" sizes="100vw" priority /></div> : null}
         <div className="absolute inset-0 -z-10 bg-gradient-to-r from-slate-950/90 via-primary/85 to-primary/50" />
         <div className="section-shell py-14 sm:py-16 lg:py-20">
           <nav className="mb-5 flex flex-wrap items-center gap-2 text-xs text-primary-foreground/75" aria-label="Breadcrumb"><Link href="/">Trang chủ</Link><span>›</span><Link href="/tin-tuc">Tin tức</Link>{article.category_name ? <><span>›</span><span>{article.category_name}</span></> : null}</nav>

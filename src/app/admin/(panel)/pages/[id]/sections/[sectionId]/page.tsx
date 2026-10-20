@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { Notice, buttonClass, inputClass, secondaryButtonClass } from "@/components/admin/AdminShell";
 import { saveSection } from "@/server/admin";
 import { parseJson, sql } from "@/lib/db";
@@ -36,11 +37,18 @@ export default async function SectionEditor({
   const config = parseJson<Record<string, unknown>>(section.config_json, {});
   const media = await getMediaAssets();
   return (
-    <div>
-      <h1 className="font-display text-3xl font-extrabold">{section.admin_name}</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Loại: {section.section_type}. Ảnh và nội dung được lưu trong PostgreSQL.</p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 p-3 sm:p-6" role="presentation">
+      <Link href={`/admin/pages/${id}/sections`} aria-label="Đóng cửa sổ chỉnh sửa" className="absolute inset-0" />
+      <section role="dialog" aria-modal="true" aria-labelledby="section-editor-title" className="relative z-10 max-h-[94vh] w-full max-w-5xl overflow-y-auto rounded-2xl border border-border bg-background p-4 shadow-elegant sm:p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 id="section-editor-title" className="font-display text-2xl font-extrabold">{section.admin_name}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Loại: {section.section_type}. Ảnh và nội dung được lưu trong PostgreSQL.</p>
+          </div>
+          <Link href={`/admin/pages/${id}/sections`} className="shrink-0 rounded-md border border-border px-3 py-2 text-sm font-semibold">Đóng</Link>
+        </div>
       <Notice saved={query.saved} error={query.error} />
-      <form action={saveSection} className="mt-6 max-w-3xl space-y-4 rounded-xl border border-border bg-card p-5">
+      <form action={saveSection} className="mt-5 space-y-4 rounded-xl border border-border bg-card p-5">
         <input type="hidden" name="id" value={section.id} />
         <input type="hidden" name="item_count" value={items.length} />
         <input type="hidden" name="gallery_count" value={gallery.length} />
@@ -93,6 +101,7 @@ export default async function SectionEditor({
           <button className={secondaryButtonClass} name="intent" value="draft" type="submit">Lưu nháp</button>
         </div>
       </form>
+      </section>
     </div>
   );
 }

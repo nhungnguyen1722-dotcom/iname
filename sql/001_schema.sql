@@ -191,3 +191,30 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   detail TEXT,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS office_locations (
+  id BIGSERIAL PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  slug VARCHAR(180) NOT NULL UNIQUE,
+  excerpt TEXT,
+  content TEXT,
+  address TEXT NOT NULL,
+  price_label VARCHAR(120) NOT NULL DEFAULT 'Từ 350K/tháng',
+  cover_url TEXT,
+  cover_alt VARCHAR(300),
+  banner_url TEXT,
+  banner_alt VARCHAR(300),
+  gallery_json TEXT NOT NULL DEFAULT '[]',
+  amenities_json TEXT NOT NULL DEFAULT '["Lễ tân","Nhận thư","Phòng họp","Wi-Fi"]',
+  status VARCHAR(32) NOT NULL DEFAULT 'draft',
+  visible BOOLEAN NOT NULL DEFAULT FALSE,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  deleted_at TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS office_locations_public_order_idx
+  ON office_locations (sort_order, id)
+  WHERE deleted_at IS NULL AND visible = TRUE AND status = 'published';
+

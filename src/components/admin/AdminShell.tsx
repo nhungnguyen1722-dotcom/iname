@@ -10,8 +10,11 @@ const links = [
   ["Footer", "/admin/footer"],
   ["Dịch vụ", "/admin/services"],
   ["Bảng giá", "/admin/pricing"],
-  ["Bài viết", "/admin/articles"],
-  ["Chuyên mục", "/admin/categories"],
+  ["Tin tức", ""],
+  ["  Bài viết", "/admin/articles"],
+  ["  Chuyên mục", "/admin/categories"],
+  ["Bài viết kế toán", "/admin/accounting-articles"],
+  ["Văn phòng ảo", "/admin/office-locations"],
   ["Yêu cầu liên hệ", "/admin/contact-requests"],
   ["Thiết lập", "/admin/settings"],
 ];
@@ -33,10 +36,12 @@ export function AdminShell({
           <p className="text-xs text-muted-foreground">{userName}</p>
         </div>
         <nav className="flex gap-2 overflow-auto px-3 pb-4 lg:block lg:space-y-1">
-          {links.map(([label, href]) => (
-            <Link key={href} href={href} className="block whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium hover:bg-primary-soft hover:text-primary">
-              {label}
+          {links.map(([label, href]) => href ? (
+            <Link key={href} href={href} className={`block whitespace-nowrap rounded-md py-2 text-sm font-medium hover:bg-primary-soft hover:text-primary ${label.startsWith("  ") ? "pl-6 pr-3 text-muted-foreground" : "px-3"}`}>
+              {label.trim()}
             </Link>
+          ) : (
+            <p key={label} className="px-3 pb-1 pt-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">{label}</p>
           ))}
         </nav>
         <form action={logoutAdmin} className="px-3 pb-4">

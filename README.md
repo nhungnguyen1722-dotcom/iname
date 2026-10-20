@@ -17,12 +17,28 @@ npm run dev
 
 `db:setup` tạo bảng nếu chưa có rồi seed nội dung. Seed bỏ qua nếu đã có trang, nên không ghi đè nội dung quản trị đã sửa. Tài khoản quản trị chỉ được tạo khi bảng admin còn trống.
 
+Migration `005_office_locations.sql` bổ sung dữ liệu quản lý sáu địa điểm văn phòng ảo và chỉ mục tra cứu bài viết. Migration `006_article_covers.sql` chỉ bổ sung ảnh đại diện còn thiếu cho sáu bài viết ban đầu, không thay đổi nội dung bài. `db:sync-neon` sẽ áp dụng các migration còn thiếu trên Neon trước khi đồng bộ. Ảnh chi nhánh được tải lên từ Quản trị → Văn phòng ảo.
+
 Website: http://localhost:3000  
 Quản trị: http://localhost:3000/admin/login
 
 ## Cơ sở dữ liệu
 
 `DATABASE_URL` nhận PostgreSQL local hoặc Neon (`sslmode=require`). File `.env` không được commit. Driver là `pg`. Prisma không dùng với PostgreSQL 9.3 local; Neon là PostgreSQL mới và vẫn dùng cùng schema SQL.
+
+Xuất database local thành file SQL bị Git bỏ qua:
+
+```bash
+npm run db:dump
+```
+
+Để đồng bộ local lên Neon, giữ `DATABASE_URL` trỏ tới database local và cấu hình `NEON_DATABASE_URL` trong `.env.local` hoặc biến môi trường. Chạy:
+
+```bash
+npm run db:sync-neon
+```
+
+Lệnh áp dụng migration còn thiếu trên Neon, sau đó thêm/cập nhật các bản ghi theo khóa chính từ local; bản ghi chỉ có trên Neon được giữ nguyên. Nếu gặp xung đột khóa duy nhất với ID khác, quá trình dừng trước khi thay đổi dữ liệu.
 
 Trang công khai gom menu, footer, giá, dịch vụ và thiết lập trong một truy vấn, rồi giữ kết quả 15 giây. Lưu nội dung trong CMS xóa cache này ngay. Ảnh từ CDN được Next.js đổi sang WebP/AVIF. Tab bảng giá và câu hỏi dùng `memo` để không dựng lại các mục không đổi.
 

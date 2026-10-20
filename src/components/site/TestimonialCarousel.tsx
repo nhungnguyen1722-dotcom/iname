@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { memo, useCallback, useRef, useState } from "react";
 
 type Review = { quote?: string; author?: string; company?: string; avatar?: string; rating?: number };
 
-export function TestimonialCarousel({ items }: { items: Review[] }) {
+export const TestimonialCarousel = memo(function TestimonialCarousel({ items }: { items: Review[] }) {
   const track = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
   const move = useCallback((direction: number) => {
@@ -61,4 +61,4 @@ export function TestimonialCarousel({ items }: { items: Review[] }) {
       ) : null}
     </>
   );
-}
+});

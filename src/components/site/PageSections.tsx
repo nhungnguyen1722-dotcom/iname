@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import { CmsImage } from "./CmsImage";
 import { ConsultButton } from "./ConsultProvider";
@@ -6,7 +7,7 @@ import { PricingBlock } from "./PricingBlock";
 import { ContactForm } from "./ContactForm";
 import { IconMark } from "./IconMark";
 import { TestimonialCarousel } from "./TestimonialCarousel";
-import type { ArticleCard, FooterGroup, Office, PricingPlan, PublicSection, ServiceRecord } from "@/lib/content";
+import type { ArticleCard, FooterGroup, Office, OfficeLocation, PricingPlan, PublicSection, ServiceRecord } from "@/lib/content";
 
 const primaryButton = "inline-flex h-11 items-center justify-center rounded-md bg-background px-6 text-base font-semibold text-foreground shadow-elegant hover:bg-background/90";
 const accentButton = "inline-flex h-11 items-center justify-center rounded-md bg-accent px-6 text-base font-semibold text-accent-foreground shadow-card hover:bg-accent/90";
@@ -42,6 +43,8 @@ export function PageSections({
   plans,
   settings,
   offices,
+  officeLocations,
+  path,
   articles,
   categories,
   popularArticles,
@@ -52,6 +55,8 @@ export function PageSections({
   plans: PricingPlan[];
   settings: Record<string, string>;
   offices: Office[];
+  officeLocations: OfficeLocation[];
+  path: string;
   articles?: {
     items: ArticleCard[];
     total: number;
@@ -65,27 +70,75 @@ export function PageSections({
   return (
     <main className="flex-1">
       {sections.map((section) => {
-        if (section.section_type === "hero") return <Hero key={section.id} section={section} />;
-        if (section.section_type === "page-hero") return <PageHero key={section.id} section={section} />;
-        if (section.section_type === "pillars") return <Pillars key={section.id} section={section} />;
-        if (section.section_type === "cards") return <Cards key={section.id} section={section} services={services} />;
-        if (section.section_type === "steps") return <Steps key={section.id} section={section} />;
-        if (section.section_type === "pricing") return <PricingSection key={section.id} section={section} plans={plans} />;
-        if (section.section_type === "team") return <Team key={section.id} section={section} />;
-        if (section.section_type === "testimonials") return <Testimonials key={section.id} section={section} />;
-        if (section.section_type === "faq") return <Faq key={section.id} section={section} settings={settings} />;
-        if (section.section_type === "cta") return <CtaBand key={section.id} section={section} />;
-        if (section.section_type === "media") return <MediaSplit key={section.id} section={section} />;
-        if (section.section_type === "gallery") return <Gallery key={section.id} section={section} />;
-        if (section.section_type === "comparison") return <Comparison key={section.id} section={section} />;
-        if (section.section_type === "stats") return <Stats key={section.id} section={section} />;
-        if (section.section_type === "addons") return <Addons key={section.id} section={section} />;
-        if (section.section_type === "notes") return <Notes key={section.id} section={section} />;
-        if (section.section_type === "articles") return <ArticleList key={section.id} articles={articles} categories={categories || []} query={query} popularArticles={popularArticles || []} />;
-        if (section.section_type === "contact") return <ContactSection key={section.id} section={section} settings={settings} offices={offices} plans={plans} />;
-        return null;
+        const renderedSection = section.section_type === "hero" ? <Hero key={section.id} section={section} />
+          : section.section_type === "page-hero" ? <PageHero key={section.id} section={section} showImage={path === "/"} />
+          : section.section_type === "pillars" ? <Pillars key={section.id} section={section} />
+          : section.section_type === "cards" ? <Cards key={section.id} section={section} services={services} />
+          : section.section_type === "steps" ? <Steps key={section.id} section={section} />
+          : section.section_type === "pricing" ? <PricingSection key={section.id} section={section} plans={plans} />
+          : section.section_type === "team" ? <Team key={section.id} section={section} />
+          : section.section_type === "testimonials" ? <Testimonials key={section.id} section={section} />
+          : section.section_type === "faq" ? <Faq key={section.id} section={section} settings={settings} />
+          : section.section_type === "cta" ? <CtaBand key={section.id} section={section} />
+          : section.section_type === "media" ? <MediaSplit key={section.id} section={section} />
+          : section.section_type === "gallery" ? <Gallery key={section.id} section={section} />
+          : section.section_type === "comparison" ? <Comparison key={section.id} section={section} />
+          : section.section_type === "stats" ? <Stats key={section.id} section={section} />
+          : section.section_type === "addons" ? <Addons key={section.id} section={section} />
+          : section.section_type === "notes" ? <Notes key={section.id} section={section} />
+          : section.section_type === "articles" ? <ArticleList key={section.id} articles={articles} categories={categories || []} query={query} popularArticles={popularArticles || []} />
+          : section.section_type === "contact" ? <ContactSection key={section.id} section={section} settings={settings} offices={offices} plans={plans} />
+          : null;
+        return (
+          <Fragment key={section.id}>
+            {renderedSection}
+            {path === "/van-phong-ao" && section.section_type === "steps" && officeLocations.length
+              ? <OfficeLocationsSection locations={officeLocations} />
+              : null}
+          </Fragment>
+        );
       })}
     </main>
+  );
+}
+
+function OfficeLocationsSection({ locations }: { locations: OfficeLocation[] }) {
+  const iconByAmenity: Record<string, string> = {
+    "Lễ tân": "message",
+    "Nhận thư": "mail",
+    "Phòng họp": "briefcase",
+    "Wi-Fi": "monitor",
+  };
+  return (
+    <section className="border-y border-border bg-secondary/40 py-12 lg:py-16">
+      <div className="section-shell">
+        <div className="mb-7 max-w-3xl">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-accent">Địa chỉ văn phòng</p>
+          <h2 className="font-display text-2xl font-extrabold sm:text-3xl">Chọn văn phòng ảo phù hợp</h2>
+          <p className="mt-3 text-muted-foreground">Sáu địa điểm tại Quận 1 với các tiện ích văn phòng thiết yếu.</p>
+        </div>
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          {locations.map((location) => (
+            <article key={location.id} className="overflow-hidden rounded-xl border border-border bg-card shadow-card">
+              <Link href={`/van-phong-ao/${location.slug}`} className="relative block aspect-[16/9] bg-secondary" aria-label={`Xem ${location.title}`}>
+                {location.cover_url ? <CmsImage src={location.cover_url} alt={location.cover_alt || location.title} className="object-cover" sizes="(min-width: 1280px) 30vw, (min-width: 640px) 45vw, 95vw" /> : <span className="absolute inset-0 bg-mesh" />}
+              </Link>
+              <div className="p-5">
+                <h3 className="font-display text-lg font-bold"><Link href={`/van-phong-ao/${location.slug}`} className="hover:text-primary">{location.title}</Link></h3>
+                <p className="mt-2 flex gap-2 text-sm text-muted-foreground"><IconMark name="pin" className="size-8 rounded-lg shrink-0" /><span>{location.address}</span></p>
+                <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2">
+                  {location.amenities.map((amenity) => <span key={amenity} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"><IconMark name={iconByAmenity[amenity] || "badge"} className="size-6 rounded-md [&_svg]:size-3.5" />{amenity}</span>)}
+                </div>
+                <div className="mt-5 flex items-center justify-between gap-3 border-t border-border pt-4">
+                  <p className="font-display font-extrabold text-primary">{location.price_label}</p>
+                  <Link href={`/van-phong-ao/${location.slug}`} className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors">Xem thêm →</Link>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -155,29 +208,61 @@ function Hero({ section }: { section: PublicSection }) {
   );
 }
 
-function PageHero({ section }: { section: PublicSection }) {
-  const configuredIcon = text(section.config.icon);
-  const title = section.title || "";
-  const icon = configuredIcon || (/kế toán/i.test(title) ? "calculator" : /giá/i.test(title) ? "wallet" : /tin tức|kiến thức/i.test(title) ? "file" : "building");
+function PageHero({ section, showImage }: { section: PublicSection; showImage: boolean }) {
+  const hasVisual = showImage && Boolean(section.image_url);
   return (
     <section className="relative overflow-hidden border-b border-border bg-subtle-gradient">
-      {section.image_url ? <div className="absolute inset-0 opacity-20"><CmsImage src={section.image_url} alt="" className="object-cover" sizes="100vw" /></div> : null}
+      {hasVisual ? (
+        <div className="pointer-events-none absolute inset-0 opacity-10">
+          <CmsImage src={section.image_url} alt="" className="object-cover" sizes="100vw" />
+        </div>
+      ) : null}
       <div className="bg-mesh pointer-events-none absolute inset-0 opacity-90" />
-      <div className="section-shell relative py-14 sm:py-16 lg:py-20">
-        {section.eyebrow ? <div className="mb-4 inline-flex rounded-full bg-primary-soft px-2.5 py-0.5 text-xs font-semibold text-primary">{section.eyebrow}</div> : null}
-        <IconMark name={icon} className="mb-4 size-14" />
-        <h1 className="max-w-4xl font-display text-3xl font-extrabold sm:text-4xl lg:text-5xl">{section.title}</h1>
-        {section.description ? <p className="mt-5 max-w-3xl text-base leading-relaxed text-muted-foreground sm:text-lg">{section.description}</p> : null}
-        {section.items.length ? (
-          <ul className="mt-6 flex flex-wrap gap-2">
-            {section.items.map((item) => (
-              <li key={text(item.label)} className="rounded-full border border-primary/20 bg-card px-2.5 py-0.5 text-xs font-medium text-muted-foreground">{text(item.label)}</li>
-            ))}
-          </ul>
-        ) : null}
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <Cta label={section.button_label} href={section.button_url} variant="accent" />
-          <Cta label={section.secondary_button_label} href={section.secondary_button_url} variant="outline" />
+      <div className="section-shell relative py-12 sm:py-16 lg:py-20">
+        <div className={hasVisual ? "grid gap-8 lg:grid-cols-12 lg:items-center" : ""}>
+          <div className={hasVisual ? "lg:col-span-7" : ""}>
+            {section.eyebrow ? (
+              <div className="mb-4 inline-flex rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary">
+                {section.eyebrow}
+              </div>
+            ) : null}
+            <h1 className="max-w-4xl font-display text-3xl font-extrabold leading-tight text-foreground sm:text-4xl lg:text-5xl">
+              {section.title}
+            </h1>
+            {section.description ? (
+              <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+                {section.description}
+              </p>
+            ) : null}
+            {section.items.length ? (
+              <ul className="mt-6 flex flex-wrap gap-2">
+                {section.items.map((item) => (
+                  <li key={text(item.label)} className="rounded-full border border-primary/20 bg-card px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                    {text(item.label)}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            {(section.button_label || section.secondary_button_label) ? (
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <Cta label={section.button_label} href={section.button_url} variant="accent" />
+                <Cta label={section.secondary_button_label} href={section.secondary_button_url} variant="outline" />
+              </div>
+            ) : null}
+          </div>
+          {hasVisual ? (
+            <div className="relative lg:col-span-5">
+              <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-border bg-card shadow-card sm:aspect-[4/3]">
+                <CmsImage
+                  src={section.image_url}
+                  alt={section.image_alt || section.title || ""}
+                  className="object-cover"
+                  sizes="(min-width: 1024px) 40vw, 95vw"
+                  priority
+                />
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
     </section>

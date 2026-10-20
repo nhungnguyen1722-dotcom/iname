@@ -41,6 +41,8 @@ export default async function HomePage({
       plans={chrome.plans}
       settings={chrome.settings}
       offices={officesFromSettings(chrome.settings)}
+      officeLocations={[]}
+      path="/"
     />
   );
 }
