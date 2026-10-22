@@ -21,8 +21,15 @@ const FaqItem = memo(function FaqItem({
     <div className="border-b border-border">
       <h3>
         <button type="button" className="flex w-full items-center justify-between gap-4 py-4 text-left font-display text-base font-bold sm:text-lg" aria-expanded={expanded} onClick={toggle}>
-          {question}
-          <span aria-hidden="true" className={`text-muted-foreground transition ${expanded ? "rotate-180" : ""}`}>⌄</span>
+          <span className="pr-2">{question}</span>
+          <span
+            aria-hidden="true"
+            className={`inline-flex size-8 shrink-0 items-center justify-center rounded-full text-lg font-semibold transition ${
+              expanded ? "bg-[#094690] text-white" : "bg-[#dbeafe] text-[#094690]"
+            }`}
+          >
+            {expanded ? "×" : "+"}
+          </span>
         </button>
       </h3>
       {expanded ? <p className="pb-4 text-sm leading-relaxed text-muted-foreground">{answer}</p> : null}

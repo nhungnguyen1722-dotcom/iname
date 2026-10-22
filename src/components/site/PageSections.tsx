@@ -92,7 +92,7 @@ export function PageSections({
         return (
           <Fragment key={section.id}>
             {renderedSection}
-            {path === "/van-phong-ao" && section.section_type === "steps" && officeLocations.length
+            {path === "/van-phong-ao" && section.section_key === "vo-services" && officeLocations.length
               ? <OfficeLocationsSection locations={officeLocations} />
               : null}
           </Fragment>
@@ -162,7 +162,7 @@ function Hero({ section }: { section: PublicSection }) {
       <div className="section-shell relative grid gap-12 py-12 lg:grid-cols-12 lg:items-center lg:py-20">
         <div className="lg:col-span-7">
           {section.eyebrow ? <div className="inline-flex rounded-full border border-primary-foreground/30 bg-primary-foreground/10 px-2.5 py-0.5 text-xs font-semibold text-primary-foreground">{section.eyebrow}</div> : null}
-          <h1 className="mt-5 font-display text-3xl font-extrabold leading-[1.12] text-primary-foreground sm:text-4xl lg:text-5xl">{section.title}</h1>
+          <h1 className="banner-h1 mt-5 font-extrabold text-primary-foreground">{section.title}</h1>
           <p className="mt-5 max-w-2xl text-base leading-relaxed text-primary-foreground/85 sm:text-lg">{section.description}</p>
           <ul className="mt-6 flex flex-wrap gap-2">
             {section.items.map((item) => (
@@ -209,35 +209,36 @@ function Hero({ section }: { section: PublicSection }) {
 }
 
 function PageHero({ section, showImage }: { section: PublicSection; showImage: boolean }) {
-  const hasVisual = showImage && Boolean(section.image_url);
+  const hasVisual = Boolean(section.image_url);
   return (
-    <section className="relative overflow-hidden border-b border-border bg-subtle-gradient">
+    <section className="page-banner relative isolate overflow-hidden bg-primary text-primary-foreground">
       {hasVisual ? (
-        <div className="pointer-events-none absolute inset-0 opacity-10">
+        <div className="pointer-events-none absolute inset-0 -z-20 opacity-30">
           <CmsImage src={section.image_url} alt="" className="object-cover" sizes="100vw" />
         </div>
       ) : null}
-      <div className="bg-mesh pointer-events-none absolute inset-0 opacity-90" />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-slate-950/95 via-primary/90 to-primary/60" />
+      <div className="bg-mesh pointer-events-none absolute inset-0 opacity-40" />
       <div className="section-shell relative py-12 sm:py-16 lg:py-20">
-        <div className={hasVisual ? "grid gap-8 lg:grid-cols-12 lg:items-center" : ""}>
-          <div className={hasVisual ? "lg:col-span-7" : ""}>
+        <div className={showImage && hasVisual ? "grid gap-8 lg:grid-cols-12 lg:items-center" : ""}>
+          <div className={showImage && hasVisual ? "lg:col-span-7" : ""}>
             {section.eyebrow ? (
-              <div className="mb-4 inline-flex rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary">
+              <div className="mb-4 inline-flex rounded-full border border-sky-300/30 bg-sky-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-sky-200">
                 {section.eyebrow}
               </div>
             ) : null}
-            <h1 className="max-w-4xl font-display text-3xl font-extrabold leading-tight text-foreground sm:text-4xl lg:text-5xl">
+            <h1 className="banner-h1 max-w-4xl font-extrabold text-primary-foreground">
               {section.title}
             </h1>
             {section.description ? (
-              <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+              <p className="mt-4 max-w-2xl text-base leading-relaxed text-primary-foreground/90 sm:text-lg">
                 {section.description}
               </p>
             ) : null}
             {section.items.length ? (
               <ul className="mt-6 flex flex-wrap gap-2">
                 {section.items.map((item) => (
-                  <li key={text(item.label)} className="rounded-full border border-primary/20 bg-card px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                  <li key={text(item.label)} className="rounded-full border border-primary-foreground/30 bg-primary-foreground/10 px-2.5 py-0.5 text-xs font-medium text-primary-foreground">
                     {text(item.label)}
                   </li>
                 ))}
@@ -246,13 +247,13 @@ function PageHero({ section, showImage }: { section: PublicSection; showImage: b
             {(section.button_label || section.secondary_button_label) ? (
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Cta label={section.button_label} href={section.button_url} variant="accent" />
-                <Cta label={section.secondary_button_label} href={section.secondary_button_url} variant="outline" />
+                <Cta label={section.secondary_button_label} href={section.secondary_button_url} variant="ghost" />
               </div>
             ) : null}
           </div>
-          {hasVisual ? (
+          {showImage && hasVisual ? (
             <div className="relative lg:col-span-5">
-              <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-border bg-card shadow-card sm:aspect-[4/3]">
+              <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-primary-foreground/20 bg-card shadow-card sm:aspect-[4/3]">
                 <CmsImage
                   src={section.image_url}
                   alt={section.image_alt || section.title || ""}
@@ -270,21 +271,32 @@ function PageHero({ section, showImage }: { section: PublicSection; showImage: b
 }
 
 function Pillars({ section }: { section: PublicSection }) {
+  const columns = section.items.length >= 3 ? "lg:grid-cols-3" : "lg:grid-cols-2";
   return (
     <section className="section-shell py-16 lg:py-20">
       <Heading section={section} />
-      <div className="mt-10 grid gap-6 lg:grid-cols-2">
-        {section.items.map((item) => (
-          <article key={text(item.title)} className="hover-lift rounded-2xl border border-border bg-card p-7 shadow-card">
-            <IconMark name={text(item.icon) || "building"} className="mb-5" />
-            <h3 className="font-display text-2xl font-bold">{text(item.title)}</h3>
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{text(item.description)}</p>
-            <ul className="mt-5 space-y-2 text-sm">
-              {list(item.points).map((point) => <li key={point}>✓ {point}</li>)}
-            </ul>
-            {text(item.href) ? <Link href={text(item.href)} className="mt-6 inline-flex text-sm font-semibold text-primary">{text(item.cta) || "Xem chi tiết"}</Link> : null}
-          </article>
-        ))}
+      <div className={`mt-10 grid gap-6 ${columns}`}>
+        {section.items.map((item) => {
+          const color = text(item.color) || "#094690";
+          const href = text(item.href);
+          const body = (
+            <>
+              <IconMark name={text(item.icon) || "building"} className="mb-5" />
+              <h3 className="font-display text-2xl font-bold" style={{ color }}>{text(item.title)}</h3>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{text(item.description)}</p>
+              <ul className="mt-5 space-y-2 text-sm">
+                {list(item.points).map((point) => <li key={point}>✓ {point}</li>)}
+              </ul>
+              <span className="mt-6 inline-flex text-sm font-semibold" style={{ color }}>{text(item.cta) || "Xem chi tiết"}</span>
+            </>
+          );
+          const className = "hover-lift flex h-full flex-col rounded-2xl border bg-card p-7 shadow-card";
+          return href ? (
+            <Link key={text(item.title)} href={href} className={className} style={{ borderColor: `${color}55` }}>{body}</Link>
+          ) : (
+            <article key={text(item.title)} className={className}>{body}</article>
+          );
+        })}
       </div>
     </section>
   );
@@ -310,14 +322,24 @@ function Cards({ section, services }: { section: PublicSection; services: Servic
       <div className="section-shell py-16 lg:py-20">
         <Heading section={section} />
         <div className={`mt-10 grid gap-5 ${grid}`}>
-          {items.map((item, index) => (
-            <article key={text(item.title)} className="hover-lift rounded-xl border border-border bg-card p-6 shadow-card">
-              <IconMark name={text(item.icon) || ["pin", "building", "monitor", "mail", "message", "file", "calculator"][index % 7]} className="mb-4" />
-              <h3 className="font-display text-lg font-bold">{text(item.title)}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{text(item.description)}</p>
-              {text(item.href) ? <Link href={text(item.href)} className="mt-4 inline-flex text-sm font-semibold text-primary">{text(item.cta) || "Xem chi tiết"}</Link> : null}
-            </article>
-          ))}
+          {items.map((item, index) => {
+            const href = text(item.href);
+            const tone = text(item.tone);
+            const className = `hover-lift flex h-full flex-col rounded-xl border border-border p-6 shadow-card ${tone || "bg-card"}`;
+            const body = (
+              <>
+                <IconMark name={text(item.icon) || ["pin", "building", "monitor", "mail", "message", "file", "calculator"][index % 7]} className="mb-4" />
+                <h3 className="font-display text-lg font-bold">{text(item.title)}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{text(item.description)}</p>
+                {href ? <span className="mt-4 inline-flex text-sm font-semibold text-primary">{text(item.cta) || "Xem chi tiết"}</span> : null}
+              </>
+            );
+            return href ? (
+              <Link key={text(item.title)} href={href} className={className}>{body}</Link>
+            ) : (
+              <article key={text(item.title)} className={className}>{body}</article>
+            );
+          })}
         </div>
       </div>
     </section>

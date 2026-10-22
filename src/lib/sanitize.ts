@@ -1,11 +1,15 @@
 import sanitizeHtml from "sanitize-html";
 
 const options: sanitizeHtml.IOptions = {
-  allowedTags: ["p", "br", "strong", "em", "ul", "ol", "li", "h2", "h3", "blockquote", "a"],
+  allowedTags: ["p", "br", "strong", "em", "ul", "ol", "li", "h1", "h2", "h3", "h4", "blockquote", "a", "img", "span"],
   allowedAttributes: {
     a: ["href", "rel", "target"],
+    h1: ["id"],
     h2: ["id"],
     h3: ["id"],
+    h4: ["id"],
+    img: ["src", "alt"],
+    span: ["class"],
   },
   allowedSchemes: ["http", "https", "mailto", "tel"],
   transformTags: {
@@ -21,6 +25,7 @@ export function safeHref(input: string) {
   const value = input.trim();
   if (!value) return "";
   if (value === "#tu-van") return value;
+  if (/^#[a-z0-9_-]+$/i.test(value)) return value;
   if (value.startsWith("/") && !value.startsWith("//")) return value;
   try {
     const url = new URL(value);
