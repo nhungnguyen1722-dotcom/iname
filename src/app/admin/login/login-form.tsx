@@ -8,7 +8,7 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
   return (
     <main className="flex min-h-screen items-center justify-center bg-subtle-gradient px-4">
       <form action={action} className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-card">
-        <p className="text-sm font-semibold text-primary">INAME CMS</p>
+        <p className="text-sm font-semibold text-primary">iName CMS</p>
         <h1 className="mt-2 font-display text-3xl font-extrabold">Đăng nhập quản trị</h1>
         <p className="mt-2 text-sm text-muted-foreground">Chỉ tài khoản quản trị đã được cấp mới thay đổi được nội dung website.</p>
         <input type="hidden" name="next" value={nextPath} />

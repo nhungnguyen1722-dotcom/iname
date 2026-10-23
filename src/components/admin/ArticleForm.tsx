@@ -4,8 +4,9 @@ import { deleteArticle, saveArticle } from "@/server/admin";
 import { getCategories, getMediaAssets } from "@/lib/content";
 import { sql } from "@/lib/db";
 import { ImageField } from "./ImageField";
+import { RichTextEditor } from "./RichTextEditor";
 
-export async function ArticleForm({ id, initialCategoryId }: { id: string; initialCategoryId?: string }) {
+export async function ArticleForm({ id, initialCategoryId, returnTo = "" }: { id: string; initialCategoryId?: string; returnTo?: string }) {
   const [categories, media] = await Promise.all([getCategories(), getMediaAssets()]);
   const rows = id === "new" ? [] : await sql<{ id: number; category_id: number | null; title: string; slug: string; excerpt: string | null; content: string | null; cover_url: string | null; cover_alt: string | null; seo_title: string | null; seo_description: string | null; status: string; read_minutes: number | null }>(
     "SELECT id, category_id, title, slug, excerpt, content, cover_url, cover_alt, seo_title, seo_description, status, read_minutes FROM articles WHERE id = $1 AND deleted_at IS NULL",
@@ -16,6 +17,7 @@ export async function ArticleForm({ id, initialCategoryId }: { id: string; initi
   return (
     <form action={saveArticle} className="mt-6 max-w-3xl space-y-3 rounded-xl border border-border bg-card p-5">
       <input type="hidden" name="id" value={article?.id || ""} />
+      {returnTo ? <input type="hidden" name="returnTo" value={returnTo} /> : null}
       <input name="title" required defaultValue={article?.title || ""} className={inputClass} placeholder="Tiêu đề" />
       <input name="slug" defaultValue={article?.slug || ""} className={inputClass} placeholder="Slug" />
       <select name="categoryId" defaultValue={article?.category_id || initialCategoryId || ""} className={inputClass}>
@@ -23,7 +25,7 @@ export async function ArticleForm({ id, initialCategoryId }: { id: string; initi
         {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
       </select>
       <textarea name="excerpt" defaultValue={article?.excerpt || ""} className={inputClass} rows={3} />
-      <textarea name="content" defaultValue={article?.content || ""} className={inputClass} rows={12} />
+      <RichTextEditor name="content" label="Nội dung bài viết" defaultValue={article?.content || ""} media={media} />
       <ImageField name="coverUrl" uploadName="article_image_file" value={article?.cover_url || ""} media={media} label="Ảnh banner và ảnh đại diện" />
       <input name="coverAlt" defaultValue={article?.cover_alt || ""} className={inputClass} />
       <input name="seoTitle" defaultValue={article?.seo_title || ""} className={inputClass} placeholder="SEO title" />

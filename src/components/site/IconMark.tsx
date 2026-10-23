@@ -1,7 +1,14 @@
+import { memo } from "react";
+
 const paths: Record<string, React.ReactNode> = {
   building: <><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M2 21h20M8 7h4M8 11h4M8 15h4M18 9h2v12" /><path d="M9 21v-3h3v3" /></>,
   calculator: <><rect x="5" y="2" width="14" height="20" rx="2" /><path d="M8 6h8M8 11h2m4 0h2m-8 4h2m4 0h2m-8 4h2m4 0h2" /></>,
   monitor: <><rect x="3" y="4" width="18" height="13" rx="2" /><path d="M8 21h8m-4-4v4" /></>,
+  website: <><rect x="3" y="4" width="18" height="13" rx="2" /><path d="M7 8h10M7 11h4M8 21h8m-4-4v4" /></>,
+  code: <path d="m16 18 6-6-6-6M8 6l-6 6 6 6M14 4l-4 16" />,
+  cloud: <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />,
+  cpu: <><rect x="4" y="4" width="16" height="16" rx="2" /><rect x="9" y="9" width="6" height="6" /><path d="M15 2v2M9 2v2M20 15h2M20 9h2M9 20v2M15 20v2M2 9h2M2 15h2" /></>,
+  chip: <><rect x="4" y="4" width="16" height="16" rx="2" /><rect x="9" y="9" width="6" height="6" /><path d="M15 2v2M9 2v2M20 15h2M20 9h2M9 20v2M15 20v2M2 9h2M2 15h2" /></>,
   mail: <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m4 7 8 6 8-6" /></>,
   message: <><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H6l-3 2v-6.5A7.5 7.5 0 1 1 20 11.5Z" /><path d="M8 11h8m-8 3h5" /></>,
   file: <><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z" /><path d="M13 2v7h7M8 14h8m-8 4h8" /></>,
@@ -20,13 +27,36 @@ const paths: Record<string, React.ReactNode> = {
   briefcase: <><rect x="3" y="7" width="18" height="14" rx="2" /><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18m-11 0v2h4v-2" /></>,
 };
 
-export function IconMark({ name, className = "" }: { name?: string; className?: string }) {
+export const IconMark = memo(function IconMark({
+  name,
+  className = "",
+  color,
+  solid = false,
+}: {
+  name?: string;
+  className?: string;
+  color?: string;
+  solid?: boolean;
+}) {
   const key = name && paths[name] ? name : "building";
+  if (solid && color) {
+    return (
+      <span
+        className={`inline-flex size-12 shrink-0 items-center justify-center rounded-xl text-white shadow-sm ${className}`}
+        style={{ backgroundColor: color }}
+        aria-hidden="true"
+      >
+        <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          {paths[key]}
+        </svg>
+      </span>
+    );
+  }
   return (
-    <span className={`inline-flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary ${className}`} aria-hidden="true">
+    <span className={`inline-flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary ${className}`} style={color ? { backgroundColor: `${color}1a`, color } : undefined} aria-hidden="true">
       <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{paths[key]}</svg>
     </span>
   );
-}
+});
 
-export const iconOptions = ["building", "calculator", "monitor", "mail", "message", "file", "pin", "piggy", "calendar", "shield", "receipt", "timer", "badge", "handshake", "search", "scale", "lock", "wallet", "briefcase"];
+export const iconOptions = ["building", "calculator", "monitor", "website", "code", "cloud", "cpu", "mail", "message", "file", "pin", "piggy", "calendar", "shield", "receipt", "timer", "badge", "handshake", "search", "scale", "lock", "wallet", "briefcase"];

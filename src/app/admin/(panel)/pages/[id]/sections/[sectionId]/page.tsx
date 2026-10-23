@@ -1,5 +1,6 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import { findAdminPage } from "@/lib/admin-pages";
 import { Notice, buttonClass, inputClass, secondaryButtonClass } from "@/components/admin/AdminShell";
 import { saveSection } from "@/server/admin";
 import { parseJson, sql } from "@/lib/db";
@@ -19,6 +20,9 @@ export default async function SectionEditor({
 }) {
   const { id, sectionId } = await params;
   const query = await searchParams;
+  const page = await findAdminPage(id);
+  if (!page) notFound();
+  if (/^\d+$/.test(id) && page.slug !== id) redirect(`/admin/pages/${page.slug}/sections/${sectionId}`);
   const rows = await sql<{
     id: number; page_id: number; section_type: string; admin_name: string; eyebrow: string | null; title: string | null;
     subtitle: string | null; description: string | null; image_url: string | null; image_alt: string | null;
@@ -28,7 +32,7 @@ export default async function SectionEditor({
     `SELECT id, page_id, section_type, admin_name, eyebrow, title, subtitle, description, image_url, image_alt,
             button_label, button_url, secondary_button_label, secondary_button_url, items_json, gallery_json, config_json, visible, status
      FROM page_sections WHERE id = $1 AND page_id = $2 AND deleted_at IS NULL`,
-    [Number(sectionId), Number(id)],
+    [Number(sectionId), page.id],
   );
   const section = rows[0];
   if (!section) notFound();
@@ -38,14 +42,14 @@ export default async function SectionEditor({
   const media = await getMediaAssets();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 p-3 sm:p-6" role="presentation">
-      <Link href={`/admin/pages/${id}/sections`} aria-label="Đóng cửa sổ chỉnh sửa" className="absolute inset-0" />
+      <Link href={`/admin/pages/${page.slug}#phan-section`} aria-label="Đóng cửa sổ chỉnh sửa" className="absolute inset-0" />
       <section role="dialog" aria-modal="true" aria-labelledby="section-editor-title" className="relative z-10 max-h-[94vh] w-full max-w-5xl overflow-y-auto rounded-2xl border border-border bg-background p-4 shadow-elegant sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 id="section-editor-title" className="font-display text-2xl font-extrabold">{section.admin_name}</h1>
             <p className="mt-1 text-sm text-muted-foreground">Loại: {section.section_type}. Ảnh và nội dung được lưu trong PostgreSQL.</p>
           </div>
-          <Link href={`/admin/pages/${id}/sections`} className="shrink-0 rounded-md border border-border px-3 py-2 text-sm font-semibold">Đóng</Link>
+          <Link href={`/admin/pages/${page.slug}#phan-section`} className="shrink-0 rounded-md border border-border px-3 py-2 text-sm font-semibold">Đóng</Link>
         </div>
       <Notice saved={query.saved} error={query.error} />
       <form action={saveSection} className="mt-5 space-y-4 rounded-xl border border-border bg-card p-5">
@@ -61,6 +65,7 @@ export default async function SectionEditor({
         <label className="block text-sm font-semibold">Văn bản thay thế<input name="imageAlt" defaultValue={section.image_alt || ""} className={inputClass} /></label>
         {section.section_type === "page-hero" ? <label className="block text-sm font-semibold">Biểu tượng banner<select name="configIcon" defaultValue={String(config.icon || "building")} className={inputClass}>{iconOptions.map((icon) => <option key={icon} value={icon}>{icon}</option>)}</select></label> : null}
         {section.section_type === "pricing" ? <div className="grid gap-3 sm:grid-cols-2"><label className="text-sm font-semibold">Phụ đề Văn phòng ảo<input name="officeSubtitle" defaultValue={String(config.officeSubtitle || "")} className={inputClass} /></label><label className="text-sm font-semibold">Phụ đề Dịch vụ kế toán<input name="accountingSubtitle" defaultValue={String(config.accountingSubtitle || "")} className={inputClass} /></label></div> : null}
+        {section.section_type === "technology-stack" ? <div className="space-y-3 rounded-lg border border-border p-4"><label className="block text-sm font-semibold">Tiêu đề ưu điểm<input name="benefitsTitle" defaultValue={String(config.benefitsTitle || "")} className={inputClass} /></label><label className="block text-sm font-semibold">Ưu điểm<textarea name="benefits" defaultValue={Array.isArray(config.benefits) ? config.benefits.map(String).join("\n") : ""} rows={4} className={inputClass} placeholder="Mỗi dòng một ưu điểm" /></label></div> : null}
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="text-sm font-semibold">Nút chính<input name="buttonLabel" defaultValue={section.button_label || ""} className={inputClass} /></label>
           <label className="text-sm font-semibold">URL nút chính<input name="buttonUrl" defaultValue={section.button_url || ""} className={inputClass} /></label>
@@ -107,7 +112,7 @@ export default async function SectionEditor({
 }
 
 function ItemFields({ type, items }: { type: string; items: Item[] }) {
-  if (!["faq", "cards", "pillars", "steps", "team", "testimonials", "stats", "comparison", "addons", "notes", "hero", "page-hero", "media"].includes(type)) {
+  if (!["faq", "cards", "pillars", "steps", "team", "testimonials", "stats", "comparison", "addons", "notes", "hero", "page-hero", "media", "technology-stack"].includes(type)) {
     return null;
   }
   return (
@@ -158,6 +163,13 @@ function ItemFields({ type, items }: { type: string; items: Item[] }) {
               <input name={`item_price_${index}`} defaultValue={String(item.price || "")} className={inputClass} />
             </>
           ) : null}
+          {type === "technology-stack" ? (
+            <>
+              <input name={`item_name_${index}`} defaultValue={String(item.name || "")} className={inputClass} placeholder="Tên công nghệ" />
+              <input name={`item_mark_${index}`} defaultValue={String(item.mark || "")} className={inputClass} placeholder="Ký hiệu logo" />
+              <input name={`item_color_${index}`} defaultValue={String(item.color || "#094690")} className={inputClass} placeholder="Màu logo" />
+            </>
+          ) : null}
           {type === "notes" || type === "hero" || type === "page-hero" ? (
             <>
               <input name={`item_label_${index}`} defaultValue={String(item.label || "")} className={inputClass} />
@@ -170,6 +182,7 @@ function ItemFields({ type, items }: { type: string; items: Item[] }) {
               <textarea name={`item_description_${index}`} defaultValue={String(item.description || "")} className={inputClass} />
               <label className="block text-sm font-semibold">Biểu tượng<select name={`item_icon_${index}`} defaultValue={String(item.icon || "building")} className={inputClass}>{iconOptions.map((icon) => <option key={icon} value={icon}>{icon}</option>)}</select></label>
               {type === "pillars" ? <textarea name={`item_points_${index}`} defaultValue={Array.isArray(item.points) ? item.points.join("\n") : ""} className={inputClass} placeholder="Mỗi dòng một ý" /> : null}
+              {type === "pillars" ? <input name={`item_color_${index}`} defaultValue={String(item.color || "#094690")} className={inputClass} placeholder="Màu nhận diện #094690" /> : null}
               <input name={`item_href_${index}`} defaultValue={String(item.href || "")} className={inputClass} placeholder="Liên kết" />
               <input name={`item_cta_${index}`} defaultValue={String(item.cta || "")} className={inputClass} placeholder="Nhãn nút" />
             </>

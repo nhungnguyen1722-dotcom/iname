@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { BangGiaPage } from "@/components/site/BangGiaPage";
 import { PageSections } from "@/components/site/PageSections";
 import {
   canPreview,
@@ -34,6 +35,20 @@ export async function renderContentPage(path: string, previewRequested: boolean,
   const data = await getPageByPath(path, preview)
     || (path === "/tin-tuc" ? await getPageByPath("/kien-thuc", preview) : null);
   if (!data) notFound();
+  if (path === "/bang-gia") {
+    const section = (key: string) => data.sections.find((item) => item.section_key === key);
+    return (
+      <BangGiaPage
+        hero={section("price-hero")}
+        plans={chrome.plans}
+        compare={section("price-compare")}
+        addons={section("price-addons")}
+        notes={section("price-notes")}
+        faq={section("price-faq")}
+        cta={section("price-cta")}
+      />
+    );
+  }
   return (
     <PageSections
       sections={data.sections}

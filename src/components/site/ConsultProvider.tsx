@@ -3,6 +3,7 @@
 import { createContext, memo, useCallback, useContext, useMemo, useState } from "react";
 import { ContactForm } from "./ContactForm";
 import type { PricingPlan } from "@/lib/content";
+import { ActionLabel } from "./ActionLabel";
 
 type Settings = Record<string, string>;
 
@@ -56,7 +57,7 @@ export const ConsultButton = memo(function ConsultButton({
   const { openConsult } = useConsult();
   return (
     <button type="button" className={className} onClick={openConsult}>
-      {label}
+      <ActionLabel label={label} />
     </button>
   );
 });

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CmsImage } from "@/components/site/CmsImage";
+import { HoverArticleCard } from "@/components/site/HoverArticleCard";
 import {
   canPreview,
   getArticleBySlug,
@@ -25,7 +26,7 @@ export async function generateMetadata({
   const article = await getArticleBySlug(slug, preview);
   if (!article) return { title: "Không tìm thấy dịch vụ kế toán" };
   return {
-    title: `${article.seo_title || article.title} | Dịch Vụ Kế Toán Iname`,
+    title: `${article.seo_title || article.title} | Dịch Vụ Kế Toán iName`,
     description: article.seo_description || article.excerpt || undefined,
     alternates: { canonical: `/ke-toan/${article.slug}` },
     robots: article.status === "published" ? undefined : { index: false, follow: false },
@@ -84,7 +85,7 @@ export default async function AccountingArticlePage({
   return (
     <main className="flex-1">
       {/* Top Banner */}
-      <header className="relative isolate overflow-hidden bg-primary text-primary-foreground">
+      <header className="page-banner relative isolate overflow-hidden bg-primary text-primary-foreground">
         {article.cover_url ? (
           <div className="absolute inset-0 -z-20 opacity-30">
             <CmsImage src={article.cover_url} alt="" className="object-cover" sizes="100vw" priority />
@@ -106,7 +107,7 @@ export default async function AccountingArticlePage({
             Dịch vụ kế toán doanh nghiệp
           </div>
 
-          <h1 className="max-w-4xl font-display text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
+          <h1 className="banner-h1 max-w-4xl font-extrabold">
             {article.title}
           </h1>
 
@@ -117,7 +118,7 @@ export default async function AccountingArticlePage({
           ) : null}
 
           <div className="mt-6 flex flex-wrap items-center gap-4 text-xs text-primary-foreground/75">
-            <span>Đội ngũ Kế toán & Kiểm toán viên Iname</span>
+            <span>Đội ngũ Kế toán & Kiểm toán viên iName</span>
             <span>·</span>
             <span>Cập nhật mới nhất 2026</span>
           </div>
@@ -161,27 +162,23 @@ export default async function AccountingArticlePage({
             dangerouslySetInnerHTML={{ __html: safeHtml }}
           />
 
-          {/* Cam kết & Giá trị Iname mang lại */}
+          {/* Cam kết & Giá trị iName mang lại */}
           <div className="mt-12 rounded-2xl border border-border bg-card p-6 shadow-card sm:p-8">
             <h3 className="font-display text-xl font-bold text-foreground">
-              Cam kết của Iname khi phụ trách {article.title}
+              Cam kết của iName khi phụ trách {article.title}
             </h3>
             <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
               <li className="flex items-start gap-2.5">
                 <span className="font-bold text-emerald-600">✓</span>
-                <span><strong>Bảo mật thông tin 100%:</strong> Ký cam kết bảo mật số liệu tài chính doanh nghiệp bằng văn bản pháp lý.</span>
+                <span><strong>Bảo mật thông tin tài chính:</strong> Số liệu kế toán chỉ dùng để làm sổ và kê khai, có cam kết bảo mật bằng văn bản.</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <span className="font-bold text-emerald-600">✓</span>
-                <span><strong>Chịu trách nhiệm bồi thường:</strong> Chịu phạt 100% nếu phát sinh lỗi kê khai hoặc chậm nộp do Iname.</span>
+                <span><strong>Chứng từ chính xác:</strong> Đối chiếu hóa đơn và dữ liệu trước khi nộp, hạn chế sai sót làm phát sinh phạt.</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <span className="font-bold text-emerald-600">✓</span>
-                <span><strong>Hỗ trợ tận nơi:</strong> Nhận chứng từ gốc tận văn phòng khách hàng định kỳ hàng tháng.</span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <span className="font-bold text-emerald-600">✓</span>
-                <span><strong>Đại diện giải trình:</strong> Chuyên gia kế toán trực tiếp làm việc với cơ quan thuế khi có thanh kiểm tra.</span>
+                <span><strong>Bàn giao sổ sách mỗi tháng:</strong> Hồ sơ được trả đầy đủ theo kỳ, doanh nghiệp không bị giữ chứng từ.</span>
               </li>
             </ul>
           </div>
@@ -192,7 +189,7 @@ export default async function AccountingArticlePage({
               Cần tư vấn chi tiết về {article.title}?
             </h2>
             <p className="mt-2 text-sm text-primary-foreground/85 leading-relaxed">
-              Để lại thông tin hoặc gọi ngay hotline, chuyên viên kế toán trưởng của Iname sẽ liên hệ hỗ trợ bạn trong vòng 15 phút làm việc.
+              Để lại thông tin hoặc gọi ngay hotline, chuyên viên kế toán trưởng của iName sẽ liên hệ hỗ trợ bạn trong vòng 15 phút làm việc.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <Link
@@ -302,29 +299,16 @@ export default async function AccountingArticlePage({
             <h2 className="font-display text-2xl font-extrabold text-foreground">Dịch vụ & Bài viết liên quan</h2>
             <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {related.map((item) => (
-                <article key={item.id} className="overflow-hidden rounded-xl border border-border bg-card shadow-card hover:shadow-glow transition-all">
-                  <Link href={`/ke-toan/${item.slug}`} className="relative block aspect-[16/9] bg-secondary">
-                    {item.cover_url ? (
-                      <CmsImage src={item.cover_url} alt={item.cover_alt || item.title} className="object-cover" sizes="(min-width: 1024px) 30vw, 90vw" />
-                    ) : (
-                      <span className="absolute inset-0 bg-mesh" />
-                    )}
-                  </Link>
-                  <div className="p-5">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-accent">{item.category_name || "Kế toán"}</p>
-                    <h3 className="mt-2 font-display font-bold text-base">
-                      <Link href={`/ke-toan/${item.slug}`} className="hover:text-primary transition-colors line-clamp-2">
-                        {item.title}
-                      </Link>
-                    </h3>
-                    <p className="mt-2 line-clamp-2 text-xs text-muted-foreground leading-relaxed">
-                      {item.excerpt}
-                    </p>
-                    <Link href={`/ke-toan/${item.slug}`} className="mt-3 inline-flex text-xs font-semibold text-primary hover:underline">
-                      Xem chi tiết →
-                    </Link>
-                  </div>
-                </article>
+                <HoverArticleCard
+                  key={item.id}
+                  href={`/ke-toan/${item.slug}`}
+                  title={item.title}
+                  excerpt={item.excerpt}
+                  coverUrl={item.cover_url}
+                  coverAlt={item.cover_alt}
+                  category={item.category_name || "Kế toán"}
+                  cta="Xem chi tiết"
+                />
               ))}
             </div>
           </div>

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { getPageByPath } from "@/lib/content";
 import { renderContentPage } from "@/components/site/render-page";
 
-const paths = new Set(["/van-phong-ao", "/ke-toan", "/bang-gia", "/tin-tuc", "/lien-he"]);
+const paths = new Set(["/van-phong-ao", "/ke-toan", "/bang-gia", "/bang-gia-cu", "/giai-phap-cong-nghe", "/tin-tuc", "/lien-he", "/trang-chu-cu"]);
 
 export async function generateMetadata({
   params,

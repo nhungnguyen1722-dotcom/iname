@@ -374,7 +374,7 @@ await section("trang-chu", {
   title: t("home.hero.title"),
   description: t("home.hero.subtitle"),
   imageUrl: HERO,
-  imageAlt: t("home.hero.imageAlt") || "Không gian làm việc hiện đại tại Iname",
+  imageAlt: t("home.hero.imageAlt") || "Không gian làm việc hiện đại tại iName",
   buttonLabel: t("common.actions.consult"),
   buttonUrl: "#tu-van",
   secondaryButtonLabel: t("common.actions.viewPricing"),
@@ -414,13 +414,21 @@ await section("trang-chu", {
       href: "/ke-toan",
       cta: t("common.actions.details"),
     },
+    {
+      title: t("home.services.technology.title"),
+      description: t("home.services.technology.description"),
+      icon: "monitor",
+      points: points("home.services.technology"),
+      href: "/giai-phap-cong-nghe",
+      cta: t("common.actions.details"),
+    },
   ],
 });
 
 await section("trang-chu", {
   key: "home-why",
   type: "cards",
-  adminName: "Vì sao chọn Iname",
+  adminName: "Vì sao chọn iName",
   eyebrow: t("home.why.eyebrow"),
   title: t("home.why.title"),
   description: t("home.why.subtitle"),
@@ -522,7 +530,7 @@ await section("van-phong-ao", {
 await section("van-phong-ao", {
   key: "vo-intro",
   type: "media",
-  adminName: "Văn phòng ảo của Iname gồm những gì?",
+  adminName: "Văn phòng ảo của iName gồm những gì?",
   title: t("vo.intro.title"),
   description: t("vo.intro.description"),
   imageUrl: RECEPTION,
@@ -622,7 +630,7 @@ await section("ke-toan", {
   title: t("ac.hero.title"),
   description: t("ac.hero.subtitle"),
   imageUrl: TEAM,
-  imageAlt: "Đội ngũ tư vấn kế toán Iname",
+  imageAlt: "Đội ngũ tư vấn kế toán iName",
   buttonLabel: t("common.actions.consult"),
   buttonUrl: "#tu-van",
   secondaryButtonLabel: t("common.actions.viewPricing"),
@@ -803,7 +811,7 @@ await section("tin-tuc", {
   title: t("blog.hero.title"),
   description: t("blog.hero.subtitle"),
   imageUrl: TEAM,
-  imageAlt: "Không gian làm việc và đội ngũ Iname",
+  imageAlt: "Không gian làm việc và đội ngũ iName",
   config: { icon: "file" },
 });
 
@@ -834,7 +842,7 @@ await section("lien-he", {
   title: t("contact.hero.title"),
   description: t("contact.hero.subtitle"),
   imageUrl: "/uploads/contact-hero.jpg",
-  imageAlt: "Trao đổi với chuyên viên Iname",
+  imageAlt: "Trao đổi với chuyên viên iName",
 });
 
 await section("lien-he", {
@@ -932,7 +940,7 @@ for (const post of posts) {
 }
 
 for (const asset of [
-  { url: HERO, alt: t("home.hero.imageAlt") || "Không gian làm việc hiện đại tại Iname" },
+  { url: HERO, alt: t("home.hero.imageAlt") || "Không gian làm việc hiện đại tại iName" },
   { url: RECEPTION, alt: t("vo.gallery.image2Caption") },
   { url: TEAM, alt: "Dịch vụ tư vấn và hỗ trợ kế toán" },
 ]) {

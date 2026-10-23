@@ -32,7 +32,7 @@ export function AdminShell({
     <div className="min-h-screen bg-secondary/40 lg:grid lg:grid-cols-[240px_1fr]">
       <aside className="border-b border-border bg-card lg:border-b-0 lg:border-r">
         <div className="px-4 py-5">
-          <p className="font-display text-lg font-extrabold text-primary">INAME CMS</p>
+          <p className="font-display text-lg font-extrabold text-primary">iName CMS</p>
           <p className="text-xs text-muted-foreground">{userName}</p>
         </div>
         <nav className="flex gap-2 overflow-auto px-3 pb-4 lg:block lg:space-y-1">

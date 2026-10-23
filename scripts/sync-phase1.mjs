@@ -29,7 +29,7 @@ async function main() {
       banner_url: "/uploads/banners/dien-bien-phu-banner.jpg",
       banner_alt: "Banner văn phòng ảo Điện Biên Phủ Quận 1",
       excerpt: "Văn phòng ảo tại số 95 Điện Biên Phủ, Quận 1 — vị trí đắc địa giáp ranh Quận 3 và Bình Thạnh, địa chỉ đăng ký kinh doanh uy tín hàng đầu cho doanh nghiệp.",
-      content: `Văn phòng ảo Điện Biên Phủ là một trong những địa điểm chiến lược hàng đầu trong hệ thống Iname, tọa lạc tại số 95 Điện Biên Phủ, Phường Đa Kao, Quận 1 — trung tâm tài chính và thương mại sầm uất bậc nhất TP. Hồ Chí Minh.
+      content: `Văn phòng ảo Điện Biên Phủ là một trong những địa điểm chiến lược hàng đầu trong hệ thống iName, tọa lạc tại số 95 Điện Biên Phủ, Phường Đa Kao, Quận 1 — trung tâm tài chính và thương mại sầm uất bậc nhất TP. Hồ Chí Minh.
 
 Vị trí địa lý đắc địa:
 - Nằm ngay trục đường huyết mạch Điện Biên Phủ, dễ dàng kết nối nhanh chóng sang Quận 3, Quận Bình Thạnh, Phú Nhuận và khu đô thị Thủ Thiêm chỉ trong 5-10 phút di chuyển.
@@ -302,7 +302,7 @@ Vị trí địa lý đắc địa:
     await pool.query(
       `UPDATE page_sections SET
         image_url = '/uploads/contact-hero.jpg',
-        image_alt = 'Trao đổi với chuyên viên tư vấn Iname',
+        image_alt = 'Trao đổi với chuyên viên tư vấn iName',
         updated_at = NOW()
        WHERE page_id = $1 AND section_type = 'page-hero'`,
       [pageId]
@@ -328,8 +328,8 @@ Vị trí địa lý đắc địa:
       slug: "ke-toan-tron-goi",
       excerpt: "Xử lý chứng từ đầu vào – đầu ra, hạch toán, lập sổ sách, báo cáo tài chính và gửi bảng tổng hợp hàng tháng cho ban điều hành.",
       cover_url: "https://cdn.enter.pro/resources/uid_100635008/ke-toan-doi-ngu_9caaa18c.png",
-      content: `<h2>1. Tổng quan dịch vụ kế toán trọn gói Iname</h2>
-<p>Dịch vụ kế toán trọn gói của Iname được thiết kế toàn diện nhằm giúp các doanh nghiệp vừa và nhỏ, doanh nghiệp mới thành lập hoặc hộ kinh doanh cá thể hoàn toàn yên tâm về công tác sổ sách, báo cáo tài chính và nghĩa vụ thuế pháp lý mà không cần tốn chi phí xây dựng phòng kế toán cồng kềnh.</p>
+      content: `<h2>1. Tổng quan dịch vụ kế toán trọn gói iName</h2>
+<p>Dịch vụ kế toán trọn gói của iName được thiết kế toàn diện nhằm giúp các doanh nghiệp vừa và nhỏ, doanh nghiệp mới thành lập hoặc hộ kinh doanh cá thể hoàn toàn yên tâm về công tác sổ sách, báo cáo tài chính và nghĩa vụ thuế pháp lý mà không cần tốn chi phí xây dựng phòng kế toán cồng kềnh.</p>
 
 <h2>2. Các công việc thực hiện hàng tháng</h2>
 <ul>
@@ -349,8 +349,8 @@ Vị trí địa lý đắc địa:
   <li>Lập tờ khai Quyết toán thuế TNDN và Quyết toán thuế TNCN năm.</li>
 </ul>
 
-<h2>4. Cam kết trách nhiệm của Iname</h2>
-<p>Iname cam kết chịu trách nhiệm bồi thường 100% nếu phát sinh tiền phạt do sai sót hoặc nộp chậm báo cáo thuộc lỗi của chuyên viên chúng tôi. Đội ngũ kế toán trưởng giàu kinh nghiệm sẽ trực tiếp ký duyệt hồ sơ và đại diện giải trình với cơ quan thuế khi có quyết định thanh tra.</p>`,
+<h2>4. Cam kết trách nhiệm của iName</h2>
+<p>iName cam kết chịu trách nhiệm bồi thường 100% nếu phát sinh tiền phạt do sai sót hoặc nộp chậm báo cáo thuộc lỗi của chuyên viên chúng tôi. Đội ngũ kế toán trưởng giàu kinh nghiệm sẽ trực tiếp ký duyệt hồ sơ và đại diện giải trình với cơ quan thuế khi có quyết định thanh tra.</p>`,
     },
     {
       title: "Báo cáo thuế định kỳ",
@@ -360,7 +360,7 @@ Vị trí địa lý đắc địa:
       content: `<h2>1. Tầm quan trọng của việc nộp báo cáo thuế đúng hạn</h2>
 <p>Kê khai thuế đúng hạn và chính xác là nghĩa vụ bắt buộc của mọi doanh nghiệp hoạt động tại Việt Nam. Bất kỳ sự chậm trễ hay sai sót nào trong tờ khai đều có thể dẫn đến các mức phạt hành chính từ cơ quan thuế và gây ảnh hưởng tiêu cực đến điểm uy tín thuế của công ty.</p>
 
-<h2>2. Danh mục báo cáo thuế định kỳ Iname phụ trách</h2>
+<h2>2. Danh mục báo cáo thuế định kỳ iName phụ trách</h2>
 <ul>
   <li><strong>Thuế giá trị gia tăng (GTGT):</strong> Kê khai theo tháng (trước ngày 20 tháng sau) hoặc theo quý (trước ngày cuối cùng của tháng đầu quý sau).</li>
   <li><strong>Thuế thu nhập cá nhân (TNCN):</strong> Kê khai tiền lương, tiền công hàng tháng hoặc quý kèm danh sách lao động được khấu trừ thuế.</li>
@@ -369,7 +369,7 @@ Vị trí địa lý đắc địa:
 </ul>
 
 <h2>3. Quy trình rà soát và kiểm soát rủi ro</h2>
-<p>Trước khi nộp bất kỳ tờ khai nào, chuyên viên Iname luôn thực hiện đối chiếu chéo dữ liệu hóa đơn điện tử trên cổng Tổng cục Thuế với bảng kê mua vào - bán ra của doanh nghiệp, giúp phát hiện sớm các hóa đơn bị hủy, sai mã số thuế hoặc rủi ro nhà cung cấp bỏ trốn.</p>`,
+<p>Trước khi nộp bất kỳ tờ khai nào, chuyên viên iName luôn thực hiện đối chiếu chéo dữ liệu hóa đơn điện tử trên cổng Tổng cục Thuế với bảng kê mua vào - bán ra của doanh nghiệp, giúp phát hiện sớm các hóa đơn bị hủy, sai mã số thuế hoặc rủi ro nhà cung cấp bỏ trốn.</p>`,
     },
     {
       title: "Quyết toán thuế",
@@ -379,7 +379,7 @@ Vị trí địa lý đắc địa:
       content: `<h2>1. Quyết toán thuế là gì và khi nào cần thực hiện?</h2>
 <p>Quyết toán thuế là việc doanh nghiệp xác định lại số thuế thực tế phải nộp cho nhà nước trong một năm tài chính, hoặc khi doanh nghiệp giải thể, sáp nhập, chia tách hoặc kết thúc chu kỳ thanh tra định kỳ 3 - 5 năm một lần.</p>
 
-<h2>2. Nội dung dịch vụ quyết toán thuế tại Iname</h2>
+<h2>2. Nội dung dịch vụ quyết toán thuế tại iName</h2>
 <ul>
   <li>Kiểm tra, rà soát lại toàn bộ hệ thống hóa đơn, chứng từ kế toán trong suốt niên độ tài chính.</li>
   <li>Điều chỉnh các sai lệch, bổ sung hồ sơ chứng từ hợp lệ để bảo vệ chi phí được trừ khi tính thuế TNDN.</li>
@@ -388,7 +388,7 @@ Vị trí địa lý đắc địa:
   <li>Trực tiếp làm việc, giải trình chi tiết từng khoản mục số liệu với đoàn thanh tra, kiểm tra thuế.</li>
 </ul>
 
-<h2>3. Lợi ích khi sử dụng dịch vụ của Iname</h2>
+<h2>3. Lợi ích khi sử dụng dịch vụ của iName</h2>
 <p>Doanh nghiệp tiết kiệm tối đa thời gian, tránh bị truy thu thuế không đáng có và an tâm phát triển kinh doanh khi có chuyên gia kế toán đồng hành bảo vệ quyền lợi hợp pháp.</p>`,
     },
     {
@@ -409,7 +409,7 @@ Vị trí địa lý đắc địa:
 </ul>
 
 <h2>3. Kết quả bàn giao cho doanh nghiệp</h2>
-<p>Iname cung cấp báo cáo phân tích rủi ro chi tiết kèm phương án xử lý, khắc phục và hoàn thiện hồ sơ hợp lệ trước ngày cơ quan thuế chính thức làm việc tại doanh nghiệp.</p>`,
+<p>iName cung cấp báo cáo phân tích rủi ro chi tiết kèm phương án xử lý, khắc phục và hoàn thiện hồ sơ hợp lệ trước ngày cơ quan thuế chính thức làm việc tại doanh nghiệp.</p>`,
     },
     {
       title: "Kế toán trưởng thuê ngoài",
@@ -417,9 +417,9 @@ Vị trí địa lý đắc địa:
       excerpt: "Kế toán trưởng làm việc theo buổi hoặc theo tuần để kiểm soát chất lượng sổ sách, phê duyệt hồ sơ và tư vấn cho kế toán nội bộ.",
       cover_url: "https://cdn.enter.pro/resources/uid_100635008/ke-toan-doi-ngu_9caaa18c.png",
       content: `<h2>1. Giải pháp kế toán trưởng thuê ngoài tối ưu chi phí</h2>
-<p>Một kế toán trưởng toàn thời gian có năng lực thường yêu cầu mức lương từ 20 - 40 triệu đồng/tháng, đây là gánh nặng lớn đối với các công ty vừa và nhỏ. Dịch vụ kế toán trưởng thuê ngoài của Iname giúp doanh nghiệp sở hữu chuyên gia kế toán cấp cao với mức chi phí chỉ bằng 1/5.</p>
+<p>Một kế toán trưởng toàn thời gian có năng lực thường yêu cầu mức lương từ 20 - 40 triệu đồng/tháng, đây là gánh nặng lớn đối với các công ty vừa và nhỏ. Dịch vụ kế toán trưởng thuê ngoài của iName giúp doanh nghiệp sở hữu chuyên gia kế toán cấp cao với mức chi phí chỉ bằng 1/5.</p>
 
-<h2>2. Trách nhiệm của Kế toán trưởng Iname</h2>
+<h2>2. Trách nhiệm của Kế toán trưởng iName</h2>
 <ul>
   <li>Chịu trách nhiệm pháp lý và đứng tên Kế toán trưởng trên Báo cáo tài chính và sổ sách kế toán của doanh nghiệp.</li>
   <li>Kiểm soát, hướng dẫn và phân công công việc cho nhân viên kế toán nội bộ của doanh nghiệp.</li>
@@ -429,7 +429,7 @@ Vị trí địa lý đắc địa:
 </ul>
 
 <h2>3. Cam kết chất lượng dịch vụ</h2>
-<p>Tất cả Kế toán trưởng phụ trách tại Iname đều có chứng chỉ hành nghề kế toán, kiểm toán (CPA) và trên 8 năm kinh nghiệm thực chiến quản lý tài chính doanh nghiệp.</p>`,
+<p>Tất cả Kế toán trưởng phụ trách tại iName đều có chứng chỉ hành nghề kế toán, kiểm toán (CPA) và trên 8 năm kinh nghiệm thực chiến quản lý tài chính doanh nghiệp.</p>`,
     },
     {
       title: "Hóa đơn điện tử và chữ ký số",
@@ -439,7 +439,7 @@ Vị trí địa lý đắc địa:
       content: `<h2>1. Quy định bắt buộc về hóa đơn điện tử và chữ ký số</h2>
 <p>Theo Nghị định 123/2020/NĐ-CP và Thông tư 78/2021/TT-BTC, 100% doanh nghiệp và hộ kinh doanh phải sử dụng hóa đơn điện tử có mã hoặc không có mã của cơ quan thuế, đồng thời bắt buộc phải có chữ ký số (Token/HSM) hợp lệ để thực hiện các giao dịch điện tử.</p>
 
-<h2>2. Gói hỗ trợ toàn diện của Iname</h2>
+<h2>2. Gói hỗ trợ toàn diện của iName</h2>
 <ul>
   <li>Cung cấp và gia hạn chữ ký số (Token, SmartCA, HSM) với mức chiết khấu tốt nhất từ các nhà mạng uy tín (VNPT, Viettel, FPT, MISA).</li>
   <li>Cài đặt phần mềm chữ ký số lên máy tính và hướng dẫn ký số trên cổng thuế điện tử, hải quan, bảo hiểm xã hội.</li>
@@ -449,7 +449,7 @@ Vị trí địa lý đắc địa:
 </ul>
 
 <h2>3. Hỗ trợ kỹ thuật 24/7</h2>
-<p>Chuyên viên Iname hỗ trợ qua Ultraviewer/Anydesk mọi lúc khi phát sinh lỗi phát hành hóa đơn hoặc trục trặc chữ ký số, đảm bảo dòng tiền kinh doanh không bị gián đoạn.</p>`,
+<p>Chuyên viên iName hỗ trợ qua Ultraviewer/Anydesk mọi lúc khi phát sinh lỗi phát hành hóa đơn hoặc trục trặc chữ ký số, đảm bảo dòng tiền kinh doanh không bị gián đoạn.</p>`,
     },
     {
       title: "Tư vấn thuế, pháp lý và bảo hiểm xã hội",
@@ -470,7 +470,7 @@ Vị trí địa lý đắc địa:
 </ul>
 
 <h2>3. Đồng hành bền vững</h2>
-<p>Iname giúp doanh nghiệp xây dựng môi trường làm việc chuyên nghiệp, tuân thủ đúng pháp luật lao động và bảo hiểm, tạo nền tảng vững chắc để thu hút và giữ chân nhân tài.</p>`,
+<p>iName giúp doanh nghiệp xây dựng môi trường làm việc chuyên nghiệp, tuân thủ đúng pháp luật lao động và bảo hiểm, tạo nền tảng vững chắc để thu hút và giữ chân nhân tài.</p>`,
     },
   ];
 

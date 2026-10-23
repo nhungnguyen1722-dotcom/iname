@@ -13,7 +13,7 @@ export default async function LogoAdmin({ searchParams }: { searchParams: Promis
       <form action={saveLogo} className="mt-6 max-w-xl space-y-4 rounded-xl border border-border bg-card p-5">
         {settings.logo_url ? null : <p className="text-sm text-muted-foreground">Chọn ảnh tải lên hoặc ảnh có sẵn trong thư viện.</p>}
         <ImageField name="logo_url" uploadName="file" value={settings.logo_url || ""} media={media} label="Biểu tượng logo" />
-        <label className="block text-sm font-semibold">Văn bản thay thế<input name="logo_alt" defaultValue={settings.logo_alt || "Iname"} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" /></label>
+        <label className="block text-sm font-semibold">Văn bản thay thế<input name="logo_alt" defaultValue={settings.logo_alt || "iName"} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" /></label>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="clear" /> Ngừng dùng logo ảnh, quay lại biểu tượng</label>
         <button className={buttonClass} type="submit">Lưu logo</button>
       </form>

@@ -34,13 +34,13 @@ Xuất database local thành file SQL bị Git bỏ qua:
 npm run db:dump
 ```
 
-Để đồng bộ local lên Neon, giữ `DATABASE_URL` trỏ tới database local và cấu hình `NEON_DATABASE_URL` trong `.env.local` hoặc biến môi trường. Chạy:
+Để ứng dụng dùng Neon, đặt `DATABASE_URL` thành chuỗi kết nối Neon. Giữ URL PostgreSQL trên máy trong `LOCAL_DATABASE_URL` và cấu hình `NEON_DATABASE_URL` trỏ tới cùng database Neon trong `.env.local` hoặc biến môi trường. Chạy:
 
 ```bash
 npm run db:sync-neon
 ```
 
-Lệnh áp dụng migration còn thiếu trên Neon, sau đó thêm/cập nhật các bản ghi theo khóa chính từ local; bản ghi chỉ có trên Neon được giữ nguyên. Nếu gặp xung đột khóa duy nhất với ID khác, quá trình dừng trước khi thay đổi dữ liệu.
+Lệnh áp dụng migration còn thiếu trên Neon, sau đó đồng bộ các bản ghi local theo khóa chính và khóa duy nhất. Nếu ID khác nhau nhưng khóa duy nhất khớp, Neon giữ ID hiện có và các khóa ngoại local được ánh xạ tương ứng; bản ghi chỉ có trên Neon được giữ nguyên. Quá trình đồng bộ dữ liệu nằm trong một transaction và rollback nếu gặp lỗi.
 
 Trang công khai gom menu, footer, giá, dịch vụ và thiết lập trong một truy vấn, rồi giữ kết quả 15 giây. Lưu nội dung trong CMS xóa cache này ngay. Ảnh từ CDN được Next.js đổi sang WebP/AVIF. Tab bảng giá và câu hỏi dùng `memo` để không dựng lại các mục không đổi.
 

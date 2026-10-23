@@ -14,7 +14,6 @@ export default async function HeaderAdmin({ searchParams }: { searchParams: Prom
         <input type="hidden" name="flags" value="1" />
         <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" name="header_visible" defaultChecked={settings.header_visible !== "false"} /> Hiện header</label>
         <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" name="topbar_visible" defaultChecked={settings.topbar_visible !== "false"} /> Hiện thanh thông tin</label>
-        <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" name="header_show_phone" defaultChecked={settings.header_show_phone !== "false"} /> Hiện số điện thoại</label>
         <label className="block text-sm font-semibold">Nhãn nút<input name="header_cta_label" defaultValue={settings.header_cta_label || ""} className={inputClass} /></label>
         <label className="block text-sm font-semibold">URL nút<input name="header_cta_url" defaultValue={settings.header_cta_url || "#tu-van"} className={inputClass} /></label>
         <label className="block text-sm font-semibold">Hotline<input name="hotline" defaultValue={settings.hotline || ""} className={inputClass} /></label>

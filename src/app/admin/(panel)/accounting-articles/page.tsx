@@ -40,7 +40,7 @@ export default async function AccountingArticlesAdmin({
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-3xl font-extrabold">Bài viết kế toán</h1>
-        {category ? <Link className={buttonClass} href={`/admin/articles/new?category=${category.id}`}>Tạo bài viết</Link> : null}
+        {category ? <Link className={buttonClass} href={`/admin/articles/new?category=${category.id}&from=accounting`}>Tạo bài viết</Link> : null}
       </div>
       <Notice saved={query.saved} error={query.error} />
       {!category ? (
@@ -65,7 +65,7 @@ export default async function AccountingArticlesAdmin({
                   <input type="hidden" name="id" value={article.id} />
                   <button className="text-sm font-semibold text-primary">{article.status === "published" ? "Tắt hiển thị" : "Xuất bản"}</button>
                 </form>
-                <Link className="text-sm font-semibold text-primary" href={`/admin/articles/${article.id}`}>Sửa</Link>
+                <Link className="text-sm font-semibold text-primary" href={`/admin/articles/${article.id}?from=accounting`}>Sửa</Link>
               </div>
             </li>
           ))}

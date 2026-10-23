@@ -4,20 +4,19 @@ import { sql } from "@/lib/db";
 
 export default async function PagesAdmin({ searchParams }: { searchParams: Promise<{ saved?: string; error?: string }> }) {
   const query = await searchParams;
-  const pages = await sql<{ id: number; title: string; path: string; status: string; updated_at: string; section_count: string }>(
-    `SELECT p.id, p.title, p.path, p.status, p.updated_at::text,
-            (SELECT COUNT(*)::text FROM page_sections s WHERE s.page_id = p.id AND s.deleted_at IS NULL) AS section_count
-     FROM pages p WHERE p.deleted_at IS NULL ORDER BY p.sort_order`,
+  const pages = await sql<{ id: number; slug: string; title: string; path: string; status: string; updated_at: string }>(
+    `SELECT p.id, p.slug, p.title, p.path, p.status, p.updated_at::text
+     FROM pages p WHERE p.deleted_at IS NULL ORDER BY p.sort_order, p.id`,
   );
   return (
     <div>
       <h1 className="font-display text-3xl font-extrabold">Trang</h1>
       <Notice saved={query.saved} error={query.error} />
       <div className="mt-6 overflow-x-auto rounded-xl border border-border bg-card">
-        <table className="w-full min-w-[720px] text-sm">
+        <table className="w-full min-w-[640px] text-sm">
           <thead className="bg-secondary/70 text-left">
             <tr>
-              <th className="px-4 py-3">Tên</th><th>URL</th><th>Trạng thái</th><th>Section</th><th>Cập nhật</th><th></th>
+              <th className="px-4 py-3">Tên</th><th>URL</th><th>Trạng thái</th><th>Cập nhật</th><th></th>
             </tr>
           </thead>
           <tbody>
@@ -26,11 +25,9 @@ export default async function PagesAdmin({ searchParams }: { searchParams: Promi
                 <td className="px-4 py-3 font-semibold">{page.title}</td>
                 <td>{page.path}</td>
                 <td>{page.status === "published" ? "Xuất bản" : "Nháp"}</td>
-                <td>{page.section_count}</td>
                 <td>{new Date(page.updated_at).toLocaleString("vi-VN")}</td>
                 <td className="space-x-3 px-4 py-3">
-                  <Link className="font-semibold text-primary" href={`/admin/pages/${page.id}`}>Sửa</Link>
-                  <Link className="font-semibold text-primary" href={`/admin/pages/${page.id}/sections`}>Section</Link>
+                  <Link className="font-semibold text-primary" href={`/admin/pages/${page.slug}`}>Sửa</Link>
                   <Link className="font-semibold text-primary" href={`${page.path}?preview=1`}>Xem trước</Link>
                 </td>
               </tr>

@@ -31,6 +31,53 @@ function text(formData: FormData, key: string, max = 4000) {
   return String(formData.get(key) || "").trim().slice(0, max);
 }
 
+async function pageSlug(pageId: number) {
+  const rows = await sql<{ slug: string }>("SELECT slug FROM pages WHERE id = $1", [pageId]);
+  return rows[0]?.slug || String(pageId);
+}
+
+export async function uploadMediaFiles(formData: FormData) {
+  await requireAdmin();
+  const urls: string[] = [];
+  try {
+    for (const file of formData.getAll("files")) {
+      const url = await uploadImageAsset(file, text(formData, "alt", 300) || "Ảnh nội dung");
+      if (url) urls.push(url);
+    }
+  } catch (error) {
+    return { urls, error: error instanceof Error ? error.message : "Không tải được ảnh." };
+  }
+  return { urls, error: "" };
+}
+
+export async function saveSectionOrder(formData: FormData) {
+  const user = await requireAdmin();
+  const pageSlugValue = text(formData, "pageSlug", 180);
+  const ids = text(formData, "order", 4000).split(",").map((part) => Number(part)).filter((id) => Number.isInteger(id) && id > 0);
+  const pages = await sql<{ id: number }>("SELECT id FROM pages WHERE slug = $1 AND deleted_at IS NULL", [pageSlugValue]);
+  const pageId = pages[0]?.id;
+  if (!pageId) redirect("/admin/pages?error=" + encodeURIComponent("Không tìm thấy trang."));
+  for (let index = 0; index < ids.length; index += 1) {
+    await sql(
+      "UPDATE page_sections SET sort_order = $1, updated_at = NOW() WHERE id = $2 AND page_id = $3 AND deleted_at IS NULL",
+      [(index + 1) * 10, ids[index], pageId],
+    );
+  }
+  await audit(user.id, "reorder", "section", pageSlugValue);
+  refresh();
+  redirect(`/admin/pages/${pageSlugValue}?saved=1`);
+}
+
+export async function toggleSectionVisible(formData: FormData) {
+  const user = await requireAdmin();
+  const id = Number(formData.get("id"));
+  const slug = text(formData, "pageSlug", 180);
+  await sql("UPDATE page_sections SET visible = NOT visible, updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL", [id]);
+  await audit(user.id, "toggle", "section", String(id));
+  refresh();
+  redirect(`/admin/pages/${slug}?saved=1`);
+}
+
 export async function loginAdmin(_prev: { error: string }, formData: FormData) {
   const email = text(formData, "email", 255).toLowerCase();
   const password = String(formData.get("password") || "");
@@ -68,7 +115,7 @@ export async function savePage(formData: FormData) {
   const seoTitle = text(formData, "seoTitle", 255);
   const seoDescription = text(formData, "seoDescription", 500);
   const ogImage = safeImageUrl(text(formData, "ogImage", 1000));
-  if (!title) redirect(`/admin/pages/${id}?error=` + encodeURIComponent("Tên trang không được để trống."));
+  if (!title) redirect(`/admin/pages/${await pageSlug(id)}?error=` + encodeURIComponent("Tên trang không được để trống."));
   const pages = await sql<{ is_system: boolean }>("SELECT is_system FROM pages WHERE id = $1 AND deleted_at IS NULL", [id]);
   if (!pages[0]) redirect("/admin/pages?error=" + encodeURIComponent("Không tìm thấy trang."));
   await sql(
@@ -78,7 +125,7 @@ export async function savePage(formData: FormData) {
   );
   await audit(user.id, "update", "page", String(id), title);
   refresh();
-  redirect(`/admin/pages/${id}?saved=1`);
+  redirect(`/admin/pages/${await pageSlug(id)}?saved=1`);
 }
 
 function readItems(type: string, formData: FormData) {
@@ -90,9 +137,10 @@ function readItems(type: string, formData: FormData) {
     else if (type === "testimonials") items.push({ quote: text(formData, `item_quote_${i}`), author: text(formData, `item_author_${i}`, 255), company: text(formData, `item_company_${i}`, 255), avatar: text(formData, `item_avatar_${i}`, 8), rating: Math.min(5, Math.max(1, Number(formData.get(`item_rating_${i}`) || 5))) });
     else if (type === "stats") items.push({ value: text(formData, `item_value_${i}`, 80), label: text(formData, `item_label_${i}`, 255) });
     else if (type === "addons") items.push({ name: text(formData, `item_name_${i}`, 255), price: text(formData, `item_price_${i}`, 80) });
+    else if (type === "technology-stack") items.push({ name: text(formData, `item_name_${i}`, 100), mark: text(formData, `item_mark_${i}`, 100), color: text(formData, `item_color_${i}`, 20) });
     else if (type === "notes" || type === "hero" || type === "page-hero") items.push({ label: text(formData, `item_label_${i}`, 255), text: text(formData, `item_text_${i}`) });
     else if (type === "comparison") items.push({ label: text(formData, `item_label_${i}`, 255), values: [0, 1, 2].map((col) => text(formData, `item_value_${i}_${col}`, 255)) });
-    else if (type === "pillars") items.push({ title: text(formData, `item_title_${i}`, 255), description: text(formData, `item_description_${i}`), href: safeHref(text(formData, `item_href_${i}`, 500)), cta: text(formData, `item_cta_${i}`, 80), icon: text(formData, `item_icon_${i}`, 64), points: text(formData, `item_points_${i}`).split("\n").map((line) => line.trim()).filter(Boolean) });
+    else if (type === "pillars") items.push({ title: text(formData, `item_title_${i}`, 255), description: text(formData, `item_description_${i}`), href: safeHref(text(formData, `item_href_${i}`, 500)), cta: text(formData, `item_cta_${i}`, 80), icon: text(formData, `item_icon_${i}`, 64), color: text(formData, `item_color_${i}`, 20), points: text(formData, `item_points_${i}`).split("\n").map((line) => line.trim()).filter(Boolean) });
     else items.push({ title: text(formData, `item_title_${i}`, 255), description: text(formData, `item_description_${i}`), href: safeHref(text(formData, `item_href_${i}`, 500)), cta: text(formData, `item_cta_${i}`, 80), icon: text(formData, `item_icon_${i}`, 64) });
   }
   return items;
@@ -106,7 +154,8 @@ function blankItem(type: string) {
   if (type === "stats") return { value: "", label: "" };
   if (type === "addons") return { name: "", price: "" };
   if (type === "notes" || type === "hero" || type === "page-hero") return { label: "", text: "" };
-  if (type === "pillars") return { title: "", description: "", href: "", cta: "", icon: "building", points: [] };
+  if (type === "pillars") return { title: "", description: "", href: "", cta: "", icon: "building", color: "#094690", points: [] };
+  if (type === "technology-stack") return { name: "", mark: "", color: "#094690" };
   return { title: "", description: "", href: "", cta: "", icon: "building" };
 }
 
@@ -140,7 +189,7 @@ export async function saveSection(formData: FormData) {
     gallery = await readGallery(formData);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Ảnh không hợp lệ.";
-    redirect(`/admin/pages/${current.page_id}/sections/${id}?error=` + encodeURIComponent(message));
+    redirect(`/admin/pages/${await pageSlug(current.page_id)}/sections/${id}?error=` + encodeURIComponent(message));
   }
   if (intent === "add-item") items.push(blankItem(current.section_type));
   if (intent.startsWith("remove-item:")) items.splice(Number(intent.split(":")[1]), 1);
@@ -161,11 +210,11 @@ export async function saveSection(formData: FormData) {
       uploaded = await uploadImageAsset(formData.get("new_gallery_file"), alt);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Ảnh không hợp lệ.";
-      redirect(`/admin/pages/${current.page_id}/sections/${id}?error=` + encodeURIComponent(message));
+      redirect(`/admin/pages/${await pageSlug(current.page_id)}/sections/${id}?error=` + encodeURIComponent(message));
     }
     const raw = text(formData, "new_gallery_url", 1000);
     const url = uploaded || (raw ? safeImageUrl(raw) : "");
-    if (!url) redirect(`/admin/pages/${current.page_id}/sections/${id}?error=` + encodeURIComponent("URL ảnh mới không hợp lệ."));
+    if (!url) redirect(`/admin/pages/${await pageSlug(current.page_id)}/sections/${id}?error=` + encodeURIComponent("URL ảnh mới không hợp lệ."));
     gallery.push({ url, alt, caption: text(formData, "new_gallery_caption", 300) });
   }
   if (intent.startsWith("remove-gallery:")) gallery.splice(Number(intent.split(":")[1]), 1);
@@ -185,11 +234,11 @@ export async function saveSection(formData: FormData) {
     uploadedImage = await uploadImageAsset(formData.get("image_file"), text(formData, "imageAlt", 300));
   } catch (error) {
     const message = error instanceof Error ? error.message : "Ảnh không hợp lệ.";
-    redirect(`/admin/pages/${current.page_id}/sections/${id}?error=` + encodeURIComponent(message));
+    redirect(`/admin/pages/${await pageSlug(current.page_id)}/sections/${id}?error=` + encodeURIComponent(message));
   }
   const imageUrl = uploadedImage || (rawImage ? safeImageUrl(rawImage) : "");
   if (rawImage && !imageUrl) {
-    redirect(`/admin/pages/${current.page_id}/sections/${id}?error=` + encodeURIComponent("URL ảnh chính không hợp lệ."));
+    redirect(`/admin/pages/${await pageSlug(current.page_id)}/sections/${id}?error=` + encodeURIComponent("URL ảnh chính không hợp lệ."));
   }
   const status = intent === "draft" ? "draft" : intent === "publish" ? "published" : (text(formData, "status", 32) === "draft" ? "draft" : "published");
   const visible = intent === "hide" ? false : intent === "show" || intent === "publish" ? true : formData.get("visible") === "on";
@@ -197,6 +246,8 @@ export async function saveSection(formData: FormData) {
   if (formData.has("configIcon")) config.icon = text(formData, "configIcon", 64);
   if (formData.has("officeSubtitle")) config.officeSubtitle = text(formData, "officeSubtitle");
   if (formData.has("accountingSubtitle")) config.accountingSubtitle = text(formData, "accountingSubtitle");
+  if (formData.has("benefitsTitle")) config.benefitsTitle = text(formData, "benefitsTitle", 255);
+  if (formData.has("benefits")) config.benefits = text(formData, "benefits").split("\n").map((line) => line.trim()).filter(Boolean);
   await sql(
     `UPDATE page_sections SET
       admin_name = $1, eyebrow = $2, title = $3, subtitle = $4, description = $5,
@@ -226,15 +277,15 @@ export async function saveSection(formData: FormData) {
   );
   await audit(user.id, intent, "section", String(id));
   refresh();
-  redirect(`/admin/pages/${current.page_id}/sections/${id}?saved=1`);
+  redirect(`/admin/pages/${await pageSlug(current.page_id)}/sections/${id}?saved=1`);
 }
 
 export async function createSection(formData: FormData) {
   const user = await requireAdmin();
   const pageId = Number(formData.get("pageId"));
   const type = text(formData, "sectionType", 64);
-  const allowed = ["hero", "page-hero", "pillars", "cards", "steps", "pricing", "team", "testimonials", "faq", "cta", "media", "gallery", "comparison", "stats", "addons", "notes", "articles", "contact"];
-  if (!allowed.includes(type)) redirect(`/admin/pages/${pageId}/sections?error=` + encodeURIComponent("Loại Section không được hỗ trợ."));
+  const allowed = ["hero", "page-hero", "pillars", "cards", "steps", "pricing", "team", "testimonials", "faq", "cta", "media", "gallery", "comparison", "stats", "addons", "notes", "technology-stack", "articles", "contact"];
+  if (!allowed.includes(type)) redirect(`/admin/pages/${await pageSlug(pageId)}/sections?error=` + encodeURIComponent("Loại Section không được hỗ trợ."));
   const order = await sql<{ max: number }>("SELECT COALESCE(MAX(sort_order), 0)::int AS max FROM page_sections WHERE page_id = $1", [pageId]);
   const key = `${type}-${Date.now()}`;
   const inserted = await sql<{ id: number }>(
@@ -244,7 +295,7 @@ export async function createSection(formData: FormData) {
   );
   await audit(user.id, "create", "section", String(inserted[0].id));
   refresh();
-  redirect(`/admin/pages/${pageId}/sections/${inserted[0].id}?saved=1`);
+  redirect(`/admin/pages/${await pageSlug(pageId)}/sections/${inserted[0].id}?saved=1`);
 }
 
 export async function duplicateSection(formData: FormData) {
@@ -267,7 +318,7 @@ export async function duplicateSection(formData: FormData) {
   );
   await audit(user.id, "duplicate", "section", String(id));
   refresh();
-  redirect(`/admin/pages/${source.page_id}/sections/${inserted[0].id}?saved=1`);
+  redirect(`/admin/pages/${await pageSlug(Number(source.page_id))}/sections/${inserted[0].id}?saved=1`);
 }
 
 export async function moveSection(formData: FormData) {
@@ -286,7 +337,7 @@ export async function moveSection(formData: FormData) {
     await audit(user.id, "reorder", "section", String(id));
     refresh();
   }
-  redirect(`/admin/pages/${rows[index]?.page_id}/sections?saved=1`);
+  redirect(`/admin/pages/${await pageSlug(rows[index]?.page_id || 0)}/sections?saved=1`);
 }
 
 export async function deleteSection(formData: FormData) {
@@ -295,7 +346,7 @@ export async function deleteSection(formData: FormData) {
   const rows = await sql<{ page_id: number }>("UPDATE page_sections SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING page_id", [id]);
   await audit(user.id, "soft-delete", "section", String(id));
   refresh();
-  redirect(`/admin/pages/${rows[0]?.page_id || ""}/sections?saved=1`);
+  redirect(`/admin/pages/${await pageSlug(rows[0]?.page_id || 0)}?saved=1`);
 }
 
 export async function saveNavigation(formData: FormData) {
@@ -579,18 +630,20 @@ export async function saveArticle(formData: FormData) {
   const title = text(formData, "title", 255);
   const slug = slugify(text(formData, "slug", 180) || title);
   const status = text(formData, "status", 32) === "published" ? "published" : "draft";
-  if (!title || !slug) redirect("/admin/articles?error=" + encodeURIComponent("Tiêu đề bài viết là bắt buộc."));
-  const content = sanitizeRichText(String(formData.get("content") || ""));
+  const back = text(formData, "returnTo", 180);
+  const articleTarget = back.startsWith("/admin/") ? back : "/admin/articles";
+  if (!title || !slug) redirect(`${articleTarget}?error=` + encodeURIComponent("Tiêu đề bài viết là bắt buộc."));
+  const content = sanitizeRichText(String(formData.get("content") || "")).slice(0, 200000);
   const categoryId = Number(formData.get("categoryId") || 0) || null;
   const rawCover = text(formData, "coverUrl", 1000);
   let uploadedCover = "";
   try {
     uploadedCover = await uploadImageAsset(formData.get("article_image_file"), text(formData, "coverAlt", 300));
   } catch (error) {
-    redirect("/admin/articles?error=" + encodeURIComponent(error instanceof Error ? error.message : "Ảnh bài viết không hợp lệ."));
+    redirect(`${articleTarget}?error=` + encodeURIComponent(error instanceof Error ? error.message : "Ảnh bài viết không hợp lệ."));
   }
   const coverUrl = uploadedCover || (rawCover ? safeImageUrl(rawCover) : "");
-  if (rawCover && !coverUrl) redirect("/admin/articles?error=" + encodeURIComponent("URL ảnh bài viết không hợp lệ."));
+  if (rawCover && !coverUrl) redirect(`${articleTarget}?error=` + encodeURIComponent("URL ảnh bài viết không hợp lệ."));
   const values = [categoryId, title, slug, text(formData, "excerpt"), content, coverUrl || null, text(formData, "coverAlt", 300) || null, text(formData, "seoTitle", 255) || null, text(formData, "seoDescription", 500) || null, status, Number(formData.get("readMinutes") || 0) || null];
   if (id) {
     await sql(
@@ -608,7 +661,7 @@ export async function saveArticle(formData: FormData) {
   }
   await audit(user.id, status === "published" ? "publish" : "draft", "article", slug);
   refresh();
-  redirect("/admin/articles?saved=1");
+  redirect(`${articleTarget}?saved=1`);
 }
 
 export async function deleteArticle(formData: FormData) {
@@ -731,7 +784,7 @@ export async function saveOfficeLocation(formData: FormData) {
     title,
     slug,
     text(formData, "excerpt", 1000) || null,
-    text(formData, "content", 12000) || null,
+    sanitizeRichText(String(formData.get("content") || "")).slice(0, 50000) || null,
     address,
     text(formData, "priceLabel", 120) || "Từ 350K/tháng",
     coverUrl || null,

@@ -30,7 +30,7 @@ const existing = new Set(tablesResult.rows.map((row) => row.tablename));
 const preferredOrder = ["admin_users", "pages", "site_settings", "navigation_items", "services", "pricing_plans", "article_categories", "articles", "page_sections", "footer_groups", "media_assets", "contact_requests", "audit_logs", "schema_migrations", "office_locations"];
 const tables = [...preferredOrder.filter((name) => existing.has(name)), ...[...existing].filter((name) => !preferredOrder.includes(name)).sort()];
 let output = [
-  "-- Iname database export. Run against an empty PostgreSQL database.",
+  "-- iName database export. Run against an empty PostgreSQL database.",
   fs.readFileSync(path.join(process.cwd(), "sql", "001_schema.sql"), "utf8"),
   "CREATE TABLE IF NOT EXISTS schema_migrations (migration VARCHAR(255) PRIMARY KEY, applied_at TIMESTAMP NOT NULL DEFAULT NOW());",
   "BEGIN;",

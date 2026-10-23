@@ -1,19 +1,38 @@
 "use client";
 
-import { memo, useCallback, useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { FaqList } from "./FaqList";
+import { ActionLabel } from "./ActionLabel";
 import type { PricingPlan, PublicSection } from "@/lib/content";
 
 const tabs = [
-  { key: "office", label: "Đăng ký doanh nghiệp & Văn phòng ảo", hint: "Địa chỉ uy tín, lễ tân, tổng đài riêng", color: "#094690" },
-  { key: "accounting", label: "Kế toán – Thuế & Pháp lý doanh nghiệp", hint: "Sổ sách minh bạch, không bị giữ hồ sơ", color: "#f26321" },
-  { key: "technology", label: "Giải pháp Công nghệ & AI Agent", hint: "Website, phần mềm, trợ lý AI", color: "#129ff8" },
+  { key: "office", label: "Văn phòng ảo", hint: "Địa chỉ đăng ký, lễ tân, phòng họp", color: "#094690" },
+  { key: "accounting", label: "Kế toán - Thuế", hint: "Sổ sách minh bạch, bàn giao hồ sơ mỗi tháng", color: "#f26321" },
+  { key: "technology", label: "Giải pháp Công nghệ", hint: "Website, phần mềm, AI Agent", color: "#129ff8" },
 ] as const;
 
 function text(value: unknown) {
   return typeof value === "string" ? value : "";
 }
+
+const PriceCard = memo(function PriceCard({ plan, color }: { plan: PricingPlan; color: string }) {
+  return (
+    <article
+      className="iname-hover-card group flex h-full min-w-0 flex-col rounded-2xl border border-border bg-card p-6 shadow-card"
+      style={{ "--iname-hover": color } as CSSProperties}
+    >
+      {plan.badge ? <p className="mb-2 text-xs font-semibold" style={{ color }}>{plan.badge}</p> : null}
+      <h3 className="font-display text-xl font-bold">{plan.name}</h3>
+      <p className="mt-2 text-sm text-muted-foreground">{plan.summary}</p>
+      <p className="mt-5 font-display text-3xl font-extrabold">{plan.price_label} <span className="text-sm font-medium text-muted-foreground">{plan.period}</span></p>
+      <ul className="mt-5 flex-1 space-y-2 text-sm">
+        {plan.features.map((feature) => <li key={feature}>✓ {feature}</li>)}
+      </ul>
+      <Link href="/lien-he" className="iname-cta mt-6 inline-flex h-10 items-center justify-center rounded-md text-sm font-semibold text-white" style={{ backgroundColor: color }}><ActionLabel label="Liên hệ" /></Link>
+    </article>
+  );
+});
 
 export const BangGiaPage = memo(function BangGiaPage({
   hero,
@@ -49,7 +68,7 @@ export const BangGiaPage = memo(function BangGiaPage({
             <h1 className="banner-h1 max-w-4xl font-extrabold">{hero.title}</h1>
             {hero.description ? <p className="mt-4 max-w-3xl text-base leading-relaxed text-primary-foreground/90 sm:text-lg">{hero.description}</p> : null}
             <div className="mt-8">
-              <Link href="/lien-he" className="inline-flex h-11 items-center justify-center rounded-md bg-accent px-6 text-base font-semibold text-accent-foreground">Liên Hệ</Link>
+              <Link href="/lien-he" className="inline-flex h-11 items-center justify-center rounded-md bg-background px-6 text-base font-semibold text-foreground"><ActionLabel label="Liên Hệ" /></Link>
             </div>
           </div>
         </section>
@@ -77,17 +96,9 @@ export const BangGiaPage = memo(function BangGiaPage({
             {active === "office" ? "Gói văn phòng ảo & địa chỉ đăng ký kinh doanh" : active === "accounting" ? "Gói kế toán - thuế" : "Gói giải pháp công nghệ"}
           </h2>
           <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {visiblePlans.length ? null : <p className="text-sm text-muted-foreground md:col-span-2 lg:col-span-3">Bảng giá mảng này đang được cập nhật. Để lại yêu cầu tại trang Liên hệ để nhận báo giá.</p>}
             {visiblePlans.map((plan) => (
-              <article key={plan.id} className={`flex h-full flex-col rounded-2xl border bg-card p-6 shadow-card ${plan.highlighted ? "ring-1" : "border-border"}`} style={plan.highlighted ? { borderColor: tab.color, boxShadow: `0 0 0 1px ${tab.color}22` } : undefined}>
-                {plan.badge ? <p className="mb-2 text-xs font-semibold" style={{ color: tab.color }}>{plan.badge}</p> : null}
-                <h3 className="font-display text-xl font-bold">{plan.name}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{plan.summary}</p>
-                <p className="mt-5 font-display text-3xl font-extrabold">{plan.price_label} <span className="text-sm font-medium text-muted-foreground">{plan.period}</span></p>
-                <ul className="mt-5 flex-1 space-y-2 text-sm">
-                  {plan.features.map((feature) => <li key={feature}>✓ {feature}</li>)}
-                </ul>
-                <Link href="/lien-he" className="mt-6 inline-flex h-10 items-center justify-center rounded-md text-sm font-semibold text-white" style={{ backgroundColor: tab.color }}>Liên hệ</Link>
-              </article>
+              <PriceCard key={plan.id} plan={plan} color={tab.color} />
             ))}
           </div>
         </div>
@@ -113,7 +124,7 @@ export const BangGiaPage = memo(function BangGiaPage({
           </div>
         ) : null}
 
-        {addons ? (
+        {active === "office" && addons ? (
           <div className="mt-14 overflow-hidden rounded-2xl border border-border">
             <div className="px-5 py-4" style={{ backgroundColor: tab.color }}>
               <h3 className="font-display text-xl font-extrabold text-white">{addons.title}</h3>
@@ -159,7 +170,7 @@ export const BangGiaPage = memo(function BangGiaPage({
           <div className="rounded-2xl px-6 py-10 text-white sm:px-10" style={{ backgroundColor: tab.color }}>
             <h2 className="font-display text-2xl font-extrabold">{cta.title}</h2>
             <p className="mt-3 max-w-2xl text-sm text-white/85">{cta.description}</p>
-            <Link href="/lien-he" className="mt-6 inline-flex h-11 items-center rounded-md bg-white px-5 text-sm font-semibold text-foreground">Liên Hệ</Link>
+            <Link href="/lien-he" className="mt-6 inline-flex h-11 items-center rounded-md bg-white px-5 text-sm font-semibold text-foreground"><ActionLabel label="Liên Hệ" /></Link>
           </div>
         </section>
       ) : null}

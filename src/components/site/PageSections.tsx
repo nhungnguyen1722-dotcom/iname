@@ -1,4 +1,4 @@
-import { Fragment } from "react";
+import { Fragment, type CSSProperties } from "react";
 import Link from "next/link";
 import { CmsImage } from "./CmsImage";
 import { ConsultButton } from "./ConsultProvider";
@@ -6,8 +6,11 @@ import { FaqList } from "./FaqList";
 import { PricingBlock } from "./PricingBlock";
 import { ContactForm } from "./ContactForm";
 import { IconMark } from "./IconMark";
+import { HeroSlider, type HeroSlide, type HeroStat } from "./HeroSlider";
+import { HoverArticleCard } from "./HoverArticleCard";
 import { TestimonialCarousel } from "./TestimonialCarousel";
-import type { ArticleCard, FooterGroup, Office, OfficeLocation, PricingPlan, PublicSection, ServiceRecord } from "@/lib/content";
+import { ActionLabel } from "./ActionLabel";
+import type { ArticleCard, FooterGroup, Office, OfficeLocation, PricingPlan, PublicSection, SectionItem, ServiceRecord } from "@/lib/content";
 
 const primaryButton = "inline-flex h-11 items-center justify-center rounded-md bg-background px-6 text-base font-semibold text-foreground shadow-elegant hover:bg-background/90";
 const accentButton = "inline-flex h-11 items-center justify-center rounded-md bg-accent px-6 text-base font-semibold text-accent-foreground shadow-card hover:bg-accent/90";
@@ -34,7 +37,7 @@ function Cta({
   if (!label) return null;
   const className = variant === "light" ? primaryButton : variant === "accent" ? accentButton : variant === "ghost" ? ghostOnDark : outlineButton;
   if (!href || href === "#tu-van") return <ConsultButton label={label} className={className} />;
-  return <Link href={href} className={className}>{label}</Link>;
+  return <Link href={href} className={className}><ActionLabel label={label} /></Link>;
 }
 
 export function PageSections({
@@ -71,9 +74,10 @@ export function PageSections({
     <main className="flex-1">
       {sections.map((section) => {
         const renderedSection = section.section_type === "hero" ? <Hero key={section.id} section={section} />
-          : section.section_type === "page-hero" ? <PageHero key={section.id} section={section} showImage={path === "/"} />
+          : section.section_type === "page-hero" ? <PageHero key={section.id} section={section} showImage={path === "/" || path === "/van-phong-ao"} />
           : section.section_type === "pillars" ? <Pillars key={section.id} section={section} />
           : section.section_type === "cards" ? <Cards key={section.id} section={section} services={services} />
+          : section.section_type === "technology-stack" ? <TechnologyStack key={section.id} section={section} />
           : section.section_type === "steps" ? <Steps key={section.id} section={section} />
           : section.section_type === "pricing" ? <PricingSection key={section.id} section={section} plans={plans} />
           : section.section_type === "team" ? <Team key={section.id} section={section} />
@@ -119,22 +123,22 @@ function OfficeLocationsSection({ locations }: { locations: OfficeLocation[] }) 
         </div>
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {locations.map((location) => (
-            <article key={location.id} className="overflow-hidden rounded-xl border border-border bg-card shadow-card">
-              <Link href={`/van-phong-ao/${location.slug}`} className="relative block aspect-[16/9] bg-secondary" aria-label={`Xem ${location.title}`}>
+            <Link key={location.id} href={`/van-phong-ao/${location.slug}#location-detail`} className="iname-hover-card group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-card">
+              <div className="iname-zoom relative block aspect-[16/9] bg-secondary">
                 {location.cover_url ? <CmsImage src={location.cover_url} alt={location.cover_alt || location.title} className="object-cover" sizes="(min-width: 1280px) 30vw, (min-width: 640px) 45vw, 95vw" /> : <span className="absolute inset-0 bg-mesh" />}
-              </Link>
-              <div className="p-5">
-                <h3 className="font-display text-lg font-bold"><Link href={`/van-phong-ao/${location.slug}`} className="hover:text-primary">{location.title}</Link></h3>
-                <p className="mt-2 flex gap-2 text-sm text-muted-foreground"><IconMark name="pin" className="size-8 rounded-lg shrink-0" /><span>{location.address}</span></p>
+              </div>
+              <div className="flex flex-1 flex-col p-5">
+                <h3 className="font-display text-lg font-bold">{location.title}</h3>
+                <p className="mt-2 flex gap-2 text-sm text-muted-foreground"><IconMark name="pin" className="iname-icon size-8 shrink-0 rounded-lg" /><span>{location.address}</span></p>
                 <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2">
-                  {location.amenities.map((amenity) => <span key={amenity} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"><IconMark name={iconByAmenity[amenity] || "badge"} className="size-6 rounded-md [&_svg]:size-3.5" />{amenity}</span>)}
+                  {location.amenities.map((amenity) => <span key={amenity} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"><IconMark name={iconByAmenity[amenity] || "badge"} className="iname-icon size-6 rounded-md [&_svg]:size-3.5" />{amenity}</span>)}
                 </div>
-                <div className="mt-5 flex items-center justify-between gap-3 border-t border-border pt-4">
+                <div className="mt-5 flex items-center justify-between gap-3 border-t border-border pt-4 group-hover:border-white/25">
                   <p className="font-display font-extrabold text-primary">{location.price_label}</p>
-                  <Link href={`/van-phong-ao/${location.slug}`} className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors">Xem thêm →</Link>
+                  <span className="iname-cta inline-flex items-center gap-1 rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground">Xem thêm <span aria-hidden="true">→</span></span>
                 </div>
               </div>
-            </article>
+            </Link>
           ))}
         </div>
       </div>
@@ -143,9 +147,23 @@ function OfficeLocationsSection({ locations }: { locations: OfficeLocation[] }) 
 }
 
 function Heading({ section, light = false }: { section: PublicSection; light?: boolean }) {
+  const eyebrowColor = text(section.config.eyebrowColor);
   return (
     <div className="max-w-3xl">
-      {section.eyebrow ? <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-accent">{section.eyebrow}</p> : null}
+      {section.eyebrow ? (
+        <p
+          className={`mb-3 text-xs font-bold uppercase tracking-[0.18em] ${
+            eyebrowColor
+              ? eyebrowColor.startsWith("text-")
+                ? eyebrowColor
+                : ""
+              : "text-accent"
+          }`}
+          style={eyebrowColor && !eyebrowColor.startsWith("text-") ? { color: eyebrowColor } : undefined}
+        >
+          {section.eyebrow}
+        </p>
+      ) : null}
       {section.title ? <h2 className={`font-display text-2xl font-extrabold sm:text-3xl lg:text-4xl ${light ? "text-primary-foreground" : ""}`}>{section.title}</h2> : null}
       {section.description ? <p className={`mt-4 text-base leading-relaxed sm:text-lg ${light ? "text-primary-foreground/80" : "text-muted-foreground"}`}>{section.description}</p> : null}
     </div>
@@ -153,7 +171,9 @@ function Heading({ section, light = false }: { section: PublicSection; light?: b
 }
 
 function Hero({ section }: { section: PublicSection }) {
-  const stats = Array.isArray(section.config.stats) ? section.config.stats as { value?: string; label?: string }[] : [];
+  const stats = Array.isArray(section.config.stats) ? section.config.stats as HeroStat[] : [];
+  const slides = Array.isArray(section.config.slides) ? section.config.slides as HeroSlide[] : [];
+  if (slides.length > 1) return <HeroSlider slides={slides} stats={stats} />;
   const floats = Array.isArray(section.config.floatCards) ? section.config.floatCards as { title?: string; value?: string; note?: string }[] : [];
   return (
     <section className="bg-hero-gradient relative overflow-hidden">
@@ -210,9 +230,10 @@ function Hero({ section }: { section: PublicSection }) {
 
 function PageHero({ section, showImage }: { section: PublicSection; showImage: boolean }) {
   const hasVisual = Boolean(section.image_url);
+  const sideImage = showImage && hasVisual;
   return (
     <section className="page-banner relative isolate overflow-hidden bg-primary text-primary-foreground">
-      {hasVisual ? (
+      {hasVisual && !sideImage ? (
         <div className="pointer-events-none absolute inset-0 -z-20 opacity-30">
           <CmsImage src={section.image_url} alt="" className="object-cover" sizes="100vw" />
         </div>
@@ -220,8 +241,8 @@ function PageHero({ section, showImage }: { section: PublicSection; showImage: b
       <div className="absolute inset-0 -z-10 bg-gradient-to-r from-slate-950/95 via-primary/90 to-primary/60" />
       <div className="bg-mesh pointer-events-none absolute inset-0 opacity-40" />
       <div className="section-shell relative py-12 sm:py-16 lg:py-20">
-        <div className={showImage && hasVisual ? "grid gap-8 lg:grid-cols-12 lg:items-center" : ""}>
-          <div className={showImage && hasVisual ? "lg:col-span-7" : ""}>
+        <div className={sideImage ? "grid gap-8 lg:grid-cols-12 lg:items-center" : ""}>
+          <div className={sideImage ? "min-w-0 lg:col-span-7" : ""}>
             {section.eyebrow ? (
               <div className="mb-4 inline-flex rounded-full border border-sky-300/30 bg-sky-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-sky-200">
                 {section.eyebrow}
@@ -246,13 +267,13 @@ function PageHero({ section, showImage }: { section: PublicSection; showImage: b
             ) : null}
             {(section.button_label || section.secondary_button_label) ? (
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Cta label={section.button_label} href={section.button_url} variant="accent" />
+                <Cta label={section.button_label} href={section.button_url} variant="light" />
                 <Cta label={section.secondary_button_label} href={section.secondary_button_url} variant="ghost" />
               </div>
             ) : null}
           </div>
-          {showImage && hasVisual ? (
-            <div className="relative lg:col-span-5">
+          {sideImage ? (
+            <div className="relative min-w-0 lg:col-span-5">
               <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-primary-foreground/20 bg-card shadow-card sm:aspect-[4/3]">
                 <CmsImage
                   src={section.image_url}
@@ -281,20 +302,21 @@ function Pillars({ section }: { section: PublicSection }) {
           const href = text(item.href);
           const body = (
             <>
-              <IconMark name={text(item.icon) || "building"} className="mb-5" />
-              <h3 className="font-display text-2xl font-bold" style={{ color }}>{text(item.title)}</h3>
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{text(item.description)}</p>
+              <IconMark name={text(item.icon) || "building"} className="pillar-icon mb-5" />
+              <h3 className="font-display text-2xl font-bold">{text(item.title)}</h3>
+              <p className="mt-3 text-sm leading-relaxed">{text(item.description)}</p>
               <ul className="mt-5 space-y-2 text-sm">
-                {list(item.points).map((point) => <li key={point}>✓ {point}</li>)}
+                {list(item.points).map((point) => <li key={point}><span className="pillar-check" aria-hidden="true">✓</span> {point}</li>)}
               </ul>
-              <span className="mt-6 inline-flex text-sm font-semibold" style={{ color }}>{text(item.cta) || "Xem chi tiết"}</span>
+              <span className="pillar-cta mt-6 inline-flex items-center gap-1 text-sm font-semibold">{text(item.cta)?.replace(/\s*(?:→|->)\s*$/, "") || "Xem chi tiết"} <span className="pillar-arrow" aria-hidden="true">→</span></span>
             </>
           );
-          const className = "hover-lift flex h-full flex-col rounded-2xl border bg-card p-7 shadow-card";
+          const className = "pillar-card hover-lift flex h-full cursor-pointer flex-col rounded-2xl p-7 shadow-card";
+          const style = { "--pillar-color": color } as CSSProperties;
           return href ? (
-            <Link key={text(item.title)} href={href} className={className} style={{ borderColor: `${color}55` }}>{body}</Link>
+            <Link key={text(item.title)} href={href} className={className} style={style}>{body}</Link>
           ) : (
-            <article key={text(item.title)} className={className}>{body}</article>
+            <article key={text(item.title)} className={className} style={style}>{body}</article>
           );
         })}
       </div>
@@ -305,7 +327,7 @@ function Pillars({ section }: { section: PublicSection }) {
 function Cards({ section, services }: { section: PublicSection; services: ServiceRecord[] }) {
   const source = text(section.config.source);
   const category = text(section.config.category);
-  const items = source === "services"
+  const items: SectionItem[] = source === "services"
     ? services.filter((service) => !category || service.category === category).map((service) => ({
         title: service.name,
         description: service.summary || "",
@@ -315,8 +337,16 @@ function Cards({ section, services }: { section: PublicSection; services: Servic
       }))
     : section.items;
   const columns = Number(section.config.columns || 3);
-  const grid = columns === 4 ? "sm:grid-cols-2 lg:grid-cols-4" : columns === 2 ? "md:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3";
+  const grid =
+    columns === 5
+      ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5"
+      : columns === 4
+      ? "sm:grid-cols-2 lg:grid-cols-4"
+      : columns === 2
+      ? "md:grid-cols-2"
+      : "sm:grid-cols-2 lg:grid-cols-3";
   const soft = section.config.tone === "soft";
+  const hoverBrand = section.config.hover === "brand";
   return (
     <section className={soft ? "border-y border-border bg-subtle-gradient" : ""}>
       <div className="section-shell py-16 lg:py-20">
@@ -324,23 +354,85 @@ function Cards({ section, services }: { section: PublicSection; services: Servic
         <div className={`mt-10 grid gap-5 ${grid}`}>
           {items.map((item, index) => {
             const href = text(item.href);
-            const tone = text(item.tone);
-            const className = `hover-lift flex h-full flex-col rounded-xl border border-border p-6 shadow-card ${tone || "bg-card"}`;
+            const tone = text("tone" in item ? item.tone : "");
+            const iconBg = hoverBrand ? "" : text(item.iconBg || item.color);
+            const cardBg = hoverBrand ? "" : text(item.bg || item.cardBg);
+            const borderColor = hoverBrand ? "" : text(item.border || item.borderColor);
+            const ctaText = text(item.cta) || "Xem chi tiết";
+            const customStyle: CSSProperties = {};
+            if (cardBg) customStyle.backgroundColor = cardBg;
+            if (borderColor) customStyle.borderColor = borderColor;
+
+            const className = `${hoverBrand ? "iname-hover-card" : "hover-lift"} group flex h-full min-w-0 flex-col justify-between rounded-2xl border p-5 shadow-sm sm:p-6 ${
+              hoverBrand || !cardBg ? "border-border bg-card shadow-card" : tone
+            }`;
             const body = (
               <>
-                <IconMark name={text(item.icon) || ["pin", "building", "monitor", "mail", "message", "file", "calculator"][index % 7]} className="mb-4" />
-                <h3 className="font-display text-lg font-bold">{text(item.title)}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{text(item.description)}</p>
-                {href ? <span className="mt-4 inline-flex text-sm font-semibold text-primary">{text(item.cta) || "Xem chi tiết"}</span> : null}
+                <div>
+                  <div className="mb-4 sm:mb-5">
+                    <IconMark
+                      name={text(item.icon) || ["pin", "building", "monitor", "mail", "message", "file", "calculator"][index % 7]}
+                      solid={Boolean(iconBg || item.solid)}
+                      color={iconBg || undefined}
+                      className={`size-12 rounded-xl ${hoverBrand ? "iname-icon" : ""}`}
+                    />
+                  </div>
+                  <h3 className="font-display text-base font-bold sm:text-lg">{text(item.title)}</h3>
+                  <p className="mt-2.5 text-xs leading-relaxed text-muted-foreground sm:text-sm">{text(item.description)}</p>
+                </div>
+                {href ? (
+                  <span className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-sky-500">
+                    {ctaText.replace(/\s*→|\s*->/g, "")}
+                    <span aria-hidden="true" className="transition-transform group-hover:translate-x-1">→</span>
+                  </span>
+                ) : null}
               </>
             );
             return href ? (
-              <Link key={text(item.title)} href={href} className={className}>{body}</Link>
+              <Link key={text(item.title)} href={href} className={className} style={Object.keys(customStyle).length ? customStyle : undefined}>{body}</Link>
             ) : (
-              <article key={text(item.title)} className={className}>{body}</article>
+              <article key={text(item.title)} className={className} style={Object.keys(customStyle).length ? customStyle : undefined}>{body}</article>
             );
           })}
         </div>
+      </div>
+    </section>
+  );
+}
+
+function TechnologyStack({ section }: { section: PublicSection }) {
+  const benefits = Array.isArray(section.config.benefits)
+    ? section.config.benefits.map(String).filter(Boolean)
+    : [];
+  return (
+    <section className="section-shell py-10 lg:py-12">
+      <div className="grid gap-8 rounded-2xl border border-sky-100 bg-[#e7f5fe] p-6 sm:p-8 lg:grid-cols-12 lg:items-center lg:gap-10 lg:p-8">
+        <div className="lg:col-span-7">
+          {section.eyebrow ? <p className="mb-2 text-xs font-bold uppercase tracking-wide text-primary">{section.eyebrow}</p> : null}
+          <h2 className="font-display text-2xl font-extrabold text-foreground sm:text-3xl">{section.title}</h2>
+          {section.description ? <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">{section.description}</p> : null}
+          <ul className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {section.items.map((item) => (
+              <li key={text(item.name)} className="flex min-h-24 flex-col items-center justify-center rounded-xl border border-sky-100 bg-white px-3 py-3 text-center shadow-card">
+                <span className="font-display text-2xl font-extrabold" style={{ color: text(item.color) || "#094690" }}>{text(item.mark) || text(item.name)}</span>
+                <span className="mt-1 text-xs font-semibold text-foreground">{text(item.name)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <aside className="rounded-xl border border-sky-100 bg-white p-5 shadow-card lg:col-span-5 lg:p-6">
+          <h3 className="font-display text-base font-extrabold">{text(section.config.benefitsTitle) || "Ưu điểm công nghệ"}</h3>
+          {benefits.length ? (
+            <ul className="mt-4 space-y-3">
+              {benefits.map((benefit) => (
+                <li key={benefit} className="flex items-start gap-3 text-sm text-muted-foreground">
+                  <span className="mt-0.5 inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-[#094690] text-[10px] font-bold text-white" aria-hidden="true">✓</span>
+                  <span>{benefit}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </aside>
       </div>
     </section>
   );
@@ -617,18 +709,17 @@ function ArticleList({
           {articles.items.length === 0 ? <p className="mt-10 text-muted-foreground">Chưa có bài viết phù hợp.</p> : null}
           <div className="mt-7 grid gap-5 sm:grid-cols-2">
             {articles.items.map((article) => (
-              <article key={article.id} className="hover-lift flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-card">
-                <Link href={`/tin-tuc/${article.slug}`} aria-label={article.title} className="relative block aspect-[16/9] bg-secondary">
-                  {article.cover_url ? <CmsImage src={article.cover_url} alt={article.cover_alt || article.title} className="object-cover" sizes="(min-width: 1024px) 30vw, 90vw" /> : <span className="absolute inset-0 bg-mesh" />}
-                </Link>
-                <div className="flex flex-1 flex-col p-5">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-accent">{article.category_name}</p>
-                  <h2 className="mt-2 font-display text-lg font-bold"><Link href={`/tin-tuc/${article.slug}`}>{article.title}</Link></h2>
-                  <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">{article.excerpt}</p>
-                  <p className="mt-4 text-xs text-muted-foreground">{article.published_at ? new Date(article.published_at).toLocaleDateString("vi-VN") : ""} · {article.read_minutes || 0} phút đọc</p>
-                  <Link href={`/tin-tuc/${article.slug}`} className="mt-3 text-sm font-semibold text-primary">Đọc thêm →</Link>
-                </div>
-              </article>
+              <HoverArticleCard
+                key={article.id}
+                href={`/tin-tuc/${article.slug}`}
+                title={article.title}
+                excerpt={article.excerpt}
+                coverUrl={article.cover_url}
+                coverAlt={article.cover_alt}
+                category={article.category_name}
+                titleAs="h2"
+                meta={`${article.published_at ? new Date(article.published_at).toLocaleDateString("vi-VN") : ""} · ${article.read_minutes || 0} phút đọc`}
+              />
             ))}
           </div>
           {articles.pages > 1 ? (

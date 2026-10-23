@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CmsImage } from "@/components/site/CmsImage";
+import { HoverArticleCard } from "@/components/site/HoverArticleCard";
 import { canPreview, getArticleBySlug, getCategories, getPopularArticles, getPublicChrome, getRelatedArticles } from "@/lib/content";
 import { sanitizeRichText, slugify } from "@/lib/sanitize";
 
@@ -54,12 +55,14 @@ export default async function NewsArticle({ params, searchParams }: {
 
   return (
     <main className="flex-1">
-      <header className="relative isolate overflow-hidden bg-primary text-primary-foreground">
-        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-slate-950/90 via-primary/85 to-primary/50" />
-        <div className="section-shell py-14 sm:py-16 lg:py-20">
+      <header className="page-banner relative isolate overflow-hidden bg-primary text-primary-foreground">
+        {article.cover_url ? <div className="absolute inset-0 -z-20 opacity-30"><CmsImage src={article.cover_url} alt="" className="object-cover" sizes="100vw" priority /></div> : null}
+        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-slate-950/95 via-primary/90 to-primary/60" />
+        <div className="bg-mesh pointer-events-none absolute inset-0 opacity-40" />
+        <div className="section-shell relative py-14 sm:py-16 lg:py-20">
           <nav className="mb-5 flex flex-wrap items-center gap-2 text-xs text-primary-foreground/75" aria-label="Breadcrumb"><Link href="/">Trang chủ</Link><span>›</span><Link href="/tin-tuc">Tin tức</Link>{article.category_name ? <><span>›</span><span>{article.category_name}</span></> : null}</nav>
           {article.category_name ? <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-sky-200">{article.category_name}</p> : null}
-          <h1 className="max-w-4xl font-display text-3xl font-extrabold leading-tight sm:text-4xl lg:text-5xl">{article.title}</h1>
+          <h1 className="banner-h1 max-w-4xl font-extrabold">{article.title}</h1>
           {article.excerpt ? <p className="mt-4 max-w-3xl text-base leading-relaxed text-primary-foreground/85 sm:text-lg">{article.excerpt}</p> : null}
           <p className="mt-5 text-sm text-primary-foreground/70">{article.published_at ? new Date(article.published_at).toLocaleDateString("vi-VN") : "Bản nháp"} · {article.read_minutes || 0} phút đọc</p>
           {article.status !== "published" ? <p className="mt-4 inline-block rounded-lg bg-amber-200/20 px-3 py-2 text-sm">Bài viết đang ở chế độ xem trước.</p> : null}
@@ -72,7 +75,7 @@ export default async function NewsArticle({ params, searchParams }: {
           <article className="prose-content max-w-none" dangerouslySetInnerHTML={{ __html: safeHtml }} />
           <div className="mt-10 rounded-2xl bg-hero-gradient p-6 text-primary-foreground sm:p-8">
             <h2 className="font-display text-xl font-extrabold">Cần trao đổi về hồ sơ của bạn?</h2>
-            <p className="mt-2 text-sm text-primary-foreground/80">Chuyên viên Iname sẽ giúp bạn xác định bước tiếp theo.</p>
+            <p className="mt-2 text-sm text-primary-foreground/80">Chuyên viên iName sẽ giúp bạn xác định bước tiếp theo.</p>
             <Link href="/lien-he" className="mt-4 inline-flex rounded-lg bg-card px-4 py-2 text-sm font-semibold text-primary">Nhận tư vấn miễn phí →</Link>
             <p className="mt-2 text-xs text-primary-foreground/75">Hotline {chrome.settings.hotline}</p>
           </div>
@@ -81,11 +84,23 @@ export default async function NewsArticle({ params, searchParams }: {
         <aside className="space-y-5">
           <section className="rounded-xl border border-border bg-card p-5 shadow-card"><h2 className="font-display font-bold">Bài viết phổ biến</h2><ul className="mt-3 space-y-3">{popular.map((item) => <li key={item.id} className="border-b border-border pb-3 last:border-0 last:pb-0"><Link href={`/tin-tuc/${item.slug}`} className="text-sm font-semibold leading-relaxed hover:text-primary">{item.title}</Link><span className="mt-1 block text-xs text-muted-foreground">{item.category_name}</span></li>)}</ul></section>
           <section className="rounded-xl border border-border bg-card p-5 shadow-card"><h2 className="font-display font-bold">Chuyên mục</h2><ul className="mt-3 space-y-2">{categories.map((item) => <li key={item.slug}><Link href={`/tin-tuc?category=${item.slug}`} className="text-sm text-muted-foreground hover:text-primary">{item.name}</Link></li>)}</ul></section>
-          <section className="rounded-xl border border-primary/15 bg-primary-soft p-5"><p className="font-display font-bold">Hotline Iname</p><a className="mt-2 block font-display text-xl font-extrabold text-primary" href={chrome.settings.hotline_href}>{chrome.settings.hotline}</a><Link href="/lien-he" className="mt-3 inline-flex text-sm font-semibold text-primary">Liên hệ với chúng tôi →</Link></section>
+          <section className="rounded-xl border border-primary/15 bg-primary-soft p-5"><p className="font-display font-bold">Hotline iName</p><a className="mt-2 block font-display text-xl font-extrabold text-primary" href={chrome.settings.hotline_href}>{chrome.settings.hotline}</a><Link href="/lien-he" className="mt-3 inline-flex text-sm font-semibold text-primary">Liên hệ với chúng tôi →</Link></section>
         </aside>
       </div>
 
-      {related.length ? <section className="border-y border-border bg-secondary/45 py-12 lg:py-16"><div className="section-shell"><p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-accent">Xem thêm</p><h2 className="font-display text-2xl font-extrabold">Bài viết liên quan</h2><div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{related.map((item) => <article key={item.id} className="overflow-hidden rounded-xl border border-border bg-card shadow-card"><Link href={`/tin-tuc/${item.slug}`} className="relative block aspect-[16/9] bg-secondary">{item.cover_url ? <CmsImage src={item.cover_url} alt={item.cover_alt || item.title} className="object-cover" sizes="(min-width: 1024px) 30vw, 90vw" /> : <span className="absolute inset-0 bg-mesh" />}</Link><div className="p-5"><p className="text-xs font-semibold uppercase tracking-wide text-accent">{item.category_name}</p><h3 className="mt-2 font-display font-bold"><Link href={`/tin-tuc/${item.slug}`}>{item.title}</Link></h3><p className="mt-2 line-clamp-3 text-sm text-muted-foreground">{item.excerpt}</p><Link href={`/tin-tuc/${item.slug}`} className="mt-3 inline-flex text-sm font-semibold text-primary">Đọc thêm →</Link></div></article>)}</div></div></section> : null}
+      {related.length ? (
+        <section className="border-y border-border bg-secondary/45 py-12 lg:py-16">
+          <div className="section-shell">
+            <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-accent">Xem thêm</p>
+            <h2 className="font-display text-2xl font-extrabold">Bài viết liên quan</h2>
+            <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {related.map((item) => (
+                <HoverArticleCard key={item.id} href={`/tin-tuc/${item.slug}`} title={item.title} excerpt={item.excerpt} coverUrl={item.cover_url} coverAlt={item.cover_alt} category={item.category_name} />
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
     </main>
   );
 }

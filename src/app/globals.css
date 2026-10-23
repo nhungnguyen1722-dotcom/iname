@@ -14,9 +14,9 @@
   --secondary-foreground: 221 47% 20%;
   --muted: 210 40% 96%;
   --muted-foreground: 215 22% 44%;
-  --accent: 160 72% 32%;
-  --accent-foreground: 152 80% 97%;
-  --accent-soft: 158 55% 94%;
+  --accent: 213 88% 30%;
+  --accent-foreground: 0 0% 100%;
+  --accent-soft: 214 70% 95%;
   --destructive: 0 72% 47%;
   --warning: 32 88% 42%;
   --border: 214 32% 90%;
@@ -26,7 +26,7 @@
   --gradient-primary: linear-gradient(135deg, hsl(221 70% 31%), hsl(199 89% 48%));
   --gradient-subtle: linear-gradient(180deg, hsl(210 40% 99%), hsl(214 45% 96%));
   --gradient-mesh: radial-gradient(circle at 15% 20%, hsl(199 89% 48% / 0.18), transparent 45%),
-    radial-gradient(circle at 85% 10%, hsl(160 72% 40% / 0.16), transparent 40%),
+    radial-gradient(circle at 85% 10%, hsl(213 88% 42% / 0.16), transparent 40%),
     radial-gradient(circle at 50% 95%, hsl(221 70% 31% / 0.14), transparent 50%);
   --shadow-elegant: 0 18px 40px -20px hsl(221 70% 31% / 0.35);
   --shadow-glow: 0 1px 0 0 hsl(0 0% 100% / 0.6) inset, 0 26px 60px -32px hsl(199 89% 40% / 0.55);
@@ -81,13 +81,137 @@ button, input, select, textarea { font-family: inherit; }
 .shadow-glow { box-shadow: var(--shadow-glow); }
 .hover-lift { transition: transform .25s ease, box-shadow .25s ease; }
 .hover-lift:hover { transform: translateY(-4px); }
+.pillar-card {
+  border: 3px solid var(--pillar-color);
+  background-color: var(--pillar-color);
+  color: #fff;
+  transition: background-color .25s ease, color .25s ease, border-color .25s ease, transform .25s ease, box-shadow .25s ease;
+}
+.pillar-card:hover,
+.pillar-card:focus-visible {
+  background-color: #fff;
+  color: #586c89;
+}
+.pillar-card:hover h3,
+.pillar-card:focus-visible h3 {
+  color: var(--pillar-color);
+}
+.pillar-card .pillar-check,
+.pillar-card .pillar-cta,
+.pillar-card .pillar-arrow { transition: color .25s ease; }
+.pillar-card:hover .pillar-check,
+.pillar-card:focus-visible .pillar-check,
+.pillar-card:hover .pillar-cta,
+.pillar-card:focus-visible .pillar-cta,
+.pillar-card:hover .pillar-arrow,
+.pillar-card:focus-visible .pillar-arrow { color: var(--pillar-color); }
+.pillar-card .pillar-icon {
+  background-color: rgb(255 255 255 / 16%);
+  color: #fff;
+}
+.pillar-card:hover .pillar-icon,
+.pillar-card:focus-visible .pillar-icon {
+  background-color: color-mix(in srgb, var(--pillar-color) 10%, white);
+  color: var(--pillar-color);
+}
+.iname-hover-card {
+  --iname-hover: #094690;
+  transition: background-color .25s ease, color .25s ease, border-color .25s ease, box-shadow .25s ease, transform .25s ease;
+}
+.iname-hover-card:hover {
+  background-color: var(--iname-hover) !important;
+  border-color: var(--iname-hover) !important;
+  color: #fff;
+  box-shadow: 0 18px 40px -24px color-mix(in srgb, var(--iname-hover) 70%, transparent);
+}
+.iname-hover-card:hover :is(h2, h3, p, li, span, a, dd, dt) {
+  color: #fff !important;
+}
+.iname-hover-card:hover .iname-icon {
+  background-color: rgb(255 255 255 / 18%) !important;
+  color: #fff !important;
+}
+.iname-hover-card:hover .iname-cta {
+  background-color: #fff !important;
+  color: var(--iname-hover) !important;
+}
+.pricing-plan-card {
+  --pricing-color: #094690;
+  transition: background-color .25s ease, color .25s ease, border-color .25s ease, box-shadow .25s ease, transform .25s ease;
+}
+.pricing-plan-card:hover {
+  background-color: var(--pricing-color);
+  border-color: var(--pricing-color);
+  color: #fff;
+  box-shadow: 0 18px 40px -24px color-mix(in srgb, var(--pricing-color) 70%, transparent);
+}
+.pricing-plan-card:hover :is(h3, p, li) { color: #fff; }
+.pricing-plan-card:hover .pricing-plan-check {
+  background-color: rgb(255 255 255 / 18%);
+  color: #fff;
+}
+.pricing-plan-card:hover .pricing-plan-button {
+  border-color: #fff;
+  background-color: #fff;
+  color: var(--pricing-color);
+}
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity .55s ease, transform .55s ease;
+}
+.scroll-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.scroll-reveal.is-visible .grid > :is(article, a, figure) {
+  animation: card-reveal .5s both;
+}
+.scroll-reveal.is-visible .grid > :is(article, a, figure):nth-child(2) { animation-delay: .06s; }
+.scroll-reveal.is-visible .grid > :is(article, a, figure):nth-child(3) { animation-delay: .12s; }
+.scroll-reveal.is-visible .grid > :is(article, a, figure):nth-child(4) { animation-delay: .18s; }
+.scroll-reveal.is-visible .grid > :is(article, a, figure):nth-child(5) { animation-delay: .24s; }
+.scroll-reveal.is-visible .grid > :is(article, a, figure):nth-child(6) { animation-delay: .30s; }
+@keyframes card-reveal {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.iname-zoom { overflow: hidden; }
+.iname-zoom img { transition: transform .5s ease; }
+.group:hover .iname-zoom img,
+.iname-hover-card:hover .iname-zoom img { transform: scale(1.08); }
+@media (prefers-reduced-motion: reduce) {
+  .iname-hover-card,
+  .iname-zoom img,
+  .pricing-plan-card,
+  .scroll-reveal { transition: none; }
+  .scroll-reveal { opacity: 1; transform: none; }
+  .scroll-reveal.is-visible .grid > :is(article, a, figure) { animation: none; }
+  .group:hover .iname-zoom img,
+  .iname-hover-card:hover .iname-zoom img { transform: none; }
+}
+@media (max-width: 640px) {
+  #button-contact-vr { right: 0; }
+  #button-contact-vr .phone-vr { width: 72px; height: 76px; }
+  #button-contact-vr .phone-vr-circle-fill { top: 10px; left: 10px; width: 52px; height: 52px; }
+  #button-contact-vr .phone-vr-img-circle { top: 20px; left: 20px; width: 32px; height: 32px; }
+  #button-contact-vr .phone-vr-img-circle svg { width: 19px; height: 19px; }
+  #button-contact-vr .phone-vr-img-circle img { max-width: 23px; max-height: 23px; }
+}
 .prose-content h1 { margin: 1.5rem 0 .75rem; font-size: 1.75rem; font-weight: 800; line-height: 1.3; }
 .prose-content h2 { margin: 1.5rem 0 .75rem; font-size: 1.5rem; font-weight: 800; }
 .prose-content h3 { margin: 1.25rem 0 .5rem; font-size: 1.25rem; font-weight: 700; }
 .prose-content p { margin: 0 0 1rem; color: hsl(var(--foreground) / .9); }
 .prose-content ul, .prose-content ol { margin: 0 0 1rem; padding-left: 1.25rem; }
 .prose-content li { margin: .35rem 0; }
+.prose-content { overflow-wrap: anywhere; }
 .prose-content img { display: block; max-width: 100%; height: auto; margin: 1rem 0; border-radius: 0.75rem; }
+.prose-content table { display: block; max-width: 100%; overflow-x: auto; }
+.prose-content iframe, .prose-content video { max-width: 100%; }
+.prose-content :is(p, li, td, th) { overflow-wrap: anywhere; }
+main { min-width: 0; }
+main img, main video, main iframe { max-width: 100%; }
+main table { max-width: 100%; }
 .grid-lines {
   background-image: linear-gradient(hsl(0 0% 100% / .08) 1px, transparent 1px),
     linear-gradient(90deg, hsl(0 0% 100% / .08) 1px, transparent 1px);

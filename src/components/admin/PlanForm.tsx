@@ -16,7 +16,7 @@ export async function PlanForm({ id }: { id: string }) {
       <input type="hidden" name="id" value={plan?.id || ""} />
       <input name="name" required defaultValue={plan?.name || ""} className={inputClass} placeholder="Tên gói" />
       <input name="slug" defaultValue={plan?.slug || ""} className={inputClass} placeholder="Slug" />
-      <select name="category" defaultValue={plan?.category || "office"} className={inputClass}><option value="office">Văn phòng ảo</option><option value="accounting">Kế toán</option></select>
+      <select name="category" defaultValue={plan?.category || "office"} className={inputClass}><option value="office">Văn phòng ảo</option><option value="accounting">Kế toán - Thuế</option><option value="technology">Giải pháp Công nghệ</option></select>
       <textarea name="summary" defaultValue={plan?.summary || ""} className={inputClass} />
       <input name="priceLabel" required defaultValue={plan?.price_label || ""} className={inputClass} placeholder="Giá" />
       <input name="period" defaultValue={plan?.period || "/tháng"} className={inputClass} />

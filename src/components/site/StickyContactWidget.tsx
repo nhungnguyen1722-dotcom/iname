@@ -18,7 +18,7 @@ const QuickLink = memo(function QuickLink({ href, label, kind }: { href: string;
           <a href={href} aria-label={label} title={label} target={href.startsWith("http") ? "_blank" : undefined} rel={href.startsWith("http") ? "noopener noreferrer" : undefined}>
             {isZalo ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src="https://hoahuy.dichvucongchung.com.vn/wp-content/plugins/button-contact-vr/legacy/img/zalo.png" alt="" />
+              <img src="/images/zalo.png" alt="" />
             ) : (
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{icon}</svg>
             )}

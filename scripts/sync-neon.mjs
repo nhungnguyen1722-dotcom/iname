@@ -62,6 +62,58 @@ async function getKeyConstraints(client, table, constraintType) {
   return result.rows.map((row) => row.columns);
 }
 
+async function getUniqueKeys(client, table) {
+  const [constraints, indexes] = await Promise.all([
+    getKeyConstraints(client, table, "UNIQUE"),
+    client.query(
+      `SELECT array_agg(a.attname::text ORDER BY key_column.ordinality) AS columns
+       FROM pg_index i
+       JOIN pg_class t ON t.oid = i.indrelid
+       JOIN pg_namespace n ON n.oid = t.relnamespace
+       JOIN LATERAL unnest(i.indkey) WITH ORDINALITY AS key_column(attnum, ordinality)
+         ON key_column.ordinality <= i.indnkeyatts
+       JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = key_column.attnum
+       WHERE n.nspname = 'public'
+         AND t.relname = $1
+         AND i.indisunique
+         AND NOT i.indisprimary
+         AND i.indpred IS NULL
+         AND i.indexprs IS NULL
+       GROUP BY i.indexrelid`,
+      [table],
+    ),
+  ]);
+  const uniqueKeys = new Map();
+  for (const columns of [...constraints, ...indexes.rows.map((row) => row.columns)]) {
+    uniqueKeys.set(JSON.stringify(columns), columns);
+  }
+  return [...uniqueKeys.values()];
+}
+
+async function getForeignKeys(client) {
+  const result = await client.query(
+    `SELECT tc.table_name AS table_name,
+            array_agg(kcu.column_name::text ORDER BY kcu.ordinal_position) AS columns,
+            ccu.table_name AS referenced_table,
+            array_agg(ccu.column_name::text ORDER BY kcu.ordinal_position) AS referenced_columns
+     FROM information_schema.table_constraints tc
+     JOIN information_schema.key_column_usage kcu
+       ON kcu.constraint_catalog = tc.constraint_catalog
+       AND kcu.constraint_schema = tc.constraint_schema
+       AND kcu.constraint_name = tc.constraint_name
+       AND kcu.table_schema = tc.table_schema
+       AND kcu.table_name = tc.table_name
+     JOIN information_schema.constraint_column_usage ccu
+       ON ccu.constraint_catalog = tc.constraint_catalog
+       AND ccu.constraint_schema = tc.constraint_schema
+       AND ccu.constraint_name = tc.constraint_name
+     WHERE tc.table_schema = 'public'
+       AND tc.constraint_type = 'FOREIGN KEY'
+     GROUP BY tc.table_name, tc.constraint_name, ccu.table_name`,
+  );
+  return result.rows;
+}
+
 loadEnv();
 
 const sourceUrl = process.env.LOCAL_DATABASE_URL || process.env.DATABASE_URL;
@@ -107,8 +159,7 @@ try {
   target = new pg.Client(pgConfig(targetUrl));
   await Promise.all([source.connect(), target.connect()]);
 
-  const transfers = [];
-  const uniqueConflicts = [];
+  const states = [];
 
   for (const table of tables) {
     const [sourceColumns, targetColumns, sourcePrimaryKeys, targetPrimaryKeys] = await Promise.all([
@@ -136,49 +187,137 @@ try {
       `SELECT * FROM public.${quoteIdentifier(table)}
        ORDER BY ${primaryKey.map(quoteIdentifier).join(", ")}`,
     );
-    const uniqueKeys = (await getKeyConstraints(target, table, "UNIQUE")).filter(
+    const uniqueKeys = (await getUniqueKeys(target, table)).filter(
       (columns) => columns.every((column) => sourceColumns.includes(column)),
     );
-    const nonPrimaryUniqueKeys = uniqueKeys.filter(
-      (columns) => JSON.stringify(columns) !== JSON.stringify(primaryKey),
+    const existingRows = await target.query(
+      `SELECT * FROM public.${quoteIdentifier(table)}
+       ORDER BY ${primaryKey.map(quoteIdentifier).join(", ")}`,
     );
-
-    if (rows.rows.length && nonPrimaryUniqueKeys.length) {
-      const requiredColumns = [...new Set(nonPrimaryUniqueKeys.flat())];
-      const existingRows = await target.query(
-        `SELECT ${[...new Set([...primaryKey, ...requiredColumns])].map(quoteIdentifier).join(", ")}
-         FROM public.${quoteIdentifier(table)}`,
-      );
-      for (const uniqueKey of nonPrimaryUniqueKeys) {
-        const existingByKey = new Map();
-        for (const row of existingRows.rows) {
-          const key = rowKey(row, uniqueKey);
-          if (key !== null) existingByKey.set(key, rowKey(row, primaryKey));
-        }
-        for (const row of rows.rows) {
-          const key = rowKey(row, uniqueKey);
-          if (key === null) continue;
-          const existingPrimaryKey = existingByKey.get(key);
-          if (existingPrimaryKey !== undefined && existingPrimaryKey !== rowKey(row, primaryKey)) {
-            uniqueConflicts.push(table);
-            break;
-          }
-        }
-      }
-    }
-
-    transfers.push({ table, columns: sourceColumns, primaryKey, rows: rows.rows });
+    states.push({
+      table,
+      columns: sourceColumns,
+      primaryKey,
+      uniqueKeys,
+      sourceRows: rows.rows,
+      targetRows: existingRows.rows,
+      idMappings: new Map(),
+      transfers: [],
+    });
   }
 
-  if (uniqueConflicts.length) {
-    throw new Error(
-      `Sync stopped before changing data: unique-key conflicts in ${[...new Set(uniqueConflicts)].join(", ")}.`,
+  const statesByTable = new Map(states.map((state) => [state.table, state]));
+  const foreignKeys = await getForeignKeys(source);
+  for (const state of states) {
+    const targetByPrimaryKey = new Map(
+      state.targetRows.map((row) => [rowKey(row, state.primaryKey), row]),
     );
+    const targetByUniqueKey = new Map(
+      state.uniqueKeys.map((key) => [
+        JSON.stringify(key),
+        new Map(
+          state.targetRows
+            .map((row) => [rowKey(row, key), row])
+            .filter(([keyValue]) => keyValue !== null),
+        ),
+      ]),
+    );
+    const nonPrimaryUniqueKeys = state.uniqueKeys.filter(
+      (columns) => JSON.stringify(columns) !== JSON.stringify(state.primaryKey),
+    );
+    const numericIds = state.targetRows
+      .map((row) => row.id)
+      .filter((id) => id !== null && id !== undefined && /^\d+$/.test(String(id)))
+      .map(Number);
+    let nextId = Math.max(0, ...numericIds) + 1;
+
+    for (const row of state.sourceRows) {
+      const comparableRow = { ...row };
+      for (const foreignKey of foreignKeys.filter((key) => key.table_name === state.table)) {
+        const referencedState = statesByTable.get(foreignKey.referenced_table);
+        if (
+          !referencedState ||
+          JSON.stringify(foreignKey.referenced_columns) !== JSON.stringify(referencedState.primaryKey)
+        ) {
+          continue;
+        }
+        const sourceForeignKey = rowKey(comparableRow, foreignKey.columns);
+        const mappedKey = referencedState.idMappings.get(sourceForeignKey);
+        if (mappedKey) {
+          foreignKey.columns.forEach((column, index) => {
+            comparableRow[column] = mappedKey[index];
+          });
+        }
+      }
+      const sourceKey = rowKey(row, state.primaryKey);
+      const matches = new Map();
+      for (const uniqueKey of state.uniqueKeys) {
+        const keyValue = rowKey(comparableRow, uniqueKey);
+        if (keyValue === null) continue;
+        const match = targetByUniqueKey.get(JSON.stringify(uniqueKey)).get(keyValue);
+        if (match) matches.set(rowKey(match, state.primaryKey), match);
+      }
+      if (matches.size > 1) {
+        throw new Error(`Ambiguous unique-key matches while reconciling ${state.table}.`);
+      }
+
+      let targetRow = matches.values().next().value;
+      if (!targetRow) {
+        const primaryKeyMatch = targetByPrimaryKey.get(sourceKey);
+        const hasUniqueKeyMismatch =
+          primaryKeyMatch &&
+          nonPrimaryUniqueKeys.some((uniqueKey) => {
+            const sourceValue = rowKey(comparableRow, uniqueKey);
+            const targetValue = rowKey(primaryKeyMatch, uniqueKey);
+            return sourceValue !== null && targetValue !== null && sourceValue !== targetValue;
+          });
+
+        if (primaryKeyMatch && !hasUniqueKeyMismatch) {
+          targetRow = primaryKeyMatch;
+        } else if (primaryKeyMatch) {
+          if (state.primaryKey.length !== 1 || state.primaryKey[0] !== "id" || !Number.isSafeInteger(nextId)) {
+            throw new Error(`Cannot safely allocate a new primary key for ${state.table}.`);
+          }
+          targetRow = { ...row, id: nextId++ };
+        } else {
+          targetRow = Object.fromEntries(state.primaryKey.map((column) => [column, row[column]]));
+        }
+      }
+      state.idMappings.set(sourceKey, state.primaryKey.map((column) => targetRow[column]));
+    }
+  }
+
+  for (const state of states) {
+    const tableForeignKeys = foreignKeys.filter((key) => key.table_name === state.table);
+    for (const sourceRow of state.sourceRows) {
+      const row = { ...sourceRow };
+      for (const foreignKey of tableForeignKeys) {
+        const referencedState = statesByTable.get(foreignKey.referenced_table);
+        if (
+          !referencedState ||
+          JSON.stringify(foreignKey.referenced_columns) !== JSON.stringify(referencedState.primaryKey)
+        ) {
+          continue;
+        }
+        const sourceForeignKey = rowKey(row, foreignKey.columns);
+        const mappedKey = referencedState.idMappings.get(sourceForeignKey);
+        if (mappedKey) {
+          foreignKey.columns.forEach((column, index) => {
+            row[column] = mappedKey[index];
+          });
+        }
+      }
+      const mappedPrimaryKey = state.idMappings.get(rowKey(sourceRow, state.primaryKey));
+      state.primaryKey.forEach((column, index) => {
+        row[column] = mappedPrimaryKey[index];
+      });
+      state.transfers.push(row);
+    }
   }
 
   await target.query("BEGIN");
   try {
-    for (const { table, columns, primaryKey, rows } of transfers) {
+    for (const { table, columns, primaryKey, transfers: rows } of states) {
       const mutableColumns = columns.filter((column) => !primaryKey.includes(column));
       const conflictAction = mutableColumns.length
         ? `DO UPDATE SET ${mutableColumns.map((column) => `${quoteIdentifier(column)} = EXCLUDED.${quoteIdentifier(column)}`).join(", ")}`
@@ -209,7 +348,7 @@ try {
     throw error;
   }
 
-  for (const { table, rows, columns } of transfers) {
+  for (const { table, sourceRows, columns, primaryKey, idMappings } of states) {
     if (!columns.includes("id")) continue;
     await target.query(
       `SELECT setval(
@@ -220,7 +359,10 @@ try {
        FROM public.${quoteIdentifier(table)}`,
       [`public.${table}`],
     );
-    console.log(`${table}: synced ${rows.length} local rows; Neon-only rows preserved.`);
+    const remappedIds = sourceRows.filter(
+      (row) => String(row.id) !== String(idMappings.get(rowKey(row, primaryKey))?.[0]),
+    ).length;
+    console.log(`${table}: synced ${sourceRows.length} local rows; remapped ${remappedIds} IDs; Neon-only rows preserved.`);
   }
   console.log("Neon merge completed. No Neon-only rows were deleted.");
 } finally {
