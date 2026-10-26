@@ -29,15 +29,21 @@ function Cta({
   label,
   href,
   variant,
+  className: extraClassName,
+  accentColor,
 }: {
   label?: string | null;
   href?: string | null;
   variant: "light" | "accent" | "ghost" | "outline";
+  className?: string;
+  accentColor?: string;
 }) {
   if (!label) return null;
-  const className = variant === "light" ? primaryButton : variant === "accent" ? accentButton : variant === "ghost" ? ghostOnDark : outlineButton;
-  if (!href || href === "#tu-van") return <ConsultButton label={label} className={className} />;
-  return <Link href={href} className={className}><ActionLabel label={label} /></Link>;
+  const baseClassName = variant === "light" ? primaryButton : variant === "accent" ? accentButton : variant === "ghost" ? ghostOnDark : outlineButton;
+  const className = [baseClassName, extraClassName].filter(Boolean).join(" ");
+  const style = accentColor ? { backgroundColor: accentColor } : undefined;
+  if (!href || href === "#tu-van") return <ConsultButton label={label} className={className} style={style} />;
+  return <Link href={href} className={className} style={style}><ActionLabel label={label} /></Link>;
 }
 
 export function PageSections({
@@ -147,7 +153,7 @@ function OfficeLocationsSection({ locations }: { locations: OfficeLocation[] }) 
 }
 
 function Heading({ section, light = false }: { section: PublicSection; light?: boolean }) {
-  const eyebrowColor = text(section.config.eyebrowColor);
+  const eyebrowColor = text(section.config.eyebrowColor) || (section.section_key === "tech-steps" ? "#129ff8" : "");
   return (
     <div className="max-w-3xl">
       {section.eyebrow ? (
@@ -347,6 +353,7 @@ function Cards({ section, services }: { section: PublicSection; services: Servic
       : "sm:grid-cols-2 lg:grid-cols-3";
   const soft = section.config.tone === "soft";
   const hoverBrand = section.config.hover === "brand";
+  const accountingHover = section.section_key === "ac-services" || section.section_key === "ac-commitments";
   return (
     <section className={soft ? "border-y border-border bg-subtle-gradient" : ""}>
       <div className="section-shell py-16 lg:py-20">
@@ -389,9 +396,9 @@ function Cards({ section, services }: { section: PublicSection; services: Servic
               </>
             );
             return href ? (
-              <Link key={text(item.title)} href={href} className={className} style={Object.keys(customStyle).length ? customStyle : undefined}>{body}</Link>
+              <Link key={text(item.title)} href={href} className={accountingHover ? className.replace("hover-lift", "accounting-hover-card") : className} style={Object.keys(customStyle).length ? customStyle : undefined}>{body}</Link>
             ) : (
-              <article key={text(item.title)} className={className} style={Object.keys(customStyle).length ? customStyle : undefined}>{body}</article>
+              <article key={text(item.title)} className={accountingHover ? className.replace("hover-lift", "accounting-hover-card") : className} style={Object.keys(customStyle).length ? customStyle : undefined}>{body}</article>
             );
           })}
         </div>
@@ -413,8 +420,19 @@ function TechnologyStack({ section }: { section: PublicSection }) {
           {section.description ? <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">{section.description}</p> : null}
           <ul className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
             {section.items.map((item) => (
-              <li key={text(item.name)} className="flex min-h-24 flex-col items-center justify-center rounded-xl border border-sky-100 bg-white px-3 py-3 text-center shadow-card">
-                <span className="font-display text-2xl font-extrabold" style={{ color: text(item.color) || "#094690" }}>{text(item.mark) || text(item.name)}</span>
+              <li key={text(item.name)} className="flex min-h-24 min-w-0 flex-col items-center justify-center rounded-xl border border-sky-100 bg-white px-3 py-3 text-center shadow-card">
+                {text(item.logoUrl) || text(item.logo_url) ? (
+                  <span className="relative block h-9 w-full max-w-28">
+                    <CmsImage
+                      src={text(item.logoUrl) || text(item.logo_url)}
+                      alt={text(item.name) + " logo"}
+                      className="object-contain"
+                      sizes="112px"
+                    />
+                  </span>
+                ) : (
+                  <span className="font-display text-2xl font-extrabold" style={{ color: text(item.color) || "#094690" }}>{text(item.mark) || text(item.name)}</span>
+                )}
                 <span className="mt-1 text-xs font-semibold text-foreground">{text(item.name)}</span>
               </li>
             ))}
@@ -513,6 +531,7 @@ function Testimonials({ section }: { section: PublicSection }) {
 }
 
 function Faq({ section, settings }: { section: PublicSection; settings: Record<string, string> }) {
+  const technologyAccent = section.section_key === "tech-faq" ? "#129ff8" : undefined;
   return (
     <section className="section-shell py-16 lg:py-20">
       <div className="grid gap-10 lg:grid-cols-12">
@@ -522,12 +541,18 @@ function Faq({ section, settings }: { section: PublicSection; settings: Record<s
             <p className="text-sm text-muted-foreground">Chưa tìm thấy câu trả lời bạn cần? Gọi hotline hoặc gửi yêu cầu tư vấn.</p>
             <div className="mt-4 flex flex-col gap-2">
               <a href={settings.hotline_href} className="inline-flex h-10 items-center justify-center rounded-md border border-primary/25 text-sm font-semibold">{settings.hotline}</a>
-              <Cta label={section.button_label} href={section.button_url} variant="accent" />
+              <Cta
+                label={section.button_label}
+                href={section.button_url}
+                variant="accent"
+                className={technologyAccent ? "technology-faq-contact" : undefined}
+                accentColor={technologyAccent}
+              />
             </div>
           </div>
         </div>
         <div className="lg:col-span-8">
-          <FaqList items={section.items} />
+          <FaqList items={section.items} accentColor={technologyAccent} />
         </div>
       </div>
     </section>

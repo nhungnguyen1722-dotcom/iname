@@ -135,9 +135,55 @@ button, input, select, textarea { font-family: inherit; }
   background-color: #fff !important;
   color: var(--iname-hover) !important;
 }
+.iname-hover-card:hover .iname-cta :is(span, svg) {
+  color: var(--iname-hover) !important;
+}
+.accounting-hover-card {
+  transition: border-color .25s ease, box-shadow .25s ease, transform .25s ease;
+}
+.accounting-hover-card:hover,
+.accounting-hover-card:focus-visible {
+  background-color: #fff !important;
+  border-color: #f26321;
+  box-shadow: 0 16px 34px -26px rgb(242 99 33 / 70%);
+  transform: translateY(-3px);
+}
+.accounting-hover-card:hover h3,
+.accounting-hover-card:focus-visible h3,
+.accounting-hover-card:hover .accounting-hover-link,
+.accounting-hover-card:focus-visible .accounting-hover-link {
+  color: #f26321;
+}
+.accounting-hover-card:hover .accounting-hover-icon,
+.accounting-hover-card:focus-visible .accounting-hover-icon {
+  background-color: rgb(242 99 33 / 10%) !important;
+  color: #f26321 !important;
+}
+.accounting-hover-card:hover .size-12,
+.accounting-hover-card:focus-visible .size-12 {
+  background-color: rgb(242 99 33 / 10%) !important;
+  color: #f26321 !important;
+}
+.accounting-hover-card:hover > span,
+.accounting-hover-card:focus-visible > span {
+  color: #f26321;
+}
 .pricing-plan-card {
   --pricing-color: #094690;
   transition: background-color .25s ease, color .25s ease, border-color .25s ease, box-shadow .25s ease, transform .25s ease;
+}
+.pricing-plan-badge {
+  background-color: color-mix(in srgb, var(--pricing-color) 12%, white);
+  color: var(--pricing-color);
+}
+.pricing-plan-check {
+  background-color: color-mix(in srgb, var(--pricing-color) 10%, white);
+  color: var(--pricing-color);
+}
+.pricing-plan-button.bg-accent {
+  border-color: var(--pricing-color);
+  background-color: var(--pricing-color);
+  color: #fff;
 }
 .pricing-plan-card:hover {
   background-color: var(--pricing-color);
@@ -155,23 +201,29 @@ button, input, select, textarea { font-family: inherit; }
   background-color: #fff;
   color: var(--pricing-color);
 }
+.pricing-plan-card:hover .pricing-plan-button :is(span, svg) {
+  color: var(--pricing-color);
+}
+.technology-faq-contact {
+  background-color: #129ff8;
+}
 .scroll-reveal {
   opacity: 0;
   transform: translateY(18px);
-  transition: opacity .55s ease, transform .55s ease;
+  transition: opacity .85s ease, transform .85s ease;
 }
 .scroll-reveal.is-visible {
   opacity: 1;
   transform: translateY(0);
 }
-.scroll-reveal.is-visible .grid > :is(article, a, figure) {
-  animation: card-reveal .5s both;
+.scroll-reveal.is-visible .grid > * {
+  animation: card-reveal .7s both;
 }
-.scroll-reveal.is-visible .grid > :is(article, a, figure):nth-child(2) { animation-delay: .06s; }
-.scroll-reveal.is-visible .grid > :is(article, a, figure):nth-child(3) { animation-delay: .12s; }
-.scroll-reveal.is-visible .grid > :is(article, a, figure):nth-child(4) { animation-delay: .18s; }
-.scroll-reveal.is-visible .grid > :is(article, a, figure):nth-child(5) { animation-delay: .24s; }
-.scroll-reveal.is-visible .grid > :is(article, a, figure):nth-child(6) { animation-delay: .30s; }
+.scroll-reveal.is-visible .grid > *:nth-child(2) { animation-delay: .08s; }
+.scroll-reveal.is-visible .grid > *:nth-child(3) { animation-delay: .16s; }
+.scroll-reveal.is-visible .grid > *:nth-child(4) { animation-delay: .24s; }
+.scroll-reveal.is-visible .grid > *:nth-child(5) { animation-delay: .32s; }
+.scroll-reveal.is-visible .grid > *:nth-child(6) { animation-delay: .40s; }
 @keyframes card-reveal {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
@@ -186,7 +238,7 @@ button, input, select, textarea { font-family: inherit; }
   .pricing-plan-card,
   .scroll-reveal { transition: none; }
   .scroll-reveal { opacity: 1; transform: none; }
-  .scroll-reveal.is-visible .grid > :is(article, a, figure) { animation: none; }
+  .scroll-reveal.is-visible .grid > * { animation: none; }
   .group:hover .iname-zoom img,
   .iname-hover-card:hover .iname-zoom img { transform: none; }
 }

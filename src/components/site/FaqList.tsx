@@ -9,12 +9,14 @@ const FaqItem = memo(function FaqItem({
   expanded,
   onToggle,
   index,
+  accentColor,
 }: {
   question: string;
   answer: string;
   expanded: boolean;
   onToggle: (index: number) => void;
   index: number;
+  accentColor?: string;
 }) {
   const toggle = useCallback(() => onToggle(index), [onToggle, index]);
   return (
@@ -27,6 +29,10 @@ const FaqItem = memo(function FaqItem({
             className={`inline-flex size-8 shrink-0 items-center justify-center rounded-full text-lg font-semibold transition ${
               expanded ? "bg-[#094690] text-white" : "bg-[#dbeafe] text-[#094690]"
             }`}
+            style={accentColor ? {
+              backgroundColor: expanded ? accentColor : "color-mix(in srgb, " + accentColor + " 14%, white)",
+              color: expanded ? "#fff" : accentColor,
+            } : undefined}
           >
             {expanded ? "×" : "+"}
           </span>
@@ -37,7 +43,7 @@ const FaqItem = memo(function FaqItem({
   );
 });
 
-export const FaqList = memo(function FaqList({ items }: { items: SectionItem[] }) {
+export const FaqList = memo(function FaqList({ items, accentColor }: { items: SectionItem[]; accentColor?: string }) {
   const [open, setOpen] = useState<number | null>(0);
   const toggle = useCallback((index: number) => {
     setOpen((current) => (current === index ? null : index));
@@ -52,6 +58,7 @@ export const FaqList = memo(function FaqList({ items }: { items: SectionItem[] }
           expanded={open === index}
           onToggle={toggle}
           index={index}
+          accentColor={accentColor}
         />
       ))}
     </div>

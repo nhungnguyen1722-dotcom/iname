@@ -15,7 +15,7 @@ const groups = [
 const PlanCard = memo(function PlanCard({ plan, color }: { plan: PricingPlan; color: string }) {
   return (
     <article className={`pricing-plan-card hover-lift relative flex h-full min-w-0 flex-col rounded-2xl border bg-card p-6 shadow-card ${plan.highlighted ? "border-accent/45 ring-1 ring-accent/20" : "border-border"}`} style={{ "--pricing-color": color } as CSSProperties}>
-      {plan.badge ? <div className="absolute -top-3 left-6 rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-semibold text-accent">{plan.badge}</div> : null}
+      {plan.badge ? <div className="pricing-plan-badge absolute -top-3 left-6 rounded-full px-2.5 py-0.5 text-xs font-semibold">{plan.badge}</div> : null}
       <h3 className="font-display text-xl font-bold">{plan.name}</h3>
       <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{plan.summary}</p>
       <div className="mt-5 flex items-end gap-1">
@@ -24,7 +24,7 @@ const PlanCard = memo(function PlanCard({ plan, color }: { plan: PricingPlan; co
       </div>
       <ul className="mt-6 flex-1 space-y-3 text-sm">
         {plan.features.map((feature) => (
-          <li key={feature} className="flex items-start gap-2"><span className="pricing-plan-check mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-bold text-accent">✓</span><span>{feature}</span></li>
+          <li key={feature} className="flex items-start gap-2"><span className="pricing-plan-check mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold">✓</span><span>{feature}</span></li>
         ))}
       </ul>
       {plan.button_url === "#tu-van" || !plan.button_url ? (

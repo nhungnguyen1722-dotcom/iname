@@ -137,7 +137,7 @@ function readItems(type: string, formData: FormData) {
     else if (type === "testimonials") items.push({ quote: text(formData, `item_quote_${i}`), author: text(formData, `item_author_${i}`, 255), company: text(formData, `item_company_${i}`, 255), avatar: text(formData, `item_avatar_${i}`, 8), rating: Math.min(5, Math.max(1, Number(formData.get(`item_rating_${i}`) || 5))) });
     else if (type === "stats") items.push({ value: text(formData, `item_value_${i}`, 80), label: text(formData, `item_label_${i}`, 255) });
     else if (type === "addons") items.push({ name: text(formData, `item_name_${i}`, 255), price: text(formData, `item_price_${i}`, 80) });
-    else if (type === "technology-stack") items.push({ name: text(formData, `item_name_${i}`, 100), mark: text(formData, `item_mark_${i}`, 100), color: text(formData, `item_color_${i}`, 20) });
+    else if (type === "technology-stack") items.push({ name: text(formData, `item_name_${i}`, 100), mark: text(formData, `item_mark_${i}`, 100), color: text(formData, `item_color_${i}`, 20), logoUrl: safeHref(text(formData, `item_logo_url_${i}`, 1000)) });
     else if (type === "notes" || type === "hero" || type === "page-hero") items.push({ label: text(formData, `item_label_${i}`, 255), text: text(formData, `item_text_${i}`) });
     else if (type === "comparison") items.push({ label: text(formData, `item_label_${i}`, 255), values: [0, 1, 2].map((col) => text(formData, `item_value_${i}_${col}`, 255)) });
     else if (type === "pillars") items.push({ title: text(formData, `item_title_${i}`, 255), description: text(formData, `item_description_${i}`), href: safeHref(text(formData, `item_href_${i}`, 500)), cta: text(formData, `item_cta_${i}`, 80), icon: text(formData, `item_icon_${i}`, 64), color: text(formData, `item_color_${i}`, 20), points: text(formData, `item_points_${i}`).split("\n").map((line) => line.trim()).filter(Boolean) });
@@ -155,7 +155,7 @@ function blankItem(type: string) {
   if (type === "addons") return { name: "", price: "" };
   if (type === "notes" || type === "hero" || type === "page-hero") return { label: "", text: "" };
   if (type === "pillars") return { title: "", description: "", href: "", cta: "", icon: "building", color: "#094690", points: [] };
-  if (type === "technology-stack") return { name: "", mark: "", color: "#094690" };
+  if (type === "technology-stack") return { name: "", mark: "", color: "#094690", logoUrl: "" };
   return { title: "", description: "", href: "", cta: "", icon: "building" };
 }
 

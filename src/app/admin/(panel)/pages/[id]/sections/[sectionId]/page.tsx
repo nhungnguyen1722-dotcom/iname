@@ -168,6 +168,7 @@ function ItemFields({ type, items }: { type: string; items: Item[] }) {
               <input name={`item_name_${index}`} defaultValue={String(item.name || "")} className={inputClass} placeholder="Tên công nghệ" />
               <input name={`item_mark_${index}`} defaultValue={String(item.mark || "")} className={inputClass} placeholder="Ký hiệu logo" />
               <input name={`item_color_${index}`} defaultValue={String(item.color || "#094690")} className={inputClass} placeholder="Màu logo" />
+              <input name={`item_logo_url_${index}`} defaultValue={String(item.logoUrl || "")} className={inputClass} placeholder="URL logo SVG" />
             </>
           ) : null}
           {type === "notes" || type === "hero" || type === "page-hero" ? (
