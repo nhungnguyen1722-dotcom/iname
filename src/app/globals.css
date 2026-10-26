@@ -67,6 +67,10 @@ a { color: inherit; text-decoration: none; }
 button, input, select, textarea { font-family: inherit; }
 
 .section-shell { margin-inline: auto; width: 100%; max-width: 72rem; padding-inline: 1rem; }
+@media (max-width: 639px) {
+  main > section[class*="py-"],
+  main .section-shell[class*="py-"] { padding-block: 25px !important; }
+}
 .process-track { position: relative; }
 @media (min-width: 1024px) { .process-track::before { content: ""; position: absolute; top: 1.65rem; left: 10%; right: 10%; border-top: 2px dashed hsl(var(--border)); } }
 .testimonial-track { scrollbar-width: none; }
