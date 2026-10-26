@@ -262,7 +262,7 @@ function PageHero({ section, showImage }: { section: PublicSection; showImage: b
               {section.title}
             </h1>
             {section.description ? (
-              <p className="mt-4 max-w-2xl text-base leading-relaxed text-primary-foreground/90 sm:text-lg">
+              <p className="mt-4 hidden max-w-2xl text-base leading-relaxed text-primary-foreground/90 sm:block sm:text-lg">
                 {section.description}
               </p>
             ) : null}
@@ -283,7 +283,7 @@ function PageHero({ section, showImage }: { section: PublicSection; showImage: b
             ) : null}
           </div>
           {sideImage ? (
-            <div className="relative min-w-0 lg:col-span-5">
+            <div className="relative min-w-0 hidden lg:col-span-5 lg:block">
               <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-primary-foreground/20 bg-card shadow-card sm:aspect-[4/3]">
                 <CmsImage
                   src={section.image_url}
@@ -597,6 +597,7 @@ function CtaBand({ section }: { section: PublicSection }) {
 }
 
 function MediaSplit({ section }: { section: PublicSection }) {
+  const isAccounting = section.section_key === "ac-credentials";
   const imageFirst = section.config.imageSide === "left";
   const image = (
     <div className="relative aspect-[4/3] overflow-hidden rounded-2xl shadow-elegant">
@@ -608,13 +609,18 @@ function MediaSplit({ section }: { section: PublicSection }) {
       <Heading section={section} />
       {section.config.list ? (
         <ul className="mt-8 space-y-5">
-          {section.items.map((item) => (
-            <li key={text(item.title)} className="flex items-start gap-3">
-              <IconMark name={text(item.icon) || "badge"} className="size-10 rounded-lg" />
-              <div><h3 className="font-display text-base font-bold">{text(item.title)}</h3>
-              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{text(item.description)}</p></div>
-            </li>
-          ))}
+          {section.items.map((item) => {
+            const iconColor = text(item.color) || (isAccounting ? "#f26321" : undefined);
+            return (
+              <li key={text(item.title)} className="flex items-start gap-3">
+                <IconMark name={text(item.icon) || "badge"} color={iconColor} className="size-10 rounded-lg" />
+                <div>
+                  <h3 className="font-display text-base font-bold">{text(item.title)}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{text(item.description)}</p>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       ) : null}
     </div>
