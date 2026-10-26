@@ -155,8 +155,10 @@ button, input, select, textarea { font-family: inherit; }
 .accounting-hover-card:hover h3,
 .accounting-hover-card:focus-visible h3,
 .accounting-hover-card:hover .accounting-hover-link,
-.accounting-hover-card:focus-visible .accounting-hover-link {
-  color: #f26321;
+.accounting-hover-card:focus-visible .accounting-hover-link,
+.accounting-hover-card:hover .accounting-hover-link :is(span, svg),
+.accounting-hover-card:focus-visible .accounting-hover-link :is(span, svg) {
+  color: #f26321 !important;
 }
 .accounting-hover-card:hover .accounting-hover-icon,
 .accounting-hover-card:focus-visible .accounting-hover-icon {
@@ -171,6 +173,9 @@ button, input, select, textarea { font-family: inherit; }
 .accounting-hover-card:hover > span,
 .accounting-hover-card:focus-visible > span {
   color: #f26321;
+}
+.accounting-faq-contact:hover {
+  background-color: #d85418 !important;
 }
 .pricing-plan-card {
   --pricing-color: #094690;

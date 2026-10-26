@@ -392,7 +392,15 @@ function Cards({ section, services }: { section: PublicSection; services: Servic
                   <p className="mt-2.5 text-xs leading-relaxed text-muted-foreground sm:text-sm">{text(item.description)}</p>
                 </div>
                 {href ? (
-                  <span className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-sky-500">
+                  <span
+                    className={`mt-6 inline-flex items-center gap-1.5 text-sm font-semibold transition-colors ${
+                      accountingHover
+                        ? "accounting-hover-link text-[#12192b] group-hover:text-[#f26321]"
+                        : hoverBrand || section.section_key === "vo-services"
+                        ? "text-[#094690] group-hover:text-white"
+                        : "text-primary group-hover:text-primary"
+                    }`}
+                  >
                     {ctaText.replace(/\s*→|\s*->/g, "")}
                     <span aria-hidden="true" className="transition-transform group-hover:translate-x-1">→</span>
                   </span>
@@ -535,7 +543,12 @@ function Testimonials({ section }: { section: PublicSection }) {
 }
 
 function Faq({ section, settings }: { section: PublicSection; settings: Record<string, string> }) {
-  const technologyAccent = section.section_key === "tech-faq" ? "#129ff8" : undefined;
+  const isAccountingFaq = section.section_key === "ac-faq";
+  const faqAccent = isAccountingFaq
+    ? "#f26321"
+    : section.section_key === "tech-faq"
+    ? "#129ff8"
+    : undefined;
   return (
     <section className="section-shell py-16 lg:py-20">
       <div className="grid gap-10 lg:grid-cols-12">
@@ -549,14 +562,14 @@ function Faq({ section, settings }: { section: PublicSection; settings: Record<s
                 label={section.button_label}
                 href={section.button_url}
                 variant="accent"
-                className={technologyAccent ? "technology-faq-contact" : undefined}
-                accentColor={technologyAccent}
+                className={section.section_key === "tech-faq" ? "technology-faq-contact" : isAccountingFaq ? "accounting-faq-contact" : undefined}
+                accentColor={faqAccent}
               />
             </div>
           </div>
         </div>
         <div className="lg:col-span-8">
-          <FaqList items={section.items} accentColor={technologyAccent} />
+          <FaqList items={section.items} accentColor={faqAccent} />
         </div>
       </div>
     </section>
