@@ -119,9 +119,11 @@ export default async function OfficeLocationPage({ params }: { params: Promise<{
         </div>
 
         <div className="mt-8 flex flex-wrap items-center gap-4">
-          <SocialShareLinks url={shareUrl} title={location.title} />
           <Link href="/lien-he" className="inline-flex h-11 items-center rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">Liên hệ đăng ký địa chỉ này</Link>
           <a href={chrome.settings.hotline_href} className="inline-flex h-11 items-center text-sm font-semibold text-primary hover:underline">Hotline tư vấn: {chrome.settings.hotline}</a>
+          <div className="sm:ml-auto">
+            <SocialShareLinks url={shareUrl} title={location.title} />
+          </div>
         </div>
       </section>
 

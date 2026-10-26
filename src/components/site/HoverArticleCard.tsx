@@ -1,8 +1,7 @@
-import { memo } from "react";
 import Link from "next/link";
 import { CmsImage } from "./CmsImage";
 
-export const HoverArticleCard = memo(function HoverArticleCard({
+export function HoverArticleCard({
   href,
   title,
   excerpt,
@@ -42,4 +41,4 @@ export const HoverArticleCard = memo(function HoverArticleCard({
       </div>
     </article>
   );
-});
+}

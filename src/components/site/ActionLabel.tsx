@@ -1,6 +1,4 @@
-import { memo } from "react";
-
-export const ActionLabel = memo(function ActionLabel({ label }: { label: string }) {
+export function ActionLabel({ label }: { label: string }) {
   const cleanLabel = label.replace(/\s*(?:→|->)\s*$/, "").trim();
   const hasChatIcon = /liên hệ|tư vấn/i.test(cleanLabel);
   const hasArrow = /xem bảng giá|xem chi tiết|xem thêm/i.test(cleanLabel) || cleanLabel !== label.trim();
@@ -17,4 +15,4 @@ export const ActionLabel = memo(function ActionLabel({ label }: { label: string 
       {hasArrow ? <span aria-hidden="true">→</span> : null}
     </span>
   );
-});
+}

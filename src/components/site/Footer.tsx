@@ -88,7 +88,13 @@ export function Footer({
               <ul className="mt-4 space-y-2.5 text-sm">
                 {group.links.map((link) => (
                   <li key={`${group.id}-${link.href}-${link.label}`}>
-                    <Link href={link.href} className="text-muted-foreground hover:text-primary">{link.label}</Link>
+                    <Link
+                      href={link.href}
+                      className="group inline-flex items-center gap-2 text-muted-foreground transition-colors hover:text-primary"
+                    >
+                      <span aria-hidden="true" className="text-xs font-semibold text-primary/70 transition-transform group-hover:translate-x-1 group-hover:text-primary">→</span>
+                      <span>{link.label}</span>
+                    </Link>
                   </li>
                 ))}
               </ul>
