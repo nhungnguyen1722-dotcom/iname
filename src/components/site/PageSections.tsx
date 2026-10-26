@@ -12,10 +12,10 @@ import { TestimonialCarousel } from "./TestimonialCarousel";
 import { ActionLabel } from "./ActionLabel";
 import type { ArticleCard, FooterGroup, Office, OfficeLocation, PricingPlan, PublicSection, SectionItem, ServiceRecord } from "@/lib/content";
 
-const primaryButton = "inline-flex h-11 items-center justify-center rounded-md bg-background px-6 text-base font-semibold text-foreground shadow-elegant hover:bg-background/90";
-const accentButton = "inline-flex h-11 items-center justify-center rounded-md bg-accent px-6 text-base font-semibold text-accent-foreground shadow-card hover:bg-accent/90";
-const ghostOnDark = "inline-flex h-11 items-center justify-center rounded-md border border-primary-foreground/35 bg-primary-foreground/10 px-6 text-base font-semibold text-primary-foreground hover:bg-primary-foreground/20";
-const outlineButton = "inline-flex h-11 items-center justify-center rounded-md border border-primary/25 bg-card px-6 text-base font-semibold shadow-card hover:bg-primary-soft";
+const primaryButton = "inline-flex h-11 w-full items-center justify-center rounded-md bg-background px-3 text-sm font-semibold text-foreground shadow-elegant hover:bg-background/90 sm:w-auto sm:px-6 sm:text-base text-center";
+const accentButton = "inline-flex h-11 w-full items-center justify-center rounded-md bg-accent px-3 text-sm font-semibold text-accent-foreground shadow-card hover:bg-accent/90 sm:w-auto sm:px-6 sm:text-base text-center";
+const ghostOnDark = "inline-flex h-11 w-full items-center justify-center rounded-md border border-primary-foreground/35 bg-primary-foreground/10 px-3 text-sm font-semibold text-primary-foreground hover:bg-primary-foreground/20 sm:w-auto sm:px-6 sm:text-base text-center";
+const outlineButton = "inline-flex h-11 w-full items-center justify-center rounded-md border border-primary/25 bg-card px-3 text-sm font-semibold shadow-card hover:bg-primary-soft sm:w-auto sm:px-6 sm:text-base text-center";
 
 function text(value: unknown) {
   return typeof value === "string" ? value : "";
@@ -188,19 +188,23 @@ function Hero({ section }: { section: PublicSection }) {
       <div className="section-shell relative grid gap-12 py-12 lg:grid-cols-12 lg:items-center lg:py-20">
         <div className="lg:col-span-7">
           {section.eyebrow ? <div className="inline-flex rounded-full border border-primary-foreground/30 bg-primary-foreground/10 px-2.5 py-0.5 text-xs font-semibold text-primary-foreground">{section.eyebrow}</div> : null}
-          <h1 className="banner-h1 mt-5 font-extrabold text-primary-foreground">{section.title}</h1>
-          <p className="mt-5 max-w-2xl text-base leading-relaxed text-primary-foreground/85 sm:text-lg">{section.description}</p>
-          <ul className="mt-6 flex flex-wrap gap-2">
-            {section.items.map((item) => (
-              <li key={text(item.label)} className="rounded-full border border-primary-foreground/30 bg-primary-foreground/10 px-2.5 py-0.5 text-xs font-medium text-primary-foreground">✓ {text(item.label)}</li>
-            ))}
-          </ul>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <h1 className="banner-h1 mt-3.5 sm:mt-5 font-extrabold text-primary-foreground">{section.title}</h1>
+          {section.description ? (
+            <p className="mt-5 hidden max-w-2xl text-base leading-relaxed text-primary-foreground/85 sm:block sm:text-lg">{section.description}</p>
+          ) : null}
+          {section.items?.length ? (
+            <ul className="mt-6 hidden flex-wrap gap-2 sm:flex">
+              {section.items.map((item) => (
+                <li key={text(item.label)} className="rounded-full border border-primary-foreground/30 bg-primary-foreground/10 px-2.5 py-0.5 text-xs font-medium text-primary-foreground">✓ {text(item.label)}</li>
+              ))}
+            </ul>
+          ) : null}
+          <div className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-8 sm:flex sm:flex-row sm:gap-3">
             <Cta label={section.button_label} href={section.button_url} variant="light" />
             <Cta label={section.secondary_button_label} href={section.secondary_button_url} variant="ghost" />
           </div>
           {stats.length ? (
-            <dl className="mt-10 grid grid-cols-2 gap-6 border-t border-primary-foreground/15 pt-8 lg:grid-cols-4">
+            <dl className="mt-7 grid grid-cols-2 gap-5 border-t border-primary-foreground/15 pt-6 sm:mt-10 sm:gap-6 sm:pt-8 lg:grid-cols-4">
               {stats.map((stat) => (
                 <div key={stat.label}>
                   <dt className="font-display text-2xl font-extrabold text-primary-foreground sm:text-3xl">{stat.value}</dt>
@@ -210,7 +214,7 @@ function Hero({ section }: { section: PublicSection }) {
             </dl>
           ) : null}
         </div>
-        <div className="relative lg:col-span-5">
+        <div className="relative min-w-0 hidden lg:col-span-5 lg:block">
           <div className="relative aspect-[4/3] overflow-hidden rounded-2xl shadow-glow lg:aspect-[5/4]">
             <CmsImage src={section.image_url} alt={section.image_alt || section.title || ""} priority sizes="(min-width: 1024px) 40vw, 100vw" />
           </div>

@@ -23,8 +23,8 @@ export type HeroSlide = {
 
 export type HeroStat = { value?: string; label?: string };
 
-const lightButton = "inline-flex h-11 items-center justify-center rounded-md bg-background px-6 text-base font-semibold text-foreground shadow-elegant hover:bg-background/90";
-const ghostButton = "inline-flex h-11 items-center justify-center rounded-md border border-primary-foreground/35 bg-primary-foreground/10 px-6 text-base font-semibold text-primary-foreground hover:bg-primary-foreground/20";
+const lightButton = "inline-flex h-11 w-full items-center justify-center rounded-md bg-background px-3 text-sm font-semibold text-foreground shadow-elegant hover:bg-background/90 sm:w-auto sm:px-6 sm:text-base text-center";
+const ghostButton = "inline-flex h-11 w-full items-center justify-center rounded-md border border-primary-foreground/35 bg-primary-foreground/10 px-3 text-sm font-semibold text-primary-foreground hover:bg-primary-foreground/20 sm:w-auto sm:px-6 sm:text-base text-center";
 
 function SlideLink({ label, href, className }: { label?: string; href?: string; className: string }) {
   if (!label) return null;
@@ -34,7 +34,7 @@ function SlideLink({ label, href, className }: { label?: string; href?: string; 
 
 function Arrow({ direction }: { direction: "left" | "right" }) {
   return (
-    <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg viewBox="0 0 24 24" className="size-4 sm:size-5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       {direction === "left" ? <path d="M15 6 9 12l6 6" /> : <path d="M9 6l6 6-6 6" />}
     </svg>
   );
@@ -86,25 +86,55 @@ export const HeroSlider = memo(function HeroSlider({
     >
       <div className="bg-mesh pointer-events-none absolute inset-0 opacity-70" />
       <div className="grid-lines pointer-events-none absolute inset-0 opacity-[0.12]" />
-      <div className="section-shell relative py-12 lg:py-20">
+      <div className="section-shell relative py-8 sm:py-12 lg:py-20">
         <div className="grid gap-10 lg:grid-cols-12 lg:items-center">
           <div className="min-w-0 lg:col-span-7">
-            {slide.eyebrow ? <div className="inline-flex rounded-full border border-primary-foreground/30 bg-primary-foreground/10 px-2.5 py-0.5 text-xs font-semibold text-primary-foreground">{slide.eyebrow}</div> : null}
-            <h1 className="banner-h1 mt-5 font-extrabold text-primary-foreground">{slide.title}</h1>
-            <p className="mt-5 max-w-2xl text-base leading-relaxed text-primary-foreground/85 sm:text-lg">{slide.description}</p>
+            <div className="flex items-center justify-between gap-3">
+              {slide.eyebrow ? (
+                <div className="inline-flex rounded-full border border-primary-foreground/30 bg-primary-foreground/10 px-2.5 py-0.5 text-xs font-semibold text-primary-foreground">
+                  {slide.eyebrow}
+                </div>
+              ) : <span />}
+              {count > 1 ? (
+                <div className="flex items-center gap-1.5 lg:hidden">
+                  <button
+                    type="button"
+                    className="flex size-8 items-center justify-center rounded-full bg-white/90 text-foreground shadow transition hover:bg-white active:scale-95"
+                    onClick={() => step(-1)}
+                    aria-label="Slide trước"
+                  >
+                    <Arrow direction="left" />
+                  </button>
+                  <button
+                    type="button"
+                    className="flex size-8 items-center justify-center rounded-full bg-white/90 text-foreground shadow transition hover:bg-white active:scale-95"
+                    onClick={() => step(1)}
+                    aria-label="Slide sau"
+                  >
+                    <Arrow direction="right" />
+                  </button>
+                </div>
+              ) : null}
+            </div>
+            <h1 className="banner-h1 mt-3.5 sm:mt-5 font-extrabold text-primary-foreground">{slide.title}</h1>
+            {slide.description ? (
+              <p className="mt-5 hidden max-w-2xl text-base leading-relaxed text-primary-foreground/85 sm:block sm:text-lg">
+                {slide.description}
+              </p>
+            ) : null}
             {slide.badges?.length ? (
-              <ul className="mt-6 flex flex-wrap gap-2">
+              <ul className="mt-6 hidden flex-wrap gap-2 sm:flex">
                 {slide.badges.map((badge) => (
                   <li key={badge} className="rounded-full border border-primary-foreground/30 bg-primary-foreground/10 px-2.5 py-0.5 text-xs font-medium text-primary-foreground">✓ {badge}</li>
                 ))}
               </ul>
             ) : null}
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-8 sm:flex sm:flex-row sm:gap-3">
               <SlideLink label={slide.primaryLabel} href={slide.primaryHref} className={lightButton} />
               <SlideLink label={slide.secondaryLabel} href={slide.secondaryHref} className={ghostButton} />
             </div>
             {stats.length ? (
-              <dl className="mt-10 grid grid-cols-2 gap-6 border-t border-primary-foreground/15 pt-8 lg:grid-cols-4">
+              <dl className="mt-7 grid grid-cols-2 gap-5 border-t border-primary-foreground/15 pt-6 sm:mt-10 sm:gap-6 sm:pt-8 lg:grid-cols-4">
                 {stats.map((stat) => (
                   <div key={stat.label}>
                     <dt className="font-display text-2xl font-extrabold text-primary-foreground sm:text-3xl">{stat.value}</dt>
@@ -114,7 +144,7 @@ export const HeroSlider = memo(function HeroSlider({
               </dl>
             ) : null}
           </div>
-          <div className="relative min-w-0 lg:col-span-5">
+          <div className="relative min-w-0 hidden lg:col-span-5 lg:block">
             <div className="relative aspect-[4/3] overflow-hidden rounded-2xl shadow-glow lg:aspect-[5/4]">
               <CmsImage src={slide.image} alt={slide.imageAlt || slide.title || ""} priority sizes="(min-width: 1024px) 40vw, 100vw" />
             </div>
@@ -145,7 +175,7 @@ export const HeroSlider = memo(function HeroSlider({
           </div>
         </div>
         {count > 1 ? (
-          <div className="mt-8 flex items-center justify-center gap-2">
+          <div className="mt-8 hidden items-center justify-center gap-2 lg:flex">
             {slides.map((item, itemIndex) => (
               <button
                 key={item.key || item.title || itemIndex}
