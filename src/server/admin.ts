@@ -416,7 +416,7 @@ export async function saveSettingsForm(formData: FormData) {
   const user = await requireAdmin();
   const keys = [
     "brand_name", "brand_tagline", "company_name", "company_address", "logo_alt", "header_cta_label", "header_cta_url", "hotline", "hotline_href",
-    "email", "email_href", "zalo_url", "zalo_label", "sticky_phone_label", "sticky_phone_href", "sticky_zalo_url", "sticky_messenger_url", "sticky_facebook_url", "tax_code", "hours_weekday_label", "hours_weekday",
+    "email", "email_href", "facebook_url", "youtube_url", "x_url", "telegram_url", "zalo_url", "zalo_label", "sticky_phone_label", "sticky_phone_href", "sticky_zalo_url", "sticky_messenger_url", "sticky_facebook_url", "tax_code", "hours_weekday_label", "hours_weekday",
     "hours_saturday_label", "hours_saturday", "hours_sunday_label", "hours_sunday", "hours_summary",
     "hours_saturday_summary", "footer_description", "copyright", "legal_note", "not_found_title", "not_found_description",
   ];

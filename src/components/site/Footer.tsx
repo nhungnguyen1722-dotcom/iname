@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { FooterGroup, Office } from "@/lib/content";
+import { FooterSocialLinks } from "./SocialLinks";
 
 export function Footer({
   settings,
@@ -36,9 +37,26 @@ export function Footer({
                 </div>
                 <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{group.body || settings.footer_description}</p>
                 <div className="mt-5 space-y-2 text-sm">
-                  <p className="mb-3 font-semibold text-foreground">{settings.company_name}</p>
-                  <a href={settings.hotline_href} className="flex items-center gap-2 font-semibold"><span aria-hidden="true">☎</span> Hotline: {settings.hotline}</a>
-                  <a href={settings.email_href} className="flex items-center gap-2 text-muted-foreground hover:text-foreground"><span aria-hidden="true">✉</span> {settings.email}</a>
+                  <p className="mb-3 flex items-center gap-2 font-semibold text-foreground">
+                    <svg viewBox="0 0 24 24" className="size-4 shrink-0 text-primary" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M2 21h20M8 7h4M8 11h4M8 15h4M18 9h2v12" />
+                    </svg>
+                    {settings.company_name}
+                  </p>
+                  <a href={settings.hotline_href} className="flex items-center gap-2 font-normal text-muted-foreground transition-colors hover:text-foreground">
+                    <svg viewBox="0 0 24 24" className="size-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.4 2.1L8.1 8.9a16 16 0 0 0 6 6l1.2-1.3a2 2 0 0 1 2.1-.4c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2Z" /></svg>
+                    <span><strong className="font-semibold text-foreground">Hotline:</strong> {settings.hotline}</span>
+                  </a>
+                  <a href={settings.email_href} className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground">
+                    <svg viewBox="0 0 24 24" className="size-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m4 7 8 6 8-6" /></svg>
+                    <span><strong className="font-semibold text-foreground">Email:</strong> {settings.email}</span>
+                  </a>
+                  <FooterSocialLinks settings={{
+                    facebook_url: settings.facebook_url,
+                    youtube_url: settings.youtube_url,
+                    x_url: settings.x_url,
+                    telegram_url: settings.telegram_url,
+                  }} />
                 </div>
               </div>
             );

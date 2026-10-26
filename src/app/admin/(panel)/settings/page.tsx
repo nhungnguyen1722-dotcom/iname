@@ -6,7 +6,7 @@ export default async function SettingsAdmin({ searchParams }: { searchParams: Pr
   const query = await searchParams;
   const settings = await getSettings();
   const offices = officesFromSettings(settings);
-  const fields = ["brand_name", "brand_tagline", "company_name", "company_address", "hotline", "hotline_href", "email", "email_href", "zalo_label", "zalo_url", "sticky_phone_label", "sticky_phone_href", "sticky_zalo_url", "sticky_messenger_url", "sticky_facebook_url", "tax_code", "hours_summary", "hours_saturday_summary", "not_found_title", "not_found_description"];
+  const fields = ["brand_name", "brand_tagline", "company_name", "company_address", "hotline", "hotline_href", "email", "email_href", "facebook_url", "youtube_url", "x_url", "telegram_url", "zalo_label", "zalo_url", "sticky_phone_label", "sticky_phone_href", "sticky_zalo_url", "sticky_messenger_url", "sticky_facebook_url", "tax_code", "hours_summary", "hours_saturday_summary", "not_found_title", "not_found_description"];
   return (
     <div>
       <h1 className="font-display text-3xl font-extrabold">Thiết lập website</h1>

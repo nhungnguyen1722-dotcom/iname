@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CmsImage } from "@/components/site/CmsImage";
 import { HoverArticleCard } from "@/components/site/HoverArticleCard";
+import { SocialShareLinks } from "@/components/site/SocialLinks";
 import {
   canPreview,
   getArticleBySlug,
@@ -12,6 +13,7 @@ import {
   getRelatedArticles,
 } from "@/lib/content";
 import { sanitizeRichText, slugify } from "@/lib/sanitize";
+import { absoluteSiteUrl } from "@/lib/site-url";
 
 export async function generateMetadata({
   params,
@@ -81,6 +83,7 @@ export default async function AccountingArticlePage({
     },
   );
   const safeHtml = sanitizeRichText(withIds);
+  const shareUrl = absoluteSiteUrl(`/ke-toan/${article.slug}`);
 
   return (
     <main className="flex-1">
@@ -181,6 +184,10 @@ export default async function AccountingArticlePage({
                 <span><strong>Bàn giao sổ sách mỗi tháng:</strong> Hồ sơ được trả đầy đủ theo kỳ, doanh nghiệp không bị giữ chứng từ.</span>
               </li>
             </ul>
+          </div>
+
+          <div className="mt-8">
+            <SocialShareLinks url={shareUrl} title={article.title} />
           </div>
 
           {/* Call to action card */}

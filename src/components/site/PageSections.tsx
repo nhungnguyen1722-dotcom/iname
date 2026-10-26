@@ -557,7 +557,10 @@ function Faq({ section, settings }: { section: PublicSection; settings: Record<s
           <div className="mt-6 rounded-xl border border-border bg-card p-5 shadow-card">
             <p className="text-sm text-muted-foreground">Chưa tìm thấy câu trả lời bạn cần? Gọi hotline hoặc gửi yêu cầu tư vấn.</p>
             <div className="mt-4 flex flex-col gap-2">
-              <a href={settings.hotline_href} className="inline-flex h-10 items-center justify-center rounded-md border border-primary/25 text-sm font-semibold">{settings.hotline}</a>
+              <a href={settings.hotline_href} className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-primary/25 text-sm font-semibold">
+                <svg viewBox="0 0 24 24" className="size-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.4 2.1L8.1 8.9a16 16 0 0 0 6 6l1.2-1.3a2 2 0 0 1 2.1-.4c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2Z" /></svg>
+                {settings.hotline}
+              </a>
               <Cta
                 label={section.button_label}
                 href={section.button_url}
