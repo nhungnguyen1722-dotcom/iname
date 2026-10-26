@@ -276,7 +276,7 @@ function PageHero({ section, showImage }: { section: PublicSection; showImage: b
               </ul>
             ) : null}
             {(section.button_label || section.secondary_button_label) ? (
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-8 grid grid-cols-2 gap-2.5 sm:flex sm:flex-row sm:gap-3">
                 <Cta label={section.button_label} href={section.button_url} variant="light" />
                 <Cta label={section.secondary_button_label} href={section.secondary_button_url} variant="ghost" />
               </div>
