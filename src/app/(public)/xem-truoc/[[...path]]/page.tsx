@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
 import { renderContentPage } from "@/components/site/render-page";
+import { renderAccountingArticle, renderNewsArticle } from "@/components/site/article-renderers";
 import { canPreview } from "@/lib/content";
-import { renderAccountingArticle } from "../../ke-toan/[slug]/page";
-import { renderNewsArticle } from "../../tin-tuc/[slug]/page";
 
 export const dynamic = "force-dynamic";
 
