@@ -146,6 +146,10 @@ async function main() {
 
   await localClient.query("BEGIN");
   try {
+    try {
+      await localClient.query("SET session_replication_role = 'replica'");
+    } catch {}
+
     // Truncate or clean in reverse order to respect foreign key constraints
     console.log("Clearing existing local data in reverse order...");
     for (let i = tablesToCopy.length - 1; i >= 0; i--) {
@@ -189,8 +193,14 @@ async function main() {
       console.log(`✔ Synced table ${table}: ${rows.length} rows`);
     }
 
+    try {
+      await localClient.query("SET session_replication_role = 'origin'");
+    } catch {}
     await localClient.query("COMMIT");
   } catch (err) {
+    try {
+      await localClient.query("SET session_replication_role = 'origin'");
+    } catch {}
     await localClient.query("ROLLBACK");
     throw err;
   }
@@ -217,6 +227,7 @@ async function main() {
   console.log("\n✅ Đã kéo toàn bộ dữ liệu từ Neon về Database local thành công!");
   await neonClient.end();
   await localClient.end();
+  process.exit(0);
 }
 
 main().catch((err) => {
