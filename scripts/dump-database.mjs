@@ -18,12 +18,13 @@ for (const envFile of [".env.local", ".env"]) {
   }
 }
 
-if (!process.env.DATABASE_URL) {
-  console.error("DATABASE_URL is not configured.");
+const connectionString = process.env.LOCAL_DATABASE_URL || process.env.DATABASE_URL;
+if (!connectionString) {
+  console.error("LOCAL_DATABASE_URL or DATABASE_URL is not configured.");
   process.exit(1);
 }
 
-const client = new pg.Client(pgConfig(process.env.DATABASE_URL));
+const client = new pg.Client(pgConfig(connectionString));
 await client.connect();
 const tablesResult = await client.query("SELECT tablename FROM pg_tables WHERE schemaname = 'public'");
 const existing = new Set(tablesResult.rows.map((row) => row.tablename));
@@ -33,9 +34,12 @@ let output = [
   "-- iName database export. Run against an empty PostgreSQL database.",
   fs.readFileSync(path.join(process.cwd(), "sql", "001_schema.sql"), "utf8"),
   "CREATE TABLE IF NOT EXISTS schema_migrations (migration VARCHAR(255) PRIMARY KEY, applied_at TIMESTAMP NOT NULL DEFAULT NOW());",
-  fs.existsSync(path.join(process.cwd(), "sql", "014_login_attempts.sql"))
-    ? fs.readFileSync(path.join(process.cwd(), "sql", "014_login_attempts.sql"), "utf8")
-    : "",
+  ["016_login_attempts.sql", "014_login_attempts.sql"]
+    .map((name) => path.join(process.cwd(), "sql", name))
+    .filter((file) => fs.existsSync(file))
+    .slice(0, 1)
+    .map((file) => fs.readFileSync(file, "utf8"))
+    .join("\n"),
   "BEGIN;",
 ];
 

@@ -5,8 +5,22 @@ import { IconMark } from "@/components/site/IconMark";
 import { LocationGallery } from "@/components/site/LocationGallery";
 import { SocialShareLinks } from "@/components/site/SocialLinks";
 import { getOfficeLocationBySlug, getPublicChrome } from "@/lib/content";
+import { sql } from "@/lib/db";
 import { sanitizeRichText } from "@/lib/sanitize";
 import { absoluteSiteUrl } from "@/lib/site-url";
+
+export const revalidate = 60;
+
+export async function generateStaticParams() {
+  try {
+    const rows = await sql<{ slug: string }>(
+      "SELECT slug FROM office_locations WHERE deleted_at IS NULL AND visible = TRUE AND status = 'published'",
+    );
+    return rows.map((row) => ({ slug: row.slug }));
+  } catch {
+    return [];
+  }
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;

@@ -1,4 +1,4 @@
-import { unstable_cache, revalidateTag } from "next/cache";
+import { unstable_cache, revalidatePath, revalidateTag } from "next/cache";
 import { cache } from "react";
 import { asList, sql, parseJson } from "./db";
 import { getCurrentAdmin } from "./auth";
@@ -196,6 +196,7 @@ const CONTENT_TAG = "site-content";
 
 export function clearContentCache() {
   revalidateTag(CONTENT_TAG);
+  revalidatePath("/", "layout");
 }
 
 async function loadPublicChrome() {

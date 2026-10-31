@@ -28,7 +28,7 @@ export default async function PagesAdmin({ searchParams }: { searchParams: Promi
                 <td>{new Date(page.updated_at).toLocaleString("vi-VN")}</td>
                 <td className="space-x-3 px-4 py-3">
                   <Link className="font-semibold text-primary" href={`/admin/pages/${page.slug}`}>Sửa</Link>
-                  <Link className="font-semibold text-primary" href={`${page.path}?preview=1`}>Xem trước</Link>
+                  <Link className="font-semibold text-primary" href={page.path === "/" ? "/xem-truoc" : `/xem-truoc${page.path}`}>Xem trước</Link>
                 </td>
               </tr>
             ))}

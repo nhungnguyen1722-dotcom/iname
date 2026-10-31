@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PageSections } from "@/components/site/PageSections";
-import { canPreview, getPageByPath, getPublicChrome, officesFromSettings } from "@/lib/content";
+import { getPageByPath, getPublicChrome, officesFromSettings } from "@/lib/content";
+
+export const revalidate = 60;
 
 export async function generateMetadata(): Promise<Metadata> {
   const data = await getPageByPath("/", false);
@@ -18,21 +20,13 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function HomePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ preview?: string }>;
-}) {
-  const query = await searchParams;
-  const preview = query.preview === "1" ? await canPreview() : false;
+export default async function HomePage() {
   const [chrome, data] = await Promise.all([
     getPublicChrome(),
-    getPageByPath("/", preview),
+    getPageByPath("/", false),
   ]);
-  if (!data || (data.page.status !== "published" && !preview)) notFound();
-  const sections = preview
-    ? data.sections
-    : data.sections.filter((section) => section.visible && section.status === "published");
+  if (!data || data.page.status !== "published") notFound();
+  const sections = data.sections.filter((section) => section.visible && section.status === "published");
   return (
     <PageSections
       sections={sections}

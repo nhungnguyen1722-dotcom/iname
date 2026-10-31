@@ -11,6 +11,14 @@ function withAdminHeaders(response: NextResponse) {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  if (pathname === "/tin-tuc") {
+    const { searchParams } = request.nextUrl;
+    if (searchParams.has("q") || searchParams.has("category") || searchParams.has("page")) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/tin-tuc/bo-loc";
+      return NextResponse.rewrite(url);
+    }
+  }
   if (!pathname.startsWith("/admin")) return NextResponse.next();
   if (pathname === "/admin/login") return withAdminHeaders(NextResponse.next());
   const token = request.cookies.get("iname_session")?.value;
@@ -25,5 +33,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin/:path*", "/tin-tuc"],
 };

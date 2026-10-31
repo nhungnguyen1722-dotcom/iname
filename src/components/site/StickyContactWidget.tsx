@@ -1,4 +1,5 @@
 import { memo, useMemo } from "react";
+import { SITE_HOTLINE_LABEL, SITE_HOTLINE_TEL, SITE_ZALO_URL } from "@/lib/site-contact";
 
 type Settings = Record<string, string>;
 
@@ -36,8 +37,8 @@ export const StickyContactWidget = memo(function StickyContactWidget({ settings 
     const messenger = settings.sticky_messenger_visible === "true";
     const facebook = settings.sticky_facebook_visible === "true";
     return [
-      phone ? { href: settings.sticky_phone_href || settings.hotline_href || "tel:0981988357", label: settings.sticky_phone_label || "Gọi 0981988357", kind: "phone" as const } : null,
-      zalo ? { href: settings.sticky_zalo_url || "https://zalo.me/0981988357", label: "Chat qua Zalo", kind: "zalo" as const } : null,
+      phone ? { href: settings.sticky_phone_href || settings.hotline_href || SITE_HOTLINE_TEL, label: settings.sticky_phone_label || SITE_HOTLINE_LABEL, kind: "phone" as const } : null,
+      zalo ? { href: settings.sticky_zalo_url || SITE_ZALO_URL, label: "Chat qua Zalo", kind: "zalo" as const } : null,
       messenger && settings.sticky_messenger_url ? { href: settings.sticky_messenger_url, label: "Chat Messenger", kind: "chat" as const } : null,
       facebook && settings.sticky_facebook_url ? { href: settings.sticky_facebook_url, label: "Facebook", kind: "social" as const } : null,
     ].filter((item): item is NonNullable<typeof item> => Boolean(item?.href));

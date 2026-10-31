@@ -147,7 +147,7 @@ export const BangGiaPage = memo(function BangGiaPage({
           <div className="mt-8 rounded-2xl border border-border bg-card p-5">
             <h3 className="font-display text-lg font-bold">{notes.title}</h3>
             <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-              {notes.items.map((item, index) => <li key={index}>• {text(item.text) || text(item.label)}</li>)}
+              {notes.items.map((item, index) => <li key={`${index}-${text(item.text) || text(item.label)}`}>• {text(item.text) || text(item.label)}</li>)}
             </ul>
           </div>
         ) : null}

@@ -5,6 +5,8 @@ import { StickyContactWidget } from "@/components/site/StickyContactWidget";
 import { ScrollReveal } from "@/components/site/ScrollReveal";
 import { getPopularArticles, getPublicChrome, officesFromSettings } from "@/lib/content";
 
+export const revalidate = 60;
+
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
   const [{ settings, navigation, groups, plans }, searchSuggestions] = await Promise.all([
     getPublicChrome(),

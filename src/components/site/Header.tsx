@@ -24,6 +24,7 @@ export const Header = memo(function Header({
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState<number | null>(null);
+  const [desktopGroup, setDesktopGroup] = useState<number | null>(null);
   const openMenu = useCallback(() => setOpen(true), []);
   const closeMenu = useCallback(() => {
     setOpen(false);
@@ -127,11 +128,20 @@ export const Header = memo(function Header({
                 );
               }
               return (
-                <div key={item.id} className="relative group">
+                <div
+                  key={item.id}
+                  className="relative group"
+                  onMouseEnter={() => setDesktopGroup(item.id)}
+                  onMouseLeave={() => setDesktopGroup((current) => current === item.id ? null : current)}
+                  onFocus={() => setDesktopGroup(item.id)}
+                  onBlur={(event) => {
+                    if (!(event.relatedTarget instanceof Node) || !event.currentTarget.contains(event.relatedTarget)) setDesktopGroup((current) => current === item.id ? null : current);
+                  }}
+                >
                   <button
                     type="button"
                     className={`inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-2 text-sm font-medium xl:px-3 ${active ? "bg-primary-soft text-primary" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}
-                    aria-expanded={false}
+                    aria-expanded={desktopGroup === item.id}
                     aria-haspopup="true"
                   >
                     {item.label}
@@ -175,7 +185,7 @@ export const Header = memo(function Header({
             <nav className="flex flex-col gap-1" aria-label="Di động">
               {mobileTree.map(({ item, children }) => children.length ? (
                 <div key={item.id}>
-                  <button type="button" className="flex w-full items-center justify-between rounded-md px-3 py-3 text-base font-semibold hover:bg-secondary" onClick={() => setOpenGroup((current) => current === item.id ? null : item.id)}>
+                  <button type="button" className="flex w-full items-center justify-between rounded-md px-3 py-3 text-base font-semibold hover:bg-secondary" aria-expanded={openGroup === item.id} onClick={() => setOpenGroup((current) => current === item.id ? null : item.id)}>
                     {item.label}
                     <ChevronIcon />
                   </button>

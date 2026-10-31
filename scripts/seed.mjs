@@ -4,6 +4,8 @@ import pg from "pg";
 import bcrypt from "bcryptjs";
 import { pgConfig } from "./pg-config.mjs";
 
+const siteContact = JSON.parse(fs.readFileSync(path.join(process.cwd(), "src/lib/site-contact.json"), "utf8"));
+
 function loadEnv() {
   for (const envFile of [".env.local", ".env"]) {
   const envPath = path.join(process.cwd(), envFile);
@@ -217,18 +219,18 @@ const settings = {
   header_cta_url: "#tu-van",
   header_show_phone: "true",
   topbar_visible: "true",
-  hotline: "0981988357",
-  hotline_href: "tel:0981988357",
-  email: contact.nn.email,
-  email_href: contact.nn.emailHref,
-  zalo_url: "https://zalo.me/0981988357",
+  hotline: siteContact.hotline,
+  hotline_href: `tel:${siteContact.hotline}`,
+  email: siteContact.email,
+  email_href: `mailto:${siteContact.email}`,
+  zalo_url: `https://zalo.me/${siteContact.hotline}`,
   zalo_label: t("contact.channels.zaloValue"),
   sticky_contacts_visible: "true",
   sticky_phone_visible: "true",
-  sticky_phone_label: "Gọi 0981988357",
-  sticky_phone_href: "tel:0981988357",
+  sticky_phone_label: `Gọi ${siteContact.hotline}`,
+  sticky_phone_href: `tel:${siteContact.hotline}`,
   sticky_zalo_visible: "true",
-  sticky_zalo_url: "https://zalo.me/0981988357",
+  sticky_zalo_url: `https://zalo.me/${siteContact.hotline}`,
   sticky_messenger_visible: "false",
   sticky_messenger_url: "",
   sticky_facebook_visible: "false",
@@ -249,8 +251,8 @@ const settings = {
     ...office,
     label: "Trụ sở Hà Nội",
     address: "Phòng Co-founder, Tầng 1, Tòa nhà N01-T2 Khu Đoàn Ngoại Giao, Đường Hoàng Minh Thảo, Phường Xuân Đỉnh, TP Hà Nội, Việt Nam",
-    phone: "0981988357",
-    phoneHref: "tel:0981988357",
+    phone: siteContact.hotline,
+    phoneHref: `tel:${siteContact.hotline}`,
   } : office)),
   not_found_title: t("notFound.title") || "Không tìm thấy trang",
   not_found_description: t("notFound.description") || "Trang bạn tìm không tồn tại hoặc đã được chuyển.",

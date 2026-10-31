@@ -4,18 +4,29 @@ import { notFound } from "next/navigation";
 import { CmsImage } from "@/components/site/CmsImage";
 import { HoverArticleCard } from "@/components/site/HoverArticleCard";
 import { SocialShareLinks } from "@/components/site/SocialLinks";
-import { canPreview, getArticleBySlug, getCategories, getPopularArticles, getPublicChrome, getRelatedArticles } from "@/lib/content";
+import { getArticleBySlug, getCategories, getPopularArticles, getPublicChrome, getRelatedArticles } from "@/lib/content";
+import { sql } from "@/lib/db";
 import { sanitizeRichText, slugify } from "@/lib/sanitize";
 import { absoluteSiteUrl } from "@/lib/site-url";
 
-export async function generateMetadata({ params, searchParams }: {
+export const revalidate = 60;
+
+export async function generateStaticParams() {
+  try {
+    const rows = await sql<{ slug: string }>(
+      "SELECT slug FROM articles WHERE deleted_at IS NULL AND status = 'published'",
+    );
+    return rows.map((row) => ({ slug: row.slug }));
+  } catch {
+    return [];
+  }
+}
+
+export async function generateMetadata({ params }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ preview?: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const query = await searchParams;
-  const preview = query.preview === "1" && await canPreview();
-  const article = await getArticleBySlug(slug, preview);
+  const article = await getArticleBySlug(slug, false);
   if (!article) return { title: "Không tìm thấy bài viết" };
   return {
     title: article.seo_title || article.title,
@@ -26,16 +37,8 @@ export async function generateMetadata({ params, searchParams }: {
   };
 }
 
-export default async function NewsArticle({ params, searchParams }: {
-  params: Promise<{ slug: string }>;
-  searchParams: Promise<{ preview?: string }>;
-}) {
-  const [{ slug }, query] = await Promise.all([params, searchParams]);
-  const previewRequested = query.preview === "1";
-  const [preview, article] = await Promise.all([
-    previewRequested ? canPreview() : Promise.resolve(false),
-    getArticleBySlug(slug, previewRequested),
-  ]);
+export async function renderNewsArticle(slug: string, preview: boolean) {
+  const article = await getArticleBySlug(slug, preview);
   if (!article || (article.status !== "published" && !preview)) notFound();
   const [related, popular, categories, chrome] = await Promise.all([
     getRelatedArticles(article.slug, article.category_slug),
@@ -109,4 +112,9 @@ export default async function NewsArticle({ params, searchParams }: {
       ) : null}
     </main>
   );
+}
+
+export default async function NewsArticle({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  return renderNewsArticle(slug, false);
 }

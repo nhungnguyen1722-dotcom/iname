@@ -41,6 +41,38 @@ function rowKey(row, columns) {
   return JSON.stringify(values);
 }
 
+function identityValue(value) {
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === "bigint") return value.toString();
+  return value ?? null;
+}
+
+function identityKey(row, columns) {
+  return JSON.stringify(columns.map((column) => identityValue(row[column])));
+}
+
+function parentsBeforeChildren(rows) {
+  const byId = new Map(rows.map((row) => [String(row.id), row]));
+  const sorted = [];
+  const seen = new Set();
+  const visit = (row) => {
+    if (!row || seen.has(String(row.id))) return;
+    seen.add(String(row.id));
+    if (row.parent_id != null) visit(byId.get(String(row.parent_id)));
+    sorted.push(row);
+  };
+  for (const row of rows) visit(row);
+  return sorted;
+}
+
+const APPEND_ONLY_TABLES = new Set(["contact_requests", "audit_logs", "login_attempts"]);
+const SERIAL_IDENTITY = {
+  navigation_items: ["href", "parent_id"],
+  contact_requests: ["full_name", "phone", "email", "message", "source_path", "created_at"],
+  audit_logs: ["admin_user_id", "action", "entity", "entity_id", "detail", "created_at"],
+  login_attempts: ["email", "ip", "success", "created_at"],
+};
+
 async function getColumns(client, table) {
   const result = await client.query(
     "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1 ORDER BY ordinal_position",
@@ -158,6 +190,7 @@ const tables = [
   "media_assets",
   "contact_requests",
   "audit_logs",
+  "login_attempts",
   "office_locations",
 ];
 
@@ -216,6 +249,7 @@ try {
       targetRows: existingRows.rows,
       idMappings: new Map(),
       transfers: [],
+      skipSourceKeys: new Set(),
     });
   }
 
@@ -238,13 +272,48 @@ try {
     const nonPrimaryUniqueKeys = state.uniqueKeys.filter(
       (columns) => JSON.stringify(columns) !== JSON.stringify(state.primaryKey),
     );
-    const numericIds = state.targetRows
-      .map((row) => row.id)
-      .filter((id) => id !== null && id !== undefined && /^\d+$/.test(String(id)))
-      .map(Number);
-    let nextId = Math.max(0, ...numericIds) + 1;
+    const reservedIds = new Set(
+      state.targetRows
+        .map((row) => Number(row.id))
+        .filter((id) => Number.isSafeInteger(id)),
+    );
+    let nextId = Math.max(0, ...reservedIds) + 1;
+    const allocateId = () => {
+      while (reservedIds.has(nextId)) nextId += 1;
+      const id = nextId;
+      nextId += 1;
+      reservedIds.add(id);
+      if (!Number.isSafeInteger(id)) {
+        throw new Error(`Cannot safely allocate a new primary key for ${state.table}.`);
+      }
+      return id;
+    };
+    const claimOrAllocate = (sourceId) => {
+      const numeric = Number(sourceId);
+      if (!Number.isSafeInteger(numeric) || reservedIds.has(numeric)) return allocateId();
+      reservedIds.add(numeric);
+      return sourceId;
+    };
+    const serialIdentity = SERIAL_IDENTITY[state.table];
+    const serialOnly =
+      state.primaryKey.length === 1 &&
+      state.primaryKey[0] === "id" &&
+      nonPrimaryUniqueKeys.length === 0;
+    const targetByIdentity = new Map();
+    const usedIdentityIds = new Set();
+    if (serialIdentity) {
+      for (const existing of state.targetRows) {
+        const key = identityKey(existing, serialIdentity);
+        const bucket = targetByIdentity.get(key);
+        if (bucket) bucket.push(existing);
+        else targetByIdentity.set(key, [existing]);
+      }
+    }
+    const orderedSourceRows = state.table === "navigation_items"
+      ? parentsBeforeChildren(state.sourceRows)
+      : state.sourceRows;
 
-    for (const row of state.sourceRows) {
+    for (const row of orderedSourceRows) {
       const comparableRow = { ...row };
       for (const foreignKey of foreignKeys.filter((key) => key.table_name === state.table)) {
         const referencedState = statesByTable.get(foreignKey.referenced_table);
@@ -274,8 +343,23 @@ try {
         throw new Error(`Ambiguous unique-key matches while reconciling ${state.table}.`);
       }
 
-      let targetRow = matches.values().next().value;
-      if (!targetRow) {
+      let targetRow = serialOnly ? undefined : matches.values().next().value;
+      if (serialOnly) {
+        if (serialIdentity) {
+          const fingerprint = identityKey(comparableRow, serialIdentity);
+          const bucket = (targetByIdentity.get(fingerprint) || []).filter((item) => !usedIdentityIds.has(String(item.id)));
+          const chosen = bucket.find((item) => String(item.id) === String(row.id)) || bucket[0];
+          if (chosen) {
+            usedIdentityIds.add(String(chosen.id));
+            targetRow = chosen;
+            if (APPEND_ONLY_TABLES.has(state.table)) state.skipSourceKeys.add(sourceKey);
+          } else {
+            targetRow = { id: claimOrAllocate(row.id) };
+          }
+        } else {
+          targetRow = { id: claimOrAllocate(row.id) };
+        }
+      } else if (!targetRow) {
         const primaryKeyMatch = targetByPrimaryKey.get(sourceKey);
         const hasUniqueKeyMismatch =
           primaryKeyMatch &&
@@ -288,12 +372,17 @@ try {
         if (primaryKeyMatch && !hasUniqueKeyMismatch) {
           targetRow = primaryKeyMatch;
         } else if (primaryKeyMatch) {
-          if (state.primaryKey.length !== 1 || state.primaryKey[0] !== "id" || !Number.isSafeInteger(nextId)) {
+          if (state.primaryKey.length !== 1 || state.primaryKey[0] !== "id") {
             throw new Error(`Cannot safely allocate a new primary key for ${state.table}.`);
           }
-          targetRow = { ...row, id: nextId++ };
+          targetRow = { ...row, id: allocateId() };
         } else {
-          targetRow = Object.fromEntries(state.primaryKey.map((column) => [column, row[column]]));
+          const kept = Object.fromEntries(state.primaryKey.map((column) => [column, row[column]]));
+          if (kept.id != null) {
+            const numeric = Number(kept.id);
+            if (Number.isSafeInteger(numeric)) reservedIds.add(numeric);
+          }
+          targetRow = kept;
         }
       }
       state.idMappings.set(sourceKey, state.primaryKey.map((column) => targetRow[column]));
@@ -320,7 +409,9 @@ try {
           });
         }
       }
-      const mappedPrimaryKey = state.idMappings.get(rowKey(sourceRow, state.primaryKey));
+      const sourceKey = rowKey(sourceRow, state.primaryKey);
+      if (state.skipSourceKeys.has(sourceKey)) continue;
+      const mappedPrimaryKey = state.idMappings.get(sourceKey);
       state.primaryKey.forEach((column, index) => {
         row[column] = mappedPrimaryKey[index];
       });
@@ -352,9 +443,9 @@ try {
       }
       keptByTable.set(table, kept);
       const mutableColumns = columns.filter((column) => !primaryKey.includes(column));
-      const conflictAction = mutableColumns.length
-        ? `DO UPDATE SET ${mutableColumns.map((column) => `${quoteIdentifier(column)} = EXCLUDED.${quoteIdentifier(column)}`).join(", ")}`
-        : "DO NOTHING";
+      const conflictAction = APPEND_ONLY_TABLES.has(table) || !mutableColumns.length
+        ? "DO NOTHING"
+        : `DO UPDATE SET ${mutableColumns.map((column) => `${quoteIdentifier(column)} = EXCLUDED.${quoteIdentifier(column)}`).join(", ")}`;
       const chunkSize = 40;
 
       for (let offset = 0; offset < writable.length; offset += chunkSize) {

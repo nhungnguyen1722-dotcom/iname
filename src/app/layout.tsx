@@ -18,8 +18,6 @@ export const metadata: Metadata = {
   description: "Văn phòng ảo, kế toán - thuế và giải pháp công nghệ cho doanh nghiệp.",
 };
 
-export const dynamic = "force-dynamic";
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi">

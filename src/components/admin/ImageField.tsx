@@ -7,7 +7,7 @@ const secondaryButtonClass = "inline-flex h-10 items-center rounded-md border bo
 
 export type MediaChoice = { url: string; alt: string | null; file_name: string | null };
 
-export function ImageField({
+function ImageFieldBody({
   name,
   uploadName = "image_file",
   value = "",
@@ -25,6 +25,7 @@ export function ImageField({
 
   useEffect(() => {
     setUrl(value);
+    setLibraryOpen(false);
   }, [value]);
   return (
     <div className="space-y-2">
@@ -52,4 +53,14 @@ export function ImageField({
       ) : null}
     </div>
   );
+}
+
+export function ImageField(props: {
+  name: string;
+  uploadName?: string;
+  value?: string;
+  media?: MediaChoice[];
+  label?: string;
+}) {
+  return <ImageFieldBody key={`${props.name}:${props.value ?? ""}`} {...props} />;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useActionState, useMemo } from "react";
+import { memo, useActionState, useEffect, useMemo, useRef } from "react";
 import { submitContact, type ContactState } from "@/server/contact";
 import type { PricingPlan } from "@/lib/content";
 
@@ -19,8 +19,12 @@ export const ContactForm = memo(function ContactForm({
 }) {
   const [state, action, pending] = useActionState(submitContact, initial);
   const visiblePlans = useMemo(() => plans.filter((plan) => plan.visible), [plans]);
+  const formRef = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    if (state.ok) formRef.current?.reset();
+  }, [state.ok, state.message]);
   return (
-    <form action={action} className="space-y-4">
+    <form ref={formRef} action={action} className="space-y-4">
       <input type="hidden" name="sourcePath" value={sourcePath} />
       <input type="text" name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true" />
       <div className={compact ? "space-y-4" : "grid gap-4 sm:grid-cols-2"}>

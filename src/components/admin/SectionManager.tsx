@@ -12,7 +12,7 @@ type SectionRow = {
   status: string;
 };
 
-export function SectionManager({
+function SectionManagerList({
   pageSlug,
   sections,
 }: {
@@ -84,4 +84,9 @@ export function SectionManager({
       </form>
     </div>
   );
+}
+
+export function SectionManager(props: { pageSlug: string; sections: SectionRow[] }) {
+  const sectionKey = props.sections.map((section) => `${section.id}:${section.visible}:${section.status}:${section.admin_name}:${section.section_type}`).join("|");
+  return <SectionManagerList key={sectionKey} {...props} />;
 }

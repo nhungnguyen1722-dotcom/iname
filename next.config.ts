@@ -33,6 +33,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  productionBrowserSourceMaps: false,
   experimental: {
     serverActions: {
       bodySizeLimit: "4.5mb",
@@ -65,6 +66,14 @@ const nextConfig: NextConfig = {
       {
         source: "/:path*",
         headers: securityHeaders,
+      },
+      {
+        source: "/:path*.map",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Content-Security-Policy", value: "default-src 'none'" },
+          { key: "Cache-Control", value: "no-store" },
+        ],
       },
     ];
   },

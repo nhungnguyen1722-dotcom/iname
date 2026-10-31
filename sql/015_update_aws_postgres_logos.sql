@@ -1,3 +1,13 @@
+DO $cms_guard$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'pages')
+     OR NOT EXISTS (SELECT 1 FROM pages)
+     OR current_setting('server_version_num')::int < 90400 THEN
+    RAISE EXCEPTION 'CMS_CONTENT_MISSING';
+  END IF;
+END
+$cms_guard$;
+
 UPDATE page_sections AS s
 SET items_json = (
       SELECT COALESCE(

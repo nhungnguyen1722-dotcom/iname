@@ -4,7 +4,13 @@ import { redirect } from "next/navigation";
 import { getPageByPath } from "@/lib/content";
 import { renderContentPage } from "@/components/site/render-page";
 
-const paths = new Set(["/van-phong-ao", "/ke-toan", "/bang-gia", "/bang-gia-cu", "/giai-phap-cong-nghe", "/tin-tuc", "/lien-he", "/trang-chu-cu"]);
+export const revalidate = 60;
+
+const paths = new Set(["/van-phong-ao", "/ke-toan", "/bang-gia", "/bang-gia-cu", "/giai-phap-cong-nghe", "/lien-he", "/trang-chu-cu"]);
+
+export function generateStaticParams() {
+  return [...paths].map((path) => ({ slug: path.slice(1) }));
+}
 
 export async function generateMetadata({
   params,
@@ -14,8 +20,7 @@ export async function generateMetadata({
   const { slug } = await params;
   if (slug === "kien-thuc") redirect("/tin-tuc");
   const path = `/${slug}`;
-  const data = await getPageByPath(path, false)
-    || (path === "/tin-tuc" ? await getPageByPath("/kien-thuc", false) : null);
+  const data = await getPageByPath(path, false);
   if (!data) return { title: "Không tìm thấy trang" };
   return {
     title: data.page.seo_title || data.page.title,
@@ -30,15 +35,12 @@ export async function generateMetadata({
 
 export default async function ContentPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ preview?: string; q?: string; category?: string; page?: string }>;
 }) {
   const { slug } = await params;
   if (slug === "kien-thuc") redirect("/tin-tuc");
   const path = `/${slug}`;
   if (!paths.has(path)) notFound();
-  const query = await searchParams;
-  return renderContentPage(path, query.preview === "1", query);
+  return renderContentPage(path, false);
 }
