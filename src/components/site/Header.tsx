@@ -43,18 +43,29 @@ export const Header = memo(function Header({
       list.push(item);
       children.set(item.parent_id, list);
     }
-    return items
-      .filter((item) => !item.parent_id)
+    const allRoots = items.filter((item) => !item.parent_id);
+    const serviceRoots = allRoots.filter((item) => item.label.trim().toLocaleLowerCase("vi") === "dịch vụ");
+    const preferredServiceRoot = serviceRoots.find((item) => children.has(item.id)) || serviceRoots[0];
+    return allRoots
+      .filter((item) => item.label.trim().toLocaleLowerCase("vi") !== "dịch vụ" || item.id === preferredServiceRoot?.id)
       .map((item) => ({ item, children: children.get(item.id) || [] }));
   }, []);
   const desktopTree = useMemo(() => tree(desktop), [desktop, tree]);
   const mobileTree = useMemo(() => tree(mobile), [mobile, tree]);
+  const contactHours = useMemo(
+    () => [
+      settings.hours_weekday ? [settings.hours_weekday_label || "Ngày thường", settings.hours_weekday].join(": ") : "",
+      settings.hours_saturday ? [settings.hours_saturday_label || "Thứ 7", settings.hours_saturday].join(": ") : settings.hours_saturday_summary || "",
+      settings.hours_sunday ? [settings.hours_sunday_label || "Chủ nhật", settings.hours_sunday].join(": ") : "",
+    ].filter(Boolean),
+    [settings.hours_weekday, settings.hours_weekday_label, settings.hours_saturday, settings.hours_saturday_label, settings.hours_saturday_summary, settings.hours_sunday, settings.hours_sunday_label],
+  );
   if (settings.header_visible === "false") return null;
 
   return (
     <>
       {settings.topbar_visible !== "false" ? (
-        <div className="border-b border-border bg-secondary text-xs text-muted-foreground">
+        <div className="hidden border-b border-border bg-secondary text-xs text-muted-foreground sm:block">
           <div className="section-shell flex flex-wrap items-center justify-between gap-x-6 gap-y-2 py-2">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 sm:gap-x-6">
               {settings.hotline ? (
@@ -154,10 +165,12 @@ export const Header = memo(function Header({
       </header>
       {open ? (
         <div className="fixed inset-0 z-50 bg-foreground/40 lg:hidden" onClick={closeMenu}>
-          <div className="ml-auto flex h-full w-[min(100%,20rem)] flex-col bg-card p-5 shadow-elegant" onClick={(event) => event.stopPropagation()}>
+          <div className="ml-auto flex h-full w-[min(100%,20rem)] flex-col overflow-y-auto bg-card p-5 shadow-elegant" onClick={(event) => event.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <p className="font-display text-lg font-extrabold">{settings.brand_name || "iName"}</p>
-              <button type="button" className="rounded-md border border-border px-3 py-1 text-sm" onClick={closeMenu}>Đóng</button>
+              <button type="button" className="inline-flex size-9 items-center justify-center rounded-full border border-border text-foreground transition-colors hover:bg-secondary" onClick={closeMenu} aria-label="Đóng menu">
+                <CloseIcon />
+              </button>
             </div>
             <nav className="flex flex-col gap-1" aria-label="Di động">
               {mobileTree.map(({ item, children }) => children.length ? (
@@ -178,12 +191,26 @@ export const Header = memo(function Header({
                 </Link>
               ))}
             </nav>
-            <button type="button" className="mt-4 inline-flex h-11 items-center justify-center gap-2 rounded-md border border-border text-sm font-semibold" onClick={() => { closeMenu(); setSearchOpen(true); }}>
-              <SearchIcon /> Tìm kiếm
-            </button>
-            <a href={settings.hotline_href} className="mt-3 inline-flex items-center justify-center gap-2 text-center text-sm font-semibold">
-              <PhoneIcon /> {settings.hotline}
-            </a>
+            <div className="mt-auto space-y-3 border-t border-border pt-4 text-sm">
+              {settings.hotline ? (
+                <a href={settings.hotline_href || "tel:" + settings.hotline} className="flex items-center gap-2 font-semibold">
+                  <PhoneIcon className="size-4 shrink-0 text-primary" />
+                  <span>Hotline: {settings.hotline}</span>
+                </a>
+              ) : null}
+              {contactHours.length ? (
+                <div className="flex items-start gap-2 text-muted-foreground">
+                  <ClockIcon className="mt-0.5 size-4 shrink-0 text-primary" />
+                  <div className="space-y-1">{contactHours.map((hours) => <p key={hours}>{hours}</p>)}</div>
+                </div>
+              ) : null}
+              {settings.email ? (
+                <a href={settings.email_href || "mailto:" + settings.email} className="flex items-center gap-2 text-muted-foreground hover:text-primary">
+                  <MailIcon className="size-4 shrink-0 text-primary" />
+                  <span className="break-all">{settings.email}</span>
+                </a>
+              ) : null}
+            </div>
           </div>
         </div>
       ) : null}
@@ -265,6 +292,14 @@ function SearchIcon() {
     <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
       <circle cx="11" cy="11" r="7" />
       <path d="m20 20-3.5-3.5" />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+      <path d="m6 6 12 12M18 6 6 18" />
     </svg>
   );
 }

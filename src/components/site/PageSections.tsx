@@ -12,10 +12,10 @@ import { TestimonialCarousel } from "./TestimonialCarousel";
 import { ActionLabel } from "./ActionLabel";
 import type { ArticleCard, FooterGroup, Office, OfficeLocation, PricingPlan, PublicSection, SectionItem, ServiceRecord } from "@/lib/content";
 
-const primaryButton = "inline-flex h-11 items-center justify-center rounded-md bg-background px-6 text-base font-semibold text-foreground shadow-elegant hover:bg-background/90";
-const accentButton = "inline-flex h-11 items-center justify-center rounded-md bg-accent px-6 text-base font-semibold text-accent-foreground shadow-card hover:bg-accent/90";
-const ghostOnDark = "inline-flex h-11 items-center justify-center rounded-md border border-primary-foreground/35 bg-primary-foreground/10 px-6 text-base font-semibold text-primary-foreground hover:bg-primary-foreground/20";
-const outlineButton = "inline-flex h-11 items-center justify-center rounded-md border border-primary/25 bg-card px-6 text-base font-semibold shadow-card hover:bg-primary-soft";
+const primaryButton = "inline-flex h-11 w-full items-center justify-center rounded-md bg-background px-3 text-sm font-semibold text-foreground shadow-elegant hover:bg-background/90 sm:w-auto sm:px-6 sm:text-base text-center";
+const accentButton = "inline-flex h-11 w-full items-center justify-center rounded-md bg-accent px-3 text-sm font-semibold text-accent-foreground shadow-card hover:bg-accent/90 sm:w-auto sm:px-6 sm:text-base text-center";
+const ghostOnDark = "inline-flex h-11 w-full items-center justify-center rounded-md border border-primary-foreground/35 bg-primary-foreground/10 px-3 text-sm font-semibold text-primary-foreground hover:bg-primary-foreground/20 sm:w-auto sm:px-6 sm:text-base text-center";
+const outlineButton = "inline-flex h-11 w-full items-center justify-center rounded-md border border-primary/25 bg-card px-3 text-sm font-semibold shadow-card hover:bg-primary-soft sm:w-auto sm:px-6 sm:text-base text-center";
 
 function text(value: unknown) {
   return typeof value === "string" ? value : "";
@@ -29,15 +29,21 @@ function Cta({
   label,
   href,
   variant,
+  className: extraClassName,
+  accentColor,
 }: {
   label?: string | null;
   href?: string | null;
   variant: "light" | "accent" | "ghost" | "outline";
+  className?: string;
+  accentColor?: string;
 }) {
   if (!label) return null;
-  const className = variant === "light" ? primaryButton : variant === "accent" ? accentButton : variant === "ghost" ? ghostOnDark : outlineButton;
-  if (!href || href === "#tu-van") return <ConsultButton label={label} className={className} />;
-  return <Link href={href} className={className}><ActionLabel label={label} /></Link>;
+  const baseClassName = variant === "light" ? primaryButton : variant === "accent" ? accentButton : variant === "ghost" ? ghostOnDark : outlineButton;
+  const className = [baseClassName, extraClassName].filter(Boolean).join(" ");
+  const style = accentColor ? { backgroundColor: accentColor } : undefined;
+  if (!href || href === "#tu-van") return <ConsultButton label={label} className={className} style={style} />;
+  return <Link href={href} className={className} style={style}><ActionLabel label={label} /></Link>;
 }
 
 export function PageSections({
@@ -147,7 +153,7 @@ function OfficeLocationsSection({ locations }: { locations: OfficeLocation[] }) 
 }
 
 function Heading({ section, light = false }: { section: PublicSection; light?: boolean }) {
-  const eyebrowColor = text(section.config.eyebrowColor);
+  const eyebrowColor = text(section.config.eyebrowColor) || (section.section_key === "tech-steps" ? "#129ff8" : "");
   return (
     <div className="max-w-3xl">
       {section.eyebrow ? (
@@ -182,19 +188,23 @@ function Hero({ section }: { section: PublicSection }) {
       <div className="section-shell relative grid gap-12 py-12 lg:grid-cols-12 lg:items-center lg:py-20">
         <div className="lg:col-span-7">
           {section.eyebrow ? <div className="inline-flex rounded-full border border-primary-foreground/30 bg-primary-foreground/10 px-2.5 py-0.5 text-xs font-semibold text-primary-foreground">{section.eyebrow}</div> : null}
-          <h1 className="banner-h1 mt-5 font-extrabold text-primary-foreground">{section.title}</h1>
-          <p className="mt-5 max-w-2xl text-base leading-relaxed text-primary-foreground/85 sm:text-lg">{section.description}</p>
-          <ul className="mt-6 flex flex-wrap gap-2">
-            {section.items.map((item) => (
-              <li key={text(item.label)} className="rounded-full border border-primary-foreground/30 bg-primary-foreground/10 px-2.5 py-0.5 text-xs font-medium text-primary-foreground">✓ {text(item.label)}</li>
-            ))}
-          </ul>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <h1 className="banner-h1 mt-3.5 sm:mt-5 font-extrabold text-primary-foreground">{section.title}</h1>
+          {section.description ? (
+            <p className="mt-5 hidden max-w-2xl text-base leading-relaxed text-primary-foreground/85 sm:block sm:text-lg">{section.description}</p>
+          ) : null}
+          {section.items?.length ? (
+            <ul className="mt-6 hidden flex-wrap gap-2 sm:flex">
+              {section.items.map((item) => (
+                <li key={text(item.label)} className="rounded-full border border-primary-foreground/30 bg-primary-foreground/10 px-2.5 py-0.5 text-xs font-medium text-primary-foreground">✓ {text(item.label)}</li>
+              ))}
+            </ul>
+          ) : null}
+          <div className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-8 sm:flex sm:flex-row sm:gap-3">
             <Cta label={section.button_label} href={section.button_url} variant="light" />
             <Cta label={section.secondary_button_label} href={section.secondary_button_url} variant="ghost" />
           </div>
           {stats.length ? (
-            <dl className="mt-10 grid grid-cols-2 gap-6 border-t border-primary-foreground/15 pt-8 lg:grid-cols-4">
+            <dl className="mt-7 grid grid-cols-2 gap-5 border-t border-primary-foreground/15 pt-6 sm:mt-10 sm:gap-6 sm:pt-8 lg:grid-cols-4">
               {stats.map((stat) => (
                 <div key={stat.label}>
                   <dt className="font-display text-2xl font-extrabold text-primary-foreground sm:text-3xl">{stat.value}</dt>
@@ -204,7 +214,7 @@ function Hero({ section }: { section: PublicSection }) {
             </dl>
           ) : null}
         </div>
-        <div className="relative lg:col-span-5">
+        <div className="relative min-w-0 hidden lg:col-span-5 lg:block">
           <div className="relative aspect-[4/3] overflow-hidden rounded-2xl shadow-glow lg:aspect-[5/4]">
             <CmsImage src={section.image_url} alt={section.image_alt || section.title || ""} priority sizes="(min-width: 1024px) 40vw, 100vw" />
           </div>
@@ -252,7 +262,7 @@ function PageHero({ section, showImage }: { section: PublicSection; showImage: b
               {section.title}
             </h1>
             {section.description ? (
-              <p className="mt-4 max-w-2xl text-base leading-relaxed text-primary-foreground/90 sm:text-lg">
+              <p className="mt-4 hidden max-w-2xl text-base leading-relaxed text-primary-foreground/90 sm:block sm:text-lg">
                 {section.description}
               </p>
             ) : null}
@@ -266,14 +276,14 @@ function PageHero({ section, showImage }: { section: PublicSection; showImage: b
               </ul>
             ) : null}
             {(section.button_label || section.secondary_button_label) ? (
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-8 grid grid-cols-2 gap-2.5 sm:flex sm:flex-row sm:gap-3">
                 <Cta label={section.button_label} href={section.button_url} variant="light" />
                 <Cta label={section.secondary_button_label} href={section.secondary_button_url} variant="ghost" />
               </div>
             ) : null}
           </div>
           {sideImage ? (
-            <div className="relative min-w-0 lg:col-span-5">
+            <div className="relative min-w-0 hidden lg:col-span-5 lg:block">
               <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-primary-foreground/20 bg-card shadow-card sm:aspect-[4/3]">
                 <CmsImage
                   src={section.image_url}
@@ -347,6 +357,7 @@ function Cards({ section, services }: { section: PublicSection; services: Servic
       : "sm:grid-cols-2 lg:grid-cols-3";
   const soft = section.config.tone === "soft";
   const hoverBrand = section.config.hover === "brand";
+  const accountingHover = section.section_key === "ac-services" || section.section_key === "ac-commitments";
   return (
     <section className={soft ? "border-y border-border bg-subtle-gradient" : ""}>
       <div className="section-shell py-16 lg:py-20">
@@ -381,7 +392,15 @@ function Cards({ section, services }: { section: PublicSection; services: Servic
                   <p className="mt-2.5 text-xs leading-relaxed text-muted-foreground sm:text-sm">{text(item.description)}</p>
                 </div>
                 {href ? (
-                  <span className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-sky-500">
+                  <span
+                    className={`mt-6 inline-flex items-center gap-1.5 text-sm font-semibold transition-colors ${
+                      accountingHover
+                        ? "accounting-hover-link text-[#12192b] group-hover:text-[#f26321]"
+                        : hoverBrand || section.section_key === "vo-services"
+                        ? "text-[#094690] group-hover:text-white"
+                        : "text-primary group-hover:text-primary"
+                    }`}
+                  >
                     {ctaText.replace(/\s*→|\s*->/g, "")}
                     <span aria-hidden="true" className="transition-transform group-hover:translate-x-1">→</span>
                   </span>
@@ -389,9 +408,9 @@ function Cards({ section, services }: { section: PublicSection; services: Servic
               </>
             );
             return href ? (
-              <Link key={text(item.title)} href={href} className={className} style={Object.keys(customStyle).length ? customStyle : undefined}>{body}</Link>
+              <Link key={text(item.title)} href={href} className={accountingHover ? className.replace("hover-lift", "accounting-hover-card") : className} style={Object.keys(customStyle).length ? customStyle : undefined}>{body}</Link>
             ) : (
-              <article key={text(item.title)} className={className} style={Object.keys(customStyle).length ? customStyle : undefined}>{body}</article>
+              <article key={text(item.title)} className={accountingHover ? className.replace("hover-lift", "accounting-hover-card") : className} style={Object.keys(customStyle).length ? customStyle : undefined}>{body}</article>
             );
           })}
         </div>
@@ -413,8 +432,19 @@ function TechnologyStack({ section }: { section: PublicSection }) {
           {section.description ? <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">{section.description}</p> : null}
           <ul className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
             {section.items.map((item) => (
-              <li key={text(item.name)} className="flex min-h-24 flex-col items-center justify-center rounded-xl border border-sky-100 bg-white px-3 py-3 text-center shadow-card">
-                <span className="font-display text-2xl font-extrabold" style={{ color: text(item.color) || "#094690" }}>{text(item.mark) || text(item.name)}</span>
+              <li key={text(item.name)} className="flex min-h-24 min-w-0 flex-col items-center justify-center rounded-xl border border-sky-100 bg-white px-3 py-3 text-center shadow-card">
+                {text(item.logoUrl) || text(item.logo_url) ? (
+                  <span className="relative block h-9 w-full max-w-28">
+                    <CmsImage
+                      src={text(item.logoUrl) || text(item.logo_url)}
+                      alt={text(item.name) + " logo"}
+                      className="object-contain"
+                      sizes="112px"
+                    />
+                  </span>
+                ) : (
+                  <span className="font-display text-2xl font-extrabold" style={{ color: text(item.color) || "#094690" }}>{text(item.mark) || text(item.name)}</span>
+                )}
                 <span className="mt-1 text-xs font-semibold text-foreground">{text(item.name)}</span>
               </li>
             ))}
@@ -513,6 +543,12 @@ function Testimonials({ section }: { section: PublicSection }) {
 }
 
 function Faq({ section, settings }: { section: PublicSection; settings: Record<string, string> }) {
+  const isAccountingFaq = section.section_key === "ac-faq";
+  const faqAccent = isAccountingFaq
+    ? "#f26321"
+    : section.section_key === "tech-faq"
+    ? "#129ff8"
+    : undefined;
   return (
     <section className="section-shell py-16 lg:py-20">
       <div className="grid gap-10 lg:grid-cols-12">
@@ -521,13 +557,22 @@ function Faq({ section, settings }: { section: PublicSection; settings: Record<s
           <div className="mt-6 rounded-xl border border-border bg-card p-5 shadow-card">
             <p className="text-sm text-muted-foreground">Chưa tìm thấy câu trả lời bạn cần? Gọi hotline hoặc gửi yêu cầu tư vấn.</p>
             <div className="mt-4 flex flex-col gap-2">
-              <a href={settings.hotline_href} className="inline-flex h-10 items-center justify-center rounded-md border border-primary/25 text-sm font-semibold">{settings.hotline}</a>
-              <Cta label={section.button_label} href={section.button_url} variant="accent" />
+              <a href={settings.hotline_href} className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-primary/25 text-sm font-semibold">
+                <svg viewBox="0 0 24 24" className="size-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.4 2.1L8.1 8.9a16 16 0 0 0 6 6l1.2-1.3a2 2 0 0 1 2.1-.4c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2Z" /></svg>
+                {settings.hotline}
+              </a>
+              <Cta
+                label={section.button_label}
+                href={section.button_url}
+                variant="accent"
+                className={section.section_key === "tech-faq" ? "technology-faq-contact" : isAccountingFaq ? "accounting-faq-contact" : undefined}
+                accentColor={faqAccent}
+              />
             </div>
           </div>
         </div>
         <div className="lg:col-span-8">
-          <FaqList items={section.items} />
+          <FaqList items={section.items} accentColor={faqAccent} />
         </div>
       </div>
     </section>
@@ -555,6 +600,7 @@ function CtaBand({ section }: { section: PublicSection }) {
 }
 
 function MediaSplit({ section }: { section: PublicSection }) {
+  const isAccounting = section.section_key === "ac-credentials";
   const imageFirst = section.config.imageSide === "left";
   const image = (
     <div className="relative aspect-[4/3] overflow-hidden rounded-2xl shadow-elegant">
@@ -566,13 +612,18 @@ function MediaSplit({ section }: { section: PublicSection }) {
       <Heading section={section} />
       {section.config.list ? (
         <ul className="mt-8 space-y-5">
-          {section.items.map((item) => (
-            <li key={text(item.title)} className="flex items-start gap-3">
-              <IconMark name={text(item.icon) || "badge"} className="size-10 rounded-lg" />
-              <div><h3 className="font-display text-base font-bold">{text(item.title)}</h3>
-              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{text(item.description)}</p></div>
-            </li>
-          ))}
+          {section.items.map((item) => {
+            const iconColor = text(item.color) || (isAccounting ? "#f26321" : undefined);
+            return (
+              <li key={text(item.title)} className="flex items-start gap-3">
+                <IconMark name={text(item.icon) || "badge"} color={iconColor} className="size-10 rounded-lg" />
+                <div>
+                  <h3 className="font-display text-base font-bold">{text(item.title)}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{text(item.description)}</p>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       ) : null}
     </div>

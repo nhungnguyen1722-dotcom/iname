@@ -3,8 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CmsImage } from "@/components/site/CmsImage";
 import { HoverArticleCard } from "@/components/site/HoverArticleCard";
+import { SocialShareLinks } from "@/components/site/SocialLinks";
 import { canPreview, getArticleBySlug, getCategories, getPopularArticles, getPublicChrome, getRelatedArticles } from "@/lib/content";
 import { sanitizeRichText, slugify } from "@/lib/sanitize";
+import { absoluteSiteUrl } from "@/lib/site-url";
 
 export async function generateMetadata({ params, searchParams }: {
   params: Promise<{ slug: string }>;
@@ -52,6 +54,7 @@ export default async function NewsArticle({ params, searchParams }: {
     return `<h${level} id="${id}">${contents}</h${level}>`;
   });
   const safeHtml = sanitizeRichText(withIds);
+  const shareUrl = absoluteSiteUrl(`/tin-tuc/${article.slug}`);
 
   return (
     <main className="flex-1">
@@ -73,6 +76,9 @@ export default async function NewsArticle({ params, searchParams }: {
         <div>
           {headings.length ? <nav className="mb-8 rounded-xl border border-border bg-secondary/60 p-5" aria-label="Mục lục"><h2 className="font-display text-sm font-extrabold uppercase tracking-wide">Mục lục</h2><ol className="mt-3 space-y-2">{headings.map((heading, index) => <li key={heading.id} className={heading.level === 3 ? "pl-4" : ""}><a href={`#${heading.id}`} className="text-sm text-muted-foreground hover:text-primary">{index + 1}. {heading.label}</a></li>)}</ol></nav> : null}
           <article className="prose-content max-w-none" dangerouslySetInnerHTML={{ __html: safeHtml }} />
+          <div className="mt-8">
+            <SocialShareLinks url={shareUrl} title={article.title} />
+          </div>
           <div className="mt-10 rounded-2xl bg-hero-gradient p-6 text-primary-foreground sm:p-8">
             <h2 className="font-display text-xl font-extrabold">Cần trao đổi về hồ sơ của bạn?</h2>
             <p className="mt-2 text-sm text-primary-foreground/80">Chuyên viên iName sẽ giúp bạn xác định bước tiếp theo.</p>

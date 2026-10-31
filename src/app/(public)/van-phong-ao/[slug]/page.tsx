@@ -3,8 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { IconMark } from "@/components/site/IconMark";
 import { LocationGallery } from "@/components/site/LocationGallery";
+import { SocialShareLinks } from "@/components/site/SocialLinks";
 import { getOfficeLocationBySlug, getPublicChrome } from "@/lib/content";
 import { sanitizeRichText } from "@/lib/sanitize";
+import { absoluteSiteUrl } from "@/lib/site-url";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -34,6 +36,7 @@ export default async function OfficeLocationPage({ params }: { params: Promise<{
   const mapQuery = encodeURIComponent(location.address);
   const mapUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
   const embedUrl = `https://www.google.com/maps?q=${mapQuery}&output=embed`;
+  const shareUrl = absoluteSiteUrl(`/van-phong-ao/${location.slug}`);
   const rawContent = location.content || "";
   const isHtml = /<[a-z][\s\S]*>/i.test(rawContent);
   const paragraphs = rawContent.split(/\n+/).map((paragraph) => paragraph.trim()).filter(Boolean);
@@ -118,6 +121,9 @@ export default async function OfficeLocationPage({ params }: { params: Promise<{
         <div className="mt-8 flex flex-wrap items-center gap-4">
           <Link href="/lien-he" className="inline-flex h-11 items-center rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">Liên hệ đăng ký địa chỉ này</Link>
           <a href={chrome.settings.hotline_href} className="inline-flex h-11 items-center text-sm font-semibold text-primary hover:underline">Hotline tư vấn: {chrome.settings.hotline}</a>
+          <div className="sm:ml-auto">
+            <SocialShareLinks url={shareUrl} title={location.title} />
+          </div>
         </div>
       </section>
 

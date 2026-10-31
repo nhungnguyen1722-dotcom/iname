@@ -50,13 +50,15 @@ export function ConsultProvider({
 export const ConsultButton = memo(function ConsultButton({
   label,
   className,
+  style,
 }: {
   label: string;
   className: string;
+  style?: React.CSSProperties;
 }) {
   const { openConsult } = useConsult();
   return (
-    <button type="button" className={className} onClick={openConsult}>
+    <button type="button" className={className} style={style} onClick={openConsult}>
       <ActionLabel label={label} />
     </button>
   );

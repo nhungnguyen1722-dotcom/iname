@@ -29,12 +29,12 @@ SELECT p.id, 'tech-stack', 'technology-stack', 'Công nghệ nền tảng', 'CÔ
        'Chúng tôi sử dụng các công nghệ hiện đại',
        'Luôn cập nhật và ứng dụng những công nghệ tiên tiến nhất để mang đến sản phẩm ổn định, bảo mật và hiệu quả.',
        $items$[
-         {"name":"Next.js","mark":"N","color":"#111827"},
-         {"name":"React","mark":"⚛","color":"#149eca"},
-         {"name":"Node.js","mark":"N","color":"#68a063"},
-         {"name":"PostgreSQL","mark":"PG","color":"#336791"},
-         {"name":"AWS","mark":"aws","color":"#232f3e"},
-         {"name":"Docker","mark":"▰","color":"#2496ed"}
+         {"name":"Next.js","mark":"N","color":"#111827","logoUrl":"https://cdn.simpleicons.org/nextdotjs/000000"},
+         {"name":"React","mark":"⚛","color":"#149eca","logoUrl":"https://cdn.simpleicons.org/react/61DAFB"},
+         {"name":"Node.js","mark":"N","color":"#68a063","logoUrl":"https://cdn.simpleicons.org/nodedotjs/339933"},
+         {"name":"PostgreSQL","mark":"PG","color":"#336791","logoUrl":"/images/postgresql-logo.png"},
+         {"name":"AWS","mark":"aws","color":"#232f3e","logoUrl":"/images/aws-logo.png"},
+         {"name":"Docker","mark":"▰","color":"#2496ed","logoUrl":"https://cdn.simpleicons.org/docker/2496ED"}
        ]$items$,
        '[]',
        '{"benefitsTitle":"Ưu điểm công nghệ","benefits":["Hiệu suất cao, khả năng mở rộng linh hoạt","Bảo mật, ổn định, cập nhật thường xuyên","Dễ dàng tích hợp với các phần mềm hiện đại","Tối ưu chi phí và thời gian phát triển"]}',
