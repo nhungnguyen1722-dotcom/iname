@@ -11,9 +11,24 @@ type Props = {
   priority?: boolean;
 };
 
+function canOptimize(src: string) {
+  if (src.startsWith("/")) return true;
+  try {
+    const hostname = new URL(src).hostname;
+    return hostname === "cdn.enter.pro"
+      || hostname.endsWith(".public.blob.vercel-storage.com")
+      || hostname.endsWith(".blob.vercel-storage.com");
+  } catch {
+    return false;
+  }
+}
+
 export const CmsImage = memo(function CmsImage({ src, alt, className = "object-cover", sizes = "(min-width: 1024px) 40vw, 100vw", priority = false }: Props) {
-  const [failed, setFailed] = useState(false);
-  const markFailed = useCallback(() => setFailed(true), []);
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const failed = failedSrc === src;
+  const markFailed = useCallback(() => {
+    if (src) setFailedSrc(src);
+  }, [src]);
   if (!src || failed) {
     return (
       <div className="flex h-full min-h-40 w-full items-center justify-center bg-secondary px-4 text-center text-sm text-muted-foreground">
@@ -21,7 +36,7 @@ export const CmsImage = memo(function CmsImage({ src, alt, className = "object-c
       </div>
     );
   }
-  const optimized = src.startsWith("/") || src.startsWith("https://cdn.enter.pro/");
+  const optimized = canOptimize(src);
   if (!optimized) {
     return (
       // Native img keeps CMS image URLs on other HTTPS hosts working without widening next/image.

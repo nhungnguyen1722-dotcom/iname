@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { NavItem } from "@/lib/content";
 import { saveNavigation } from "@/server/admin";
 import { buttonClass, inputClass, secondaryButtonClass } from "./AdminShell";
@@ -8,20 +8,26 @@ import { buttonClass, inputClass, secondaryButtonClass } from "./AdminShell";
 export function NavigationEditor({ initialItems }: { initialItems: NavItem[] }) {
   const [items, setItems] = useState(initialItems);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const itemKey = initialItems.map((item) => `${item.id}:${item.label}:${item.href}:${item.visible}:${item.sort_order}`).join("|");
 
-  function move(from: number, to: number) {
-    if (to < 0 || to >= items.length || from === to) return;
+  useEffect(() => {
+    setItems(initialItems);
+    setDraggedIndex(null);
+  }, [itemKey, initialItems]);
+
+  const move = useCallback((from: number, to: number) => {
     setItems((current) => {
+      if (to < 0 || to >= current.length || from === to) return current;
       const reordered = [...current];
       const [item] = reordered.splice(from, 1);
       reordered.splice(to, 0, item);
       return reordered;
     });
-  }
+  }, []);
 
-  function update(index: number, values: Partial<NavItem>) {
+  const update = useCallback((index: number, values: Partial<NavItem>) => {
     setItems((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, ...values } : item));
-  }
+  }, []);
 
   return (
     <form action={saveNavigation} className="mt-6 space-y-4">

@@ -1,12 +1,12 @@
 "use client";
 
-import { useActionState } from "react";
+import { memo, useActionState, useMemo } from "react";
 import { submitContact, type ContactState } from "@/server/contact";
 import type { PricingPlan } from "@/lib/content";
 
 const initial: ContactState = { ok: false, message: "" };
 
-export function ContactForm({
+export const ContactForm = memo(function ContactForm({
   settings,
   plans,
   sourcePath,
@@ -18,6 +18,7 @@ export function ContactForm({
   compact?: boolean;
 }) {
   const [state, action, pending] = useActionState(submitContact, initial);
+  const visiblePlans = useMemo(() => plans.filter((plan) => plan.visible), [plans]);
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="sourcePath" value={sourcePath} />
@@ -43,7 +44,7 @@ export function ContactForm({
           <select name="packageName" className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm font-normal" defaultValue="">
             <option value="">Chọn gói hoặc để trống để được tư vấn</option>
             <option>Chưa rõ, cần tư vấn thêm</option>
-            {plans.filter((plan) => plan.visible).map((plan) => (
+            {visiblePlans.map((plan) => (
               <option key={plan.id}>{plan.name}</option>
             ))}
           </select>
@@ -62,7 +63,7 @@ export function ContactForm({
       ) : null}
     </form>
   );
-}
+});
 
 function Field({ label, name, required = false, type = "text", placeholder }: { label: string; name: string; required?: boolean; type?: string; placeholder?: string }) {
   return (

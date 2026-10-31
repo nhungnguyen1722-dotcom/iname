@@ -1,3 +1,12 @@
+-- Apply only after CMS pages exist (fresh install: seed first, then migrate again).
+DO $cms_guard$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pages WHERE deleted_at IS NULL) THEN
+    RAISE EXCEPTION 'CMS_CONTENT_MISSING';
+  END IF;
+END
+$cms_guard$;
+
 UPDATE site_settings
 SET value = replace(replace(value, 'hotro@anvietoffice.vn', 'support@iname'), 'Iname', 'iName'),
     updated_at = NOW()

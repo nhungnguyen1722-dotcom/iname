@@ -2,27 +2,50 @@ import { Pool, type PoolConfig, type QueryResultRow } from "pg";
 
 function poolConfig(): PoolConfig {
   const raw = process.env.DATABASE_URL;
-  if (!raw) return { max: 8 };
+  const serverless = process.env.VERCEL === "1";
+  if (!raw) {
+    return {
+      max: serverless ? 1 : 8,
+      idleTimeoutMillis: serverless ? 5_000 : 20_000,
+      connectionTimeoutMillis: 10_000,
+      allowExitOnIdle: serverless,
+    };
+  }
+
   const url = new URL(raw);
   url.searchParams.delete("channel_binding");
   const sslmode = url.searchParams.get("sslmode");
   const remote = Boolean(sslmode && sslmode !== "disable");
+  url.searchParams.delete("sslmode");
+
   return {
     connectionString: url.toString(),
-    max: remote ? 5 : 10,
-    idleTimeoutMillis: 20_000,
+    max: serverless ? 1 : 10,
+    idleTimeoutMillis: serverless ? 5_000 : 20_000,
     connectionTimeoutMillis: 10_000,
-    ssl: remote ? { rejectUnauthorized: false } : undefined,
+    allowExitOnIdle: serverless,
+    ssl: remote ? { rejectUnauthorized: true } : undefined,
   };
 }
 
-const pool = new Pool(poolConfig());
+const globalForDb = globalThis as unknown as { inamePool?: Pool };
+
+function getPool() {
+  if (!globalForDb.inamePool) {
+    const pool = new Pool(poolConfig());
+    pool.on("error", (error) => {
+      console.error("Postgres pool idle client error", error);
+    });
+    globalForDb.inamePool = pool;
+  }
+  return globalForDb.inamePool;
+}
 
 export async function sql<T extends QueryResultRow = QueryResultRow>(
   text: string,
   params: unknown[] = [],
 ) {
-  const result = await pool.query<T>(text, params);
+  const result = await getPool().query<T>(text, params);
   return result.rows;
 }
 

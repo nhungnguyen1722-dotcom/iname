@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { duplicateSection, deleteSection, saveSectionOrder, toggleSectionVisible } from "@/server/admin";
 
 type SectionRow = {
@@ -21,10 +21,16 @@ export function SectionManager({
 }) {
   const [items, setItems] = useState(sections);
   const [dragId, setDragId] = useState<number | null>(null);
+  const sectionKey = sections.map((section) => `${section.id}:${section.visible}:${section.status}:${section.admin_name}:${section.section_type}`).join("|");
 
-  function dropOn(targetId: number) {
-    if (dragId == null || dragId === targetId) return;
+  useEffect(() => {
+    setItems(sections);
+    setDragId(null);
+  }, [sectionKey, sections]);
+
+  const dropOn = useCallback((targetId: number) => {
     setItems((current) => {
+      if (dragId == null || dragId === targetId) return current;
       const next = [...current];
       const from = next.findIndex((item) => item.id === dragId);
       const to = next.findIndex((item) => item.id === targetId);
@@ -34,7 +40,7 @@ export function SectionManager({
       return next;
     });
     setDragId(null);
-  }
+  }, [dragId]);
 
   return (
     <div>

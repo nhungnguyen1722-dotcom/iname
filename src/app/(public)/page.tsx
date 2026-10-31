@@ -24,11 +24,10 @@ export default async function HomePage({
   searchParams: Promise<{ preview?: string }>;
 }) {
   const query = await searchParams;
-  const previewRequested = query.preview === "1";
-  const [preview, chrome, data] = await Promise.all([
-    previewRequested ? canPreview() : Promise.resolve(false),
+  const preview = query.preview === "1" ? await canPreview() : false;
+  const [chrome, data] = await Promise.all([
     getPublicChrome(),
-    getPageByPath("/", previewRequested),
+    getPageByPath("/", preview),
   ]);
   if (!data || (data.page.status !== "published" && !preview)) notFound();
   const sections = preview

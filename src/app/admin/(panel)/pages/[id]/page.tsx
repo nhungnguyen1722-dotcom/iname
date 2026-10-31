@@ -40,7 +40,7 @@ export default async function EditPage({
         <h2 className="font-display text-2xl font-extrabold">Section — {page.title}</h2>
         <p className="mt-1 text-sm text-muted-foreground">Kéo thả để đổi vị trí, bật hoặc tắt từng section, rồi bấm Lưu thứ tự.</p>
         <div className="mt-5">
-          <SectionManager key={sections.map((section) => `${section.id}:${section.visible}`).join(",")} pageSlug={page.slug} sections={sections} />
+          <SectionManager key={sections.map((section) => `${section.id}:${section.visible}:${section.status}:${section.admin_name}`).join(",")} pageSlug={page.slug} sections={sections} />
         </div>
         <form action={createSection} className="mt-6 flex flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-end">
           <input type="hidden" name="pageId" value={page.id} />

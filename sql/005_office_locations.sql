@@ -1,4 +1,4 @@
-CREATE TABLE office_locations (
+CREATE TABLE IF NOT EXISTS office_locations (
   id BIGSERIAL PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
   slug VARCHAR(180) NOT NULL UNIQUE,
@@ -18,15 +18,15 @@ CREATE TABLE office_locations (
   deleted_at TIMESTAMP
 );
 
-CREATE INDEX office_locations_public_order_idx
+CREATE INDEX IF NOT EXISTS office_locations_public_order_idx
   ON office_locations (sort_order, id)
   WHERE deleted_at IS NULL AND visible = TRUE AND status = 'published';
 
-CREATE INDEX articles_category_published_idx
+CREATE INDEX IF NOT EXISTS articles_category_published_idx
   ON articles (category_id, published_at DESC, id DESC)
   WHERE deleted_at IS NULL AND status = 'published';
 
-CREATE INDEX articles_published_at_idx
+CREATE INDEX IF NOT EXISTS articles_published_at_idx
   ON articles (published_at DESC, id DESC)
   WHERE deleted_at IS NULL AND status = 'published';
 

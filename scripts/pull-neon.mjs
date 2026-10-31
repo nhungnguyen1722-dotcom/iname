@@ -52,12 +52,7 @@ if (!localUrl) {
 }
 
 function getDatabaseConfig(connStr) {
-  const cfg = pgConfig(connStr);
-  const url = new URL(connStr);
-  if (url.hostname.includes("neon.tech")) {
-    cfg.ssl = { rejectUnauthorized: false };
-  }
-  return cfg;
+  return pgConfig(connStr);
 }
 
 const tableOrder = [

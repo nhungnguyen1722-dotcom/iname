@@ -15,7 +15,7 @@ export async function ArticleForm({ id, initialCategoryId, returnTo = "" }: { id
   const article = rows[0];
   if (id !== "new" && !article) notFound();
   return (
-    <form action={saveArticle} className="mt-6 max-w-3xl space-y-3 rounded-xl border border-border bg-card p-5">
+    <form key={article?.id ?? "new"} action={saveArticle} className="mt-6 max-w-3xl space-y-3 rounded-xl border border-border bg-card p-5">
       <input type="hidden" name="id" value={article?.id || ""} />
       {returnTo ? <input type="hidden" name="returnTo" value={returnTo} /> : null}
       <input name="title" required defaultValue={article?.title || ""} className={inputClass} placeholder="Tiêu đề" />
@@ -26,7 +26,7 @@ export async function ArticleForm({ id, initialCategoryId, returnTo = "" }: { id
       </select>
       <textarea name="excerpt" defaultValue={article?.excerpt || ""} className={inputClass} rows={3} />
       <RichTextEditor name="content" label="Nội dung bài viết" defaultValue={article?.content || ""} media={media} />
-      <ImageField name="coverUrl" uploadName="article_image_file" value={article?.cover_url || ""} media={media} label="Ảnh banner và ảnh đại diện" />
+      <ImageField key={`${article?.id ?? "new"}:${article?.cover_url || ""}`} name="coverUrl" uploadName="article_image_file" value={article?.cover_url || ""} media={media} label="Ảnh banner và ảnh đại diện" />
       <input name="coverAlt" defaultValue={article?.cover_alt || ""} className={inputClass} />
       <input name="seoTitle" defaultValue={article?.seo_title || ""} className={inputClass} placeholder="SEO title" />
       <textarea name="seoDescription" defaultValue={article?.seo_description || ""} className={inputClass} />

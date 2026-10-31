@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { uploadMediaFiles } from "@/server/admin";
 import type { MediaChoice } from "./ImageField";
 
@@ -20,15 +20,22 @@ export function GalleryField({
   const [pending, setPending] = useState(false);
   const urls = useMemo(() => text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean), [text]);
 
-  function append(next: string[]) {
-    const merged = [...urls];
-    for (const url of next) {
-      if (url && !merged.includes(url)) merged.push(url);
-    }
-    setText(merged.join("\n"));
-  }
+  useEffect(() => {
+    setText(initialValue);
+    setError("");
+  }, [initialValue]);
 
-  async function onUpload(files: FileList | null) {
+  const append = useCallback((next: string[]) => {
+    setText((current) => {
+      const merged = current.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+      for (const url of next) {
+        if (url && !merged.includes(url)) merged.push(url);
+      }
+      return merged.join("\n");
+    });
+  }, []);
+
+  const onUpload = useCallback(async (files: FileList | null) => {
     if (!files?.length) return;
     const data = new FormData();
     for (const file of Array.from(files)) data.append("files", file);
@@ -37,11 +44,11 @@ export function GalleryField({
     setPending(false);
     if (result.error) setError(result.error);
     append(result.urls);
-  }
+  }, [append]);
 
-  function remove(url: string) {
-    setText(urls.filter((item) => item !== url).join("\n"));
-  }
+  const remove = useCallback((url: string) => {
+    setText((current) => current.split(/\r?\n/).map((line) => line.trim()).filter((item) => item && item !== url).join("\n"));
+  }, []);
 
   return (
     <div className="space-y-3 rounded-xl border border-border p-4">

@@ -3,7 +3,6 @@
 import { randomBytes } from "crypto";
 import fs from "fs/promises";
 import path from "path";
-import bcrypt from "bcryptjs";
 import { put } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -13,6 +12,7 @@ import { requireAdmin } from "@/lib/auth";
 import { createSessionToken } from "@/lib/session";
 import { SESSION_COOKIE } from "@/lib/auth";
 import { cookies } from "next/headers";
+import { clientAddress, loginIsLimited, passwordsMatch, recordLoginAttempt } from "@/lib/login-guard";
 import { safeHref, safeImageUrl, sanitizeRichText, slugify } from "@/lib/sanitize";
 
 function refresh() {
@@ -82,14 +82,23 @@ export async function loginAdmin(_prev: { error: string }, formData: FormData) {
   const email = text(formData, "email", 255).toLowerCase();
   const password = String(formData.get("password") || "");
   const next = text(formData, "next", 180);
+  const ip = await clientAddress();
+  const limited = await loginIsLimited(email, ip);
   const rows = await sql<{ id: number; password_hash: string; role: string }>(
     "SELECT id, password_hash, role FROM admin_users WHERE email = $1",
     [email],
   );
   const user = rows[0];
-  if (!user || user.role !== "admin" || !(await bcrypt.compare(password, user.password_hash))) {
-    return { error: "Email hoặc mật khẩu không đúng." };
+  const passwordMatches = await passwordsMatch(password, user?.password_hash);
+  if (limited || !user || user.role !== "admin" || !passwordMatches) {
+    if (!limited) await recordLoginAttempt(email, ip, false);
+    return {
+      error: limited
+        ? "Quá nhiều lần thử. Vui lòng đợi vài phút rồi thử lại."
+        : "Email hoặc mật khẩu không đúng.",
+    };
   }
+  await recordLoginAttempt(email, ip, true);
   const token = await createSessionToken(user.id, user.role);
   const jar = await cookies();
   jar.set(SESSION_COOKIE, token, {

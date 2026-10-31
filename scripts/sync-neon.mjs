@@ -29,6 +29,12 @@ function quoteIdentifier(value) {
   return `"${value.replace(/"/g, '""')}"`;
 }
 
+function rowTime(row) {
+  if (!row || row.updated_at == null) return null;
+  const time = new Date(row.updated_at).getTime();
+  return Number.isFinite(time) ? time : null;
+}
+
 function rowKey(row, columns) {
   const values = columns.map((column) => row[column]);
   if (values.some((value) => value === null || value === undefined)) return null;
@@ -129,6 +135,13 @@ function databaseIdentity(connectionString) {
 
 if (databaseIdentity(sourceUrl) === databaseIdentity(targetUrl)) {
   throw new Error("Source and Neon target must be different databases.");
+}
+
+if (process.env.CONFIRM_NEON_SYNC !== "yes") {
+  console.error("Đã chặn db:sync-neon để tránh ghi đè dữ liệu Neon.");
+  console.error("Hàng chỉ có trên Neon không bị xóa. Hàng Neon có updated_at mới hơn được giữ nguyên.");
+  console.error("Chạy lại với CONFIRM_NEON_SYNC=yes khi muốn đẩy dữ liệu từ máy local lên.");
+  process.exit(1);
 }
 
 const tables = [
@@ -315,17 +328,37 @@ try {
     }
   }
 
+  const pageState = states.find((state) => state.table === "pages");
+  if (pageState && pageState.sourceRows.length === 0 && pageState.targetRows.length > 0) {
+    throw new Error("Bảng pages trên máy local đang trống. Đã hủy đồng bộ, dữ liệu Neon không bị ghi đè.");
+  }
+
+  const keptByTable = new Map();
   await target.query("BEGIN");
   try {
-    for (const { table, columns, primaryKey, transfers: rows } of states) {
+    for (const { table, columns, primaryKey, transfers: rows, targetRows } of states) {
+      const targetByPrimaryKey = new Map(targetRows.map((row) => [rowKey(row, primaryKey), row]));
+      const writable = [];
+      let kept = 0;
+      for (const row of rows) {
+        const existing = targetByPrimaryKey.get(rowKey(row, primaryKey));
+        const sourceTime = rowTime(row);
+        const targetTime = rowTime(existing);
+        if (existing && sourceTime != null && targetTime != null && targetTime > sourceTime) {
+          kept += 1;
+          continue;
+        }
+        writable.push(row);
+      }
+      keptByTable.set(table, kept);
       const mutableColumns = columns.filter((column) => !primaryKey.includes(column));
       const conflictAction = mutableColumns.length
         ? `DO UPDATE SET ${mutableColumns.map((column) => `${quoteIdentifier(column)} = EXCLUDED.${quoteIdentifier(column)}`).join(", ")}`
         : "DO NOTHING";
       const chunkSize = 40;
 
-      for (let offset = 0; offset < rows.length; offset += chunkSize) {
-        const chunk = rows.slice(offset, offset + chunkSize);
+      for (let offset = 0; offset < writable.length; offset += chunkSize) {
+        const chunk = writable.slice(offset, offset + chunkSize);
         const values = [];
         const placeholders = chunk.map((row, rowIndex) => {
           const marks = columns.map((column, columnIndex) => {
@@ -362,7 +395,7 @@ try {
     const remappedIds = sourceRows.filter(
       (row) => String(row.id) !== String(idMappings.get(rowKey(row, primaryKey))?.[0]),
     ).length;
-    console.log(`${table}: synced ${sourceRows.length} local rows; remapped ${remappedIds} IDs; Neon-only rows preserved.`);
+    console.log(`${table}: synced ${sourceRows.length} local rows; remapped ${remappedIds} IDs; kept ${keptByTable.get(table) || 0} newer Neon rows; Neon-only rows preserved.`);
   }
   console.log("Neon merge completed. No Neon-only rows were deleted.");
 } finally {

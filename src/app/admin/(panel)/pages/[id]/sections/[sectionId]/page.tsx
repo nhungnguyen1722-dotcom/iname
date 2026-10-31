@@ -52,7 +52,7 @@ export default async function SectionEditor({
           <Link href={`/admin/pages/${page.slug}#phan-section`} className="shrink-0 rounded-md border border-border px-3 py-2 text-sm font-semibold">Đóng</Link>
         </div>
       <Notice saved={query.saved} error={query.error} />
-      <form action={saveSection} className="mt-5 space-y-4 rounded-xl border border-border bg-card p-5">
+      <form key={section.id} action={saveSection} className="mt-5 space-y-4 rounded-xl border border-border bg-card p-5">
         <input type="hidden" name="id" value={section.id} />
         <input type="hidden" name="item_count" value={items.length} />
         <input type="hidden" name="gallery_count" value={gallery.length} />
@@ -61,7 +61,7 @@ export default async function SectionEditor({
         <label className="block text-sm font-semibold">Tiêu đề<input name="title" defaultValue={section.title || ""} className={inputClass} /></label>
         <label className="block text-sm font-semibold">Tiêu đề phụ<input name="subtitle" defaultValue={section.subtitle || ""} className={inputClass} /></label>
         <label className="block text-sm font-semibold">Mô tả<textarea name="description" defaultValue={section.description || ""} rows={4} className={inputClass} /></label>
-        <ImageField name="imageUrl" value={section.image_url || ""} media={media} label="Ảnh banner / ảnh chính" />
+        <ImageField key={`${section.id}:${section.image_url || ""}`} name="imageUrl" value={section.image_url || ""} media={media} label="Ảnh banner / ảnh chính" />
         <label className="block text-sm font-semibold">Văn bản thay thế<input name="imageAlt" defaultValue={section.image_alt || ""} className={inputClass} /></label>
         {section.section_type === "page-hero" ? <label className="block text-sm font-semibold">Biểu tượng banner<select name="configIcon" defaultValue={String(config.icon || "building")} className={inputClass}>{iconOptions.map((icon) => <option key={icon} value={icon}>{icon}</option>)}</select></label> : null}
         {section.section_type === "pricing" ? <div className="grid gap-3 sm:grid-cols-2"><label className="text-sm font-semibold">Phụ đề Văn phòng ảo<input name="officeSubtitle" defaultValue={String(config.officeSubtitle || "")} className={inputClass} /></label><label className="text-sm font-semibold">Phụ đề Dịch vụ kế toán<input name="accountingSubtitle" defaultValue={String(config.accountingSubtitle || "")} className={inputClass} /></label></div> : null}
@@ -85,7 +85,7 @@ export default async function SectionEditor({
           {gallery.map((image, index) => (
             <div key={`${image.url}-${index}`} className="grid gap-2 rounded-lg bg-secondary/50 p-3">
               {image.url ? <span className="relative block h-32 w-full overflow-hidden rounded-md bg-background"><CmsImage src={image.url} alt={image.alt || ""} className="object-contain" sizes="480px" /></span> : null}
-              <ImageField name={`gallery_url_${index}`} uploadName={`gallery_file_${index}`} value={image.url} media={media} label="Ảnh" />
+              <ImageField key={`${section.id}:${index}:${image.url}`} name={`gallery_url_${index}`} uploadName={`gallery_file_${index}`} value={image.url} media={media} label="Ảnh" />
               <input name={`gallery_alt_${index}`} defaultValue={image.alt} className={inputClass} placeholder="Văn bản thay thế" />
               <input name={`gallery_caption_${index}`} defaultValue={image.caption || ""} className={inputClass} placeholder="Chú thích" />
               <div className="flex gap-2">

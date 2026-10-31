@@ -33,6 +33,9 @@ let output = [
   "-- iName database export. Run against an empty PostgreSQL database.",
   fs.readFileSync(path.join(process.cwd(), "sql", "001_schema.sql"), "utf8"),
   "CREATE TABLE IF NOT EXISTS schema_migrations (migration VARCHAR(255) PRIMARY KEY, applied_at TIMESTAMP NOT NULL DEFAULT NOW());",
+  fs.existsSync(path.join(process.cwd(), "sql", "014_login_attempts.sql"))
+    ? fs.readFileSync(path.join(process.cwd(), "sql", "014_login_attempts.sql"), "utf8")
+    : "",
   "BEGIN;",
 ];
 

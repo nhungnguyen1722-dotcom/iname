@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import pg from "pg";
 import { pgConfig } from "./pg-config.mjs";
+import { splitSqlStatements } from "./sql-statements.mjs";
 
 for (const envFile of [".env.local", ".env"]) {
   const envPath = path.join(process.cwd(), envFile);
@@ -31,14 +32,12 @@ await client.query(`CREATE TABLE IF NOT EXISTS schema_migrations (
  )`);
 const migrationFiles = fs.readdirSync(path.join(process.cwd(), "sql")).filter((file) => /^\d+_.+\.sql$/.test(file)).sort();
 let appliedCount = 0;
+let deferredCount = 0;
 for (const file of migrationFiles) {
   const applied = await client.query("SELECT 1 FROM schema_migrations WHERE migration = $1", [file]);
   if (applied.rowCount) continue;
   const source = fs.readFileSync(path.join(process.cwd(), "sql", file), "utf8");
-  const statements = source
-    .split(";")
-    .map((statement) => statement.split("\n").filter((line) => !line.trim().startsWith("--")).join("\n").trim())
-    .filter(Boolean);
+  const statements = splitSqlStatements(source);
   await client.query("BEGIN");
   try {
     for (const statement of statements) {
@@ -46,15 +45,25 @@ for (const file of migrationFiles) {
     }
     await client.query("INSERT INTO schema_migrations (migration) VALUES ($1)", [file]);
     await client.query("COMMIT");
+    appliedCount += 1;
   } catch (error) {
     await client.query("ROLLBACK");
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes("CMS_CONTENT_MISSING")) {
+      deferredCount += 1;
+      console.log(`Deferred ${file} until CMS pages exist. Run db:seed, then db:migrate again.`);
+      continue;
+    }
     throw error;
   }
-  appliedCount += 1;
 }
 await client.end();
-console.log(
-  appliedCount
-    ? `Applied ${appliedCount} pending database migrations.`
-    : "No pending database migrations.",
-);
+if (appliedCount && deferredCount) {
+  console.log(`Applied ${appliedCount} pending database migrations. Deferred ${deferredCount} content migrations until after seed.`);
+} else if (appliedCount) {
+  console.log(`Applied ${appliedCount} pending database migrations.`);
+} else if (deferredCount) {
+  console.log(`Deferred ${deferredCount} content migrations until CMS pages exist.`);
+} else {
+  console.log("No pending database migrations.");
+}

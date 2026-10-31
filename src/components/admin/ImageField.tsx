@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const inputClass = "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm";
 const secondaryButtonClass = "inline-flex h-10 items-center rounded-md border border-border bg-card px-3 text-sm font-semibold";
@@ -22,6 +22,10 @@ export function ImageField({
 }) {
   const [url, setUrl] = useState(value);
   const [libraryOpen, setLibraryOpen] = useState(false);
+
+  useEffect(() => {
+    setUrl(value);
+  }, [value]);
   return (
     <div className="space-y-2">
       <label className="block text-sm font-semibold">{label}</label>

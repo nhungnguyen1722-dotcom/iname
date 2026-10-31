@@ -16,13 +16,13 @@ export async function ServiceEditor({ id }: { id: number | null }) {
   const service = rows[0];
   if (id && !service) notFound();
   return (
-    <form action={saveService} className="mt-6 max-w-2xl space-y-3 rounded-xl border border-border bg-card p-5">
+    <form key={service?.id ?? "new"} action={saveService} className="mt-6 max-w-2xl space-y-3 rounded-xl border border-border bg-card p-5">
       <input type="hidden" name="id" value={service?.id || ""} />
       <input name="name" defaultValue={service?.name || ""} className={inputClass} placeholder="Tên" required />
       <input name="slug" defaultValue={service?.slug || ""} className={inputClass} placeholder="Slug" />
       <textarea name="summary" defaultValue={service?.summary || ""} className={inputClass} rows={3} />
       <textarea name="description" defaultValue={service?.description || ""} className={inputClass} rows={4} />
-      <ImageField name="imageUrl" uploadName="service_image_file" value={service?.image_url || ""} media={media} label="Ảnh dịch vụ" />
+      <ImageField key={`${service?.id ?? "new"}:${service?.image_url || ""}`} name="imageUrl" uploadName="service_image_file" value={service?.image_url || ""} media={media} label="Ảnh dịch vụ" />
       <input name="imageAlt" defaultValue={service?.image_alt || ""} className={inputClass} placeholder="Văn bản thay thế" />
       <input name="buttonLabel" defaultValue={service?.button_label || ""} className={inputClass} />
       <input name="buttonUrl" defaultValue={service?.button_url || ""} className={inputClass} />

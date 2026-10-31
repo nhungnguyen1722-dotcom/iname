@@ -45,18 +45,18 @@ export async function OfficeLocationForm({ id }: { id: string }) {
   const amenities = location?.amenities_json ? JSON.parse(location.amenities_json) as string[] : ["Lễ tân", "Nhận thư", "Phòng họp", "Wi-Fi"];
 
   return (
-    <form action={saveOfficeLocation} encType="multipart/form-data" className="mt-6 max-w-3xl space-y-4 rounded-xl border border-border bg-card p-5">
+    <form key={location?.id ?? "new"} action={saveOfficeLocation} encType="multipart/form-data" className="mt-6 max-w-3xl space-y-4 rounded-xl border border-border bg-card p-5">
       <input type="hidden" name="id" value={location?.id || ""} />
       <label className="block text-sm font-semibold">Tên địa điểm<input name="title" required defaultValue={location?.title || ""} className={inputClass} /></label>
       <label className="block text-sm font-semibold">Slug<input name="slug" defaultValue={location?.slug || ""} className={inputClass} placeholder="Tự tạo từ tên nếu để trống" /></label>
       <label className="block text-sm font-semibold">Địa chỉ đầy đủ<input name="address" required defaultValue={location?.address || ""} className={inputClass} /></label>
       <label className="block text-sm font-semibold">Mô tả ngắn<textarea name="excerpt" defaultValue={location?.excerpt || ""} rows={2} className={inputClass} /></label>
       <RichTextEditor name="content" label="Nội dung chi tiết (Vị trí, ưu thế, kết nối giao thông)" defaultValue={location?.content || ""} media={media} />
-      <ImageField name="bannerUrl" uploadName="banner_file" value={location?.banner_url || ""} media={media} label="Ảnh Banner Top chi nhánh" />
+      <ImageField key={`banner-${location?.id ?? "new"}:${location?.banner_url || ""}`} name="bannerUrl" uploadName="banner_file" value={location?.banner_url || ""} media={media} label="Ảnh Banner Top chi nhánh" />
       <label className="block text-sm font-semibold">Văn bản thay thế ảnh Banner<input name="bannerAlt" defaultValue={location?.banner_alt || ""} className={inputClass} /></label>
-      <ImageField name="coverUrl" uploadName="cover_file" value={location?.cover_url || ""} media={media} label="Ảnh đại diện chi nhánh" />
+      <ImageField key={`cover-${location?.id ?? "new"}:${location?.cover_url || ""}`} name="coverUrl" uploadName="cover_file" value={location?.cover_url || ""} media={media} label="Ảnh đại diện chi nhánh" />
       <label className="block text-sm font-semibold">Văn bản thay thế ảnh đại diện<input name="coverAlt" defaultValue={location?.cover_alt || ""} className={inputClass} /></label>
-      <GalleryField initialValue={gallery.map((image) => image.url).join("\n")} media={media} />
+      <GalleryField key={`gallery-${location?.id ?? "new"}`} initialValue={gallery.map((image) => image.url).join("\n")} media={media} />
       <label className="block text-sm font-semibold">Tiện ích — phân tách bằng dấu phẩy<input name="amenities" defaultValue={amenities.join(", ")} className={inputClass} /></label>
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block text-sm font-semibold">Giá hiển thị<input name="priceLabel" defaultValue={location?.price_label || "Từ 350K/tháng"} className={inputClass} /></label>

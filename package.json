@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "db:migrate": "node scripts/migrate.mjs",
     "db:seed": "node scripts/seed.mjs",
-    "db:setup": "node scripts/migrate.mjs && node scripts/seed.mjs",
+    "db:setup": "node scripts/migrate.mjs && node scripts/seed.mjs && node scripts/migrate.mjs",
     "db:dump": "node scripts/dump-database.mjs",
     "db:sync-neon": "node scripts/sync-neon.mjs"
   },

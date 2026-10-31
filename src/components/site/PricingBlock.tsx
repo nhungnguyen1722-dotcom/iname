@@ -58,7 +58,10 @@ export const PricingBlock = memo(function PricingBlock({
     return map;
   }, [plans]);
   const selectTab = useCallback((key: string) => setActive(key), []);
-  const visibleGroups = mode === "tabs" ? groups.filter((group) => group.key === active) : groups;
+  const visibleGroups = useMemo(
+    () => (mode === "tabs" ? groups.filter((group) => group.key === active) : groups),
+    [mode, active],
+  );
   return (
     <div>
       {mode === "tabs" ? (

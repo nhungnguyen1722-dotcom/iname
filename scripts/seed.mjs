@@ -191,7 +191,7 @@ if (pages.rows[0].n > 0) {
 
 async function setting(key, value) {
   await client.query(
-    "INSERT INTO site_settings (key, value) VALUES ($1, $2)",
+    "INSERT INTO site_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO NOTHING",
     [key, value],
   );
 }
