@@ -363,3 +363,4 @@ export async function renderNewsArticle(slug: string, preview: boolean) {
     </main>
   );
 }
+
