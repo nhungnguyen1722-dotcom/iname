@@ -9,7 +9,7 @@ export type GalleryImage = {
   caption?: string;
 };
 
-export type SectionItem = Record<string, unknown>;
+export type SectionItem = Record<string, unknown> & { id?: string };
 
 export type SectionRecord = {
   id: number;
@@ -295,7 +295,7 @@ const cachedPublicChrome = unstable_cache(loadPublicChrome, ["site-public-chrome
 
 export const getPublicChrome = cache(async () => cachedPublicChrome());
 
-export const getFooterGroups = cache(async () => {
+async function loadFooterGroups() {
   try {
     const rows = await sql<Omit<FooterGroup, "links">>(
       `SELECT id, group_key, title, body, links_json, visible, sort_order
@@ -309,9 +309,16 @@ export const getFooterGroups = cache(async () => {
     console.warn("[content] getFooterGroups fallback:", error instanceof Error ? error.message : error);
     return [];
   }
+}
+
+const cachedFooterGroups = unstable_cache(loadFooterGroups, ["site-footer-groups"], {
+  revalidate: 60,
+  tags: [CONTENT_TAG],
 });
 
-export const getServices = cache(async (publicOnly = true) => {
+export const getFooterGroups = cache(async () => cachedFooterGroups());
+
+async function loadServices(publicOnly: boolean) {
   try {
     const rows = await sql<ServiceRecord>(
       `SELECT id, name, slug, summary, description, image_url, image_alt,
@@ -328,9 +335,16 @@ export const getServices = cache(async (publicOnly = true) => {
     console.warn("[content] getServices fallback:", error instanceof Error ? error.message : error);
     return [];
   }
+}
+
+const cachedServices = unstable_cache(loadServices, ["site-services"], {
+  revalidate: 60,
+  tags: [CONTENT_TAG],
 });
 
-export const getPricingPlans = cache(async (publicOnly = true) => {
+export const getServices = cache(async (publicOnly = true) => cachedServices(publicOnly));
+
+async function loadPricingPlans(publicOnly: boolean) {
   try {
     const rows = await sql<Omit<PricingPlan, "features">>(
       `SELECT id, name, slug, category, summary, price_label, period, features_json, highlighted, badge, button_label, button_url, visible, sort_order
@@ -345,7 +359,14 @@ export const getPricingPlans = cache(async (publicOnly = true) => {
     console.warn("[content] getPricingPlans fallback:", error instanceof Error ? error.message : error);
     return [];
   }
+}
+
+const cachedPricingPlans = unstable_cache(loadPricingPlans, ["site-pricing-plans"], {
+  revalidate: 60,
+  tags: [CONTENT_TAG],
 });
+
+export const getPricingPlans = cache(async (publicOnly = true) => cachedPricingPlans(publicOnly));
 
 type PageBundleRow = PageRecord & { sections: SectionRecord[] | string | null };
 

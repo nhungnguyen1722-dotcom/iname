@@ -10,6 +10,11 @@ function bytesToHex(buffer: ArrayBuffer) {
   return [...new Uint8Array(buffer)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+export async function hashSessionToken(token: string) {
+  const hash = await crypto.subtle.digest("SHA-256", encoder.encode(token));
+  return bytesToHex(hash);
+}
+
 function hexToBytes(hex: string) {
   const out = new Uint8Array(hex.length / 2);
   for (let i = 0; i < out.length; i++) out[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);

@@ -1,5 +1,6 @@
 import { memo } from "react";
 import Link from "next/link";
+import { CmsImage } from "@/components/site/CmsImage";
 import type { FooterGroup, Office } from "@/lib/content";
 import { FooterSocialLinks } from "./SocialLinks";
 
@@ -23,8 +24,9 @@ export const Footer = memo(function Footer({
               <div key={group.id} className="lg:col-span-4">
                 <div className="flex items-center">
                   {settings.logo_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={settings.logo_url} alt={settings.logo_alt || settings.brand_name || "iName"} className="h-14 w-36 object-contain object-left" />
+                    <span className="relative block h-14 w-36">
+                      <CmsImage src={settings.logo_url} alt={settings.logo_alt || settings.brand_name || "iName"} className="object-contain object-left" sizes="144px" />
+                    </span>
                   ) : (
                     <span role="img" aria-label="iName" className="bg-primary-gradient flex size-11 items-center justify-center rounded-xl text-primary-foreground shadow-card">
                       <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">

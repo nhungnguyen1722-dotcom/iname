@@ -13,6 +13,33 @@ import {
 import { sanitizeRichText, slugify } from "@/lib/sanitize";
 import { absoluteSiteUrl } from "@/lib/site-url";
 
+type ArticleHeading = { id: string; label: string; level: number };
+
+function extractHeadings(content: string) {
+  const headingIds = new Set<string>();
+  const headings: ArticleHeading[] = [];
+  const withIds = content.replace(
+    /<h([23])\b[^>]*>([\s\S]*?)<\/h\1>/gi,
+    (_match, level: string, contents: string) => {
+      const label = contents
+        .replace(/<[^>]+>/g, " ")
+        .replace(/&nbsp;/gi, " ")
+        .replace(/&amp;/gi, "&")
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;/g, "'")
+        .trim();
+      const baseId = slugify(label) || `muc-${headings.length + 1}`;
+      let id = baseId;
+      let suffix = 2;
+      while (headingIds.has(id)) id = `${baseId}-${suffix++}`;
+      headingIds.add(id);
+      headings.push({ id, label, level: Number(level) });
+      return `<h${level} id="${id}">${contents}</h${level}>`;
+    },
+  );
+  return { headings, html: withIds };
+}
+
 export async function renderAccountingArticle(slug: string, preview: boolean) {
   const article = await getArticleBySlug(slug, preview);
 
@@ -25,26 +52,8 @@ export async function renderAccountingArticle(slug: string, preview: boolean) {
     getPublicChrome(),
   ]);
 
-  const headingIds = new Set<string>();
-  const headings: { id: string; label: string; level: number }[] = [];
-  const withIds = (article.content || "").replace(
-    /<h([23])\b[^>]*>([\s\S]*?)<\/h\1>/gi,
-    (_match, level: string, contents: string) => {
-      const label = contents
-        .replace(/<[^>]+>/g, " ")
-        .replace(/&nbsp;/gi, " ")
-        .replace(/&amp;/gi, "&")
-        .replace(/&quot;/gi, '"')
-        .replace(/&#39;/g, "'")
-        .trim();
-      let id = slugify(label) || `muc-${headings.length + 1}`;
-      if (headingIds.has(id)) id = `${id}-${headings.length + 1}`;
-      headingIds.add(id);
-      headings.push({ id, label, level: Number(level) });
-      return `<h${level} id="${id}">${contents}</h${level}>`;
-    },
-  );
-  const safeHtml = sanitizeRichText(withIds);
+  const { headings, html } = extractHeadings(article.content || "");
+  const safeHtml = sanitizeRichText(html);
   const shareUrl = absoluteSiteUrl(`/ke-toan/${article.slug}`);
 
   return (
@@ -296,17 +305,8 @@ export async function renderNewsArticle(slug: string, preview: boolean) {
     getCategories(),
     getPublicChrome(),
   ]);
-  const headingIds = new Set<string>();
-  const headings: { id: string; label: string; level: number }[] = [];
-  const withIds = (article.content || "").replace(/<h([23])\b[^>]*>([\s\S]*?)<\/h\1>/gi, (_match, level: string, contents: string) => {
-    const label = contents.replace(/<[^>]+>/g, " ").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&").replace(/&quot;/gi, "\"").replace(/&#39;/g, "'").trim();
-    let id = slugify(label) || `muc-${headings.length + 1}`;
-    if (headingIds.has(id)) id = `${id}-${headings.length + 1}`;
-    headingIds.add(id);
-    headings.push({ id, label, level: Number(level) });
-    return `<h${level} id="${id}">${contents}</h${level}>`;
-  });
-  const safeHtml = sanitizeRichText(withIds);
+  const { headings, html } = extractHeadings(article.content || "");
+  const safeHtml = sanitizeRichText(html);
   const shareUrl = absoluteSiteUrl(`/tin-tuc/${article.slug}`);
 
   return (
@@ -363,4 +363,3 @@ export async function renderNewsArticle(slug: string, preview: boolean) {
     </main>
   );
 }
-

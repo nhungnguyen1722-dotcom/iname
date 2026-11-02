@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { randomUUID } from "crypto";
 import Link from "next/link";
 import { findAdminPage } from "@/lib/admin-pages";
 import { Notice, buttonClass, inputClass, secondaryButtonClass } from "@/components/admin/AdminShell";
@@ -36,7 +37,10 @@ export default async function SectionEditor({
   );
   const section = rows[0];
   if (!section) notFound();
-  const items = parseJson<Item[]>(section.items_json, []);
+  const items = parseJson<Item[]>(section.items_json, []).map((item) => ({
+    ...item,
+    id: typeof item.id === "string" && item.id ? item.id : randomUUID(),
+  }));
   const gallery = parseJson<{ url: string; alt: string; caption?: string }[]>(section.gallery_json, []);
   const config = parseJson<Record<string, unknown>>(section.config_json, {});
   const media = await getMediaAssets();
@@ -119,7 +123,8 @@ function ItemFields({ type, items }: { type: string; items: Item[] }) {
     <fieldset className="space-y-3 rounded-lg border border-border p-4">
       <legend className="px-2 text-sm font-bold">Các mục trong Section</legend>
       {items.map((item, index) => (
-        <div key={index} className="space-y-2 rounded-lg bg-secondary/40 p-3">
+        <div key={String(item.id || index)} className="space-y-2 rounded-lg bg-secondary/40 p-3">
+          <input type="hidden" name={`item_id_${index}`} value={String(item.id || "")} />
           {type === "faq" ? (
             <>
               <textarea name={`item_question_${index}`} defaultValue={String(item.question || "")} className={inputClass} rows={2} />

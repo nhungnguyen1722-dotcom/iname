@@ -25,6 +25,12 @@ export function list(value: unknown) {
   return Array.isArray(value) ? value.map((item) => String(item)) : [];
 }
 
+function itemKey(section: PublicSection, item: SectionItem, index: number) {
+  const id = item.id;
+  const stableId = (typeof id === "string" && id) || (typeof id === "number" && id);
+  return `${section.id}-${stableId || index}`;
+}
+
 export function Cta({
   label,
   href,
@@ -130,7 +136,7 @@ export function Hero({ section }: { section: PublicSection }) {
           {section.items?.length ? (
             <ul className="mt-6 hidden flex-wrap gap-2 sm:flex">
               {section.items.map((item, index) => (
-                <li key={`${section.id}-${index}-${text(item.label)}`} className="rounded-full border border-primary-foreground/30 bg-primary-foreground/10 px-2.5 py-0.5 text-xs font-medium text-primary-foreground">✓ {text(item.label)}</li>
+                <li key={itemKey(section, item, index)} className="rounded-full border border-primary-foreground/30 bg-primary-foreground/10 px-2.5 py-0.5 text-xs font-medium text-primary-foreground">✓ {text(item.label)}</li>
               ))}
             </ul>
           ) : null}
@@ -204,7 +210,7 @@ export function PageHero({ section, showImage }: { section: PublicSection; showI
             {section.items.length ? (
               <ul className="mt-6 flex flex-wrap gap-2">
                 {section.items.map((item, index) => (
-                  <li key={`${section.id}-${index}-${text(item.label)}`} className="rounded-full border border-primary-foreground/30 bg-primary-foreground/10 px-2.5 py-0.5 text-xs font-medium text-primary-foreground">
+                  <li key={itemKey(section, item, index)} className="rounded-full border border-primary-foreground/30 bg-primary-foreground/10 px-2.5 py-0.5 text-xs font-medium text-primary-foreground">
                     {text(item.label)}
                   </li>
                 ))}
@@ -259,9 +265,9 @@ export function Pillars({ section }: { section: PublicSection }) {
           const className = "pillar-card hover-lift flex h-full cursor-pointer flex-col rounded-2xl p-7 shadow-card";
           const style = { "--pillar-color": color } as CSSProperties;
           return href ? (
-            <Link key={`${section.id}-${index}-${text(item.title)}`} href={href} className={className} style={style}>{body}</Link>
+            <Link key={itemKey(section, item, index)} href={href} className={className} style={style}>{body}</Link>
           ) : (
-            <article key={`${section.id}-${index}-${text(item.title)}`} className={className} style={style}>{body}</article>
+            <article key={itemKey(section, item, index)} className={className} style={style}>{body}</article>
           );
         })}
       </div>
@@ -274,6 +280,7 @@ export function Cards({ section, services }: { section: PublicSection; services:
   const category = text(section.config.category);
   const items: SectionItem[] = source === "services"
     ? services.filter((service) => !category || service.category === category).map((service) => ({
+        id: `service-${service.id}`,
         title: service.name,
         description: service.summary || "",
         href: service.button_url || "",
@@ -343,9 +350,9 @@ export function Cards({ section, services }: { section: PublicSection; services:
               </>
             );
             return href ? (
-              <Link key={`${section.id}-${index}-${text(item.title)}`} href={href} className={accountingHover ? className.replace("hover-lift", "accounting-hover-card") : className} style={Object.keys(customStyle).length ? customStyle : undefined}>{body}</Link>
+              <Link key={itemKey(section, item, index)} href={href} className={accountingHover ? className.replace("hover-lift", "accounting-hover-card") : className} style={Object.keys(customStyle).length ? customStyle : undefined}>{body}</Link>
             ) : (
-              <article key={`${section.id}-${index}-${text(item.title)}`} className={accountingHover ? className.replace("hover-lift", "accounting-hover-card") : className} style={Object.keys(customStyle).length ? customStyle : undefined}>{body}</article>
+              <article key={itemKey(section, item, index)} className={accountingHover ? className.replace("hover-lift", "accounting-hover-card") : className} style={Object.keys(customStyle).length ? customStyle : undefined}>{body}</article>
             );
           })}
         </div>
@@ -367,7 +374,7 @@ export function TechnologyStack({ section }: { section: PublicSection }) {
           {section.description ? <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">{section.description}</p> : null}
           <ul className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
             {section.items.map((item, index) => (
-              <li key={`${section.id}-${index}-${text(item.name)}`} className="flex min-h-24 min-w-0 flex-col items-center justify-center rounded-xl border border-sky-100 bg-white px-3 py-3 text-center shadow-card">
+              <li key={itemKey(section, item, index)} className="flex min-h-24 min-w-0 flex-col items-center justify-center rounded-xl border border-sky-100 bg-white px-3 py-3 text-center shadow-card">
                 {text(item.logoUrl) || text(item.logo_url) ? (
                   <span className="relative block h-9 w-full max-w-28">
                     <CmsImage
@@ -411,7 +418,7 @@ export function Steps({ section }: { section: PublicSection }) {
         <Heading section={section} />
         <ol className="process-track mt-10 grid gap-7 md:grid-cols-2 lg:grid-cols-4">
           {section.items.map((item, index) => (
-            <li key={`${section.id}-${index}-${text(item.title)}`} className="relative text-center">
+            <li key={itemKey(section, item, index)} className="relative text-center">
               <span className={`relative z-10 mx-auto flex size-14 items-center justify-center rounded-full font-display text-lg font-extrabold text-primary-foreground shadow-card ${index === 0 ? "bg-red-500" : "bg-primary"}`}>{String(index + 1).padStart(2, "0")}</span>
               <h3 className="mt-5 font-display text-lg font-bold">{text(item.title)}</h3>
               <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground">{text(item.description)}</p>
@@ -449,7 +456,7 @@ export function Team({ section }: { section: PublicSection }) {
         <Heading section={section} />
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {section.items.map((item, index) => (
-            <article key={`${section.id}-${index}-${text(item.name)}`} className="hover-lift rounded-xl border border-border bg-card p-6 text-center shadow-card">
+            <article key={itemKey(section, item, index)} className="hover-lift rounded-xl border border-border bg-card p-6 text-center shadow-card">
               <span className="bg-primary-gradient mx-auto flex size-16 items-center justify-center rounded-full font-display text-lg font-extrabold text-primary-foreground">{text(item.initials)}</span>
               <h3 className="mt-4 font-display text-base font-bold">{text(item.name)}</h3>
               <p className="mt-1 text-sm font-semibold text-accent">{text(item.role)}</p>
@@ -547,10 +554,10 @@ export function MediaSplit({ section }: { section: PublicSection }) {
       <Heading section={section} />
       {section.config.list ? (
         <ul className="mt-8 space-y-5">
-          {section.items.map((item) => {
+          {section.items.map((item, index) => {
             const iconColor = text(item.color) || (isAccounting ? "#f26321" : undefined);
             return (
-              <li key={`${section.id}-${text(item.title)}-${text(item.icon)}`} className="flex items-start gap-3">
+              <li key={itemKey(section, item, index)} className="flex items-start gap-3">
                 <IconMark name={text(item.icon) || "badge"} color={iconColor} className="size-10 rounded-lg" />
                 <div>
                   <h3 className="font-display text-base font-bold">{text(item.title)}</h3>
@@ -607,7 +614,7 @@ export function Comparison({ section }: { section: PublicSection }) {
           ) : null}
           <tbody>
             {section.items.map((item, index) => (
-              <tr key={`${section.id}-${index}-${text(item.label)}`} className="border-t border-border">
+              <tr key={itemKey(section, item, index)} className="border-t border-border">
                 <td className="px-4 py-3 font-medium">{text(item.label)}</td>
                 {list(item.values).map((value, valueIndex) => <td key={`${section.id}-${index}-${valueIndex}`} className="px-4 py-3 text-muted-foreground">{value}</td>)}
               </tr>
@@ -624,7 +631,7 @@ export function Stats({ section }: { section: PublicSection }) {
     <section className="section-shell py-10">
       <dl className="grid grid-cols-2 gap-6 lg:grid-cols-4">
         {section.items.map((item, index) => (
-          <div key={`${section.id}-${index}-${text(item.label)}`} className="rounded-xl border border-border bg-card p-5 shadow-card">
+          <div key={itemKey(section, item, index)} className="rounded-xl border border-border bg-card p-5 shadow-card">
             <dt className="font-display text-2xl font-extrabold text-primary">{text(item.value)}</dt>
             <dd className="mt-1 text-sm text-muted-foreground">{text(item.label)}</dd>
           </div>
@@ -640,7 +647,7 @@ export function Addons({ section }: { section: PublicSection }) {
       <Heading section={section} />
       <div className="mt-8 overflow-hidden rounded-xl border border-border bg-card shadow-card">
         {section.items.map((item, index) => (
-          <div key={`${section.id}-${index}-${text(item.name)}`} className="flex items-center justify-between gap-4 border-b border-border px-5 py-4 last:border-b-0">
+          <div key={itemKey(section, item, index)} className="flex items-center justify-between gap-4 border-b border-border px-5 py-4 last:border-b-0">
             <p className="text-sm font-medium">{text(item.name)}</p>
             <p className="shrink-0 font-display font-bold">{text(item.price)}</p>
           </div>
@@ -656,7 +663,7 @@ export function Notes({ section }: { section: PublicSection }) {
       <div className="section-shell rounded-2xl border border-border bg-card p-6 shadow-card sm:p-8">
         <h2 className="flex items-center gap-2 font-display text-xl font-extrabold"><span className="flex size-7 items-center justify-center rounded-full bg-primary-soft text-primary">i</span>{section.title}</h2>
         <ul className="mt-4 space-y-2 text-sm leading-relaxed text-muted-foreground">
-          {section.items.map((item, index) => <li key={`${section.id}-${index}-${text(item.text)}`} className="flex gap-2"><span className="font-bold text-accent">•</span><span>{text(item.text)}</span></li>)}
+          {section.items.map((item, index) => <li key={itemKey(section, item, index)} className="flex gap-2"><span className="font-bold text-accent">•</span><span>{text(item.text)}</span></li>)}
         </ul>
       </div>
     </section>

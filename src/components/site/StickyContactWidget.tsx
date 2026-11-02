@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { memo, useMemo } from "react";
 import { SITE_HOTLINE_LABEL, SITE_HOTLINE_TEL, SITE_ZALO_URL } from "@/lib/site-contact";
 
@@ -18,8 +19,7 @@ const QuickLink = memo(function QuickLink({ href, label, kind }: { href: string;
         <div className="phone-vr-img-circle">
           <a href={href} aria-label={label} title={label} target={href.startsWith("http") ? "_blank" : undefined} rel={href.startsWith("http") ? "noopener noreferrer" : undefined}>
             {isZalo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src="/images/zalo.png" alt="" />
+              <Image src="/images/zalo.png" alt="" width={50} height={50} />
             ) : (
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{icon}</svg>
             )}

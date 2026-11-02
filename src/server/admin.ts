@@ -10,7 +10,7 @@ import { parseJson, sql } from "@/lib/db";
 import { clearContentCache } from "@/lib/content";
 import { requireAdmin } from "@/lib/auth";
 import { createSessionToken } from "@/lib/session";
-import { SESSION_COOKIE } from "@/lib/auth";
+import { revokeSessionToken, SESSION_COOKIE } from "@/lib/auth";
 import { cookies } from "next/headers";
 import { clientAddress, loginIsLimited, passwordsMatch, recordLoginAttempt } from "@/lib/login-guard";
 import { safeHref, safeImageUrl, sanitizeRichText, slugify } from "@/lib/sanitize";
@@ -57,10 +57,13 @@ export async function saveSectionOrder(formData: FormData) {
   const pages = await sql<{ id: number }>("SELECT id FROM pages WHERE slug = $1 AND deleted_at IS NULL", [pageSlugValue]);
   const pageId = pages[0]?.id;
   if (!pageId) redirect("/admin/pages?error=" + encodeURIComponent("Không tìm thấy trang."));
-  for (let index = 0; index < ids.length; index += 1) {
+  if (ids.length) {
     await sql(
-      "UPDATE page_sections SET sort_order = $1, updated_at = NOW() WHERE id = $2 AND page_id = $3 AND deleted_at IS NULL",
-      [(index + 1) * 10, ids[index], pageId],
+      `UPDATE page_sections AS section
+       SET sort_order = ordered.sort_order, updated_at = NOW()
+       FROM UNNEST($1::int[], $2::int[]) AS ordered(id, sort_order)
+       WHERE section.id = ordered.id AND section.page_id = $3 AND section.deleted_at IS NULL`,
+      [ids, ids.map((_, index) => (index + 1) * 10), pageId],
     );
   }
   await audit(user.id, "reorder", "section", pageSlugValue);
@@ -113,6 +116,8 @@ export async function loginAdmin(_prev: { error: string }, formData: FormData) {
 
 export async function logoutAdmin() {
   const jar = await cookies();
+  const token = jar.get(SESSION_COOKIE)?.value;
+  if (token) await revokeSessionToken(token);
   jar.delete(SESSION_COOKIE);
   redirect("/admin/login");
 }
@@ -152,20 +157,29 @@ function readItems(type: string, formData: FormData) {
     else if (type === "pillars") items.push({ title: text(formData, `item_title_${i}`, 255), description: text(formData, `item_description_${i}`), href: safeHref(text(formData, `item_href_${i}`, 500)), cta: text(formData, `item_cta_${i}`, 80), icon: text(formData, `item_icon_${i}`, 64), color: text(formData, `item_color_${i}`, 20), points: text(formData, `item_points_${i}`).split("\n").map((line) => line.trim()).filter(Boolean) });
     else items.push({ title: text(formData, `item_title_${i}`, 255), description: text(formData, `item_description_${i}`), href: safeHref(text(formData, `item_href_${i}`, 500)), cta: text(formData, `item_cta_${i}`, 80), icon: text(formData, `item_icon_${i}`, 64) });
   }
-  return items;
+  const usedIds = new Set<string>();
+  return items.map((item, index) => {
+    const submittedId = text(formData, `item_id_${index}`, 64);
+    const id = submittedId && !usedIds.has(submittedId)
+      ? submittedId
+      : randomBytes(16).toString("hex");
+    usedIds.add(id);
+    return { ...item, id };
+  });
 }
 
 function blankItem(type: string) {
-  if (type === "faq") return { question: "", answer: "" };
-  if (type === "team") return { name: "", role: "", credential: "", initials: "" };
-  if (type === "testimonials") return { quote: "", author: "", company: "", avatar: "", rating: 5 };
-  if (type === "comparison") return { label: "", values: ["", "", ""] };
-  if (type === "stats") return { value: "", label: "" };
-  if (type === "addons") return { name: "", price: "" };
-  if (type === "notes" || type === "hero" || type === "page-hero") return { label: "", text: "" };
-  if (type === "pillars") return { title: "", description: "", href: "", cta: "", icon: "building", color: "#094690", points: [] };
-  if (type === "technology-stack") return { name: "", mark: "", color: "#094690", logoUrl: "" };
-  return { title: "", description: "", href: "", cta: "", icon: "building" };
+  const id = randomBytes(16).toString("hex");
+  if (type === "faq") return { id, question: "", answer: "" };
+  if (type === "team") return { id, name: "", role: "", credential: "", initials: "" };
+  if (type === "testimonials") return { id, quote: "", author: "", company: "", avatar: "", rating: 5 };
+  if (type === "comparison") return { id, label: "", values: ["", "", ""] };
+  if (type === "stats") return { id, value: "", label: "" };
+  if (type === "addons") return { id, name: "", price: "" };
+  if (type === "notes" || type === "hero" || type === "page-hero") return { id, label: "", text: "" };
+  if (type === "pillars") return { id, title: "", description: "", href: "", cta: "", icon: "building", color: "#094690", points: [] };
+  if (type === "technology-stack") return { id, name: "", mark: "", color: "#094690", logoUrl: "" };
+  return { id, title: "", description: "", href: "", cta: "", icon: "building" };
 }
 
 async function readGallery(formData: FormData) {
@@ -392,23 +406,54 @@ export async function saveNavigation(formData: FormData) {
     }
   }
   const ids = new Set(items.map((item) => item.id).filter(Boolean));
-  const existing = await sql<{ id: number }>("SELECT id FROM navigation_items WHERE deleted_at IS NULL");
-  for (const row of existing) {
-    if (!ids.has(row.id)) await sql("UPDATE navigation_items SET deleted_at = NOW() WHERE id = $1", [row.id]);
+  await sql(
+    "UPDATE navigation_items SET deleted_at = NOW() WHERE deleted_at IS NULL AND NOT (id = ANY($1::int[]))",
+    [Array.from(ids)],
+  );
+  const updates = items.filter((item) => item.id);
+  if (updates.length) {
+    await sql(
+      `UPDATE navigation_items AS navigation
+       SET label = data_rows.label, href = data_rows.href, visible = data_rows.visible,
+           open_in_new_tab = data_rows.open_in_new_tab, show_desktop = data_rows.show_desktop,
+           show_mobile = data_rows.show_mobile, sort_order = data_rows.sort_order, deleted_at = NULL
+       FROM UNNEST(
+         $1::int[], $2::text[], $3::text[], $4::boolean[], $5::boolean[],
+         $6::boolean[], $7::boolean[], $8::int[]
+       ) AS data_rows(id, label, href, visible, open_in_new_tab, show_desktop, show_mobile, sort_order)
+       WHERE navigation.id = data_rows.id`,
+      [
+        updates.map((item) => item.id),
+        updates.map((item) => item.label),
+        updates.map((item) => item.href),
+        updates.map((item) => item.visible),
+        updates.map((item) => item.newTab),
+        updates.map((item) => item.desktop),
+        updates.map((item) => item.mobile),
+        updates.map((item) => items.indexOf(item) + 1),
+      ],
+    );
   }
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i];
-    if (item.id) {
-      await sql(
-        `UPDATE navigation_items SET label=$1, href=$2, visible=$3, open_in_new_tab=$4, show_desktop=$5, show_mobile=$6, sort_order=$7, deleted_at=NULL WHERE id=$8`,
-        [item.label, item.href, item.visible, item.newTab, item.desktop, item.mobile, i + 1, item.id],
-      );
-    } else {
-      await sql(
-        `INSERT INTO navigation_items (label, href, visible, open_in_new_tab, show_desktop, show_mobile, sort_order) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-        [item.label, item.href, item.visible, item.newTab, item.desktop, item.mobile, i + 1],
-      );
-    }
+  const inserts = items.filter((item) => !item.id);
+  if (inserts.length) {
+    await sql(
+      `INSERT INTO navigation_items (label, href, visible, open_in_new_tab, show_desktop, show_mobile, sort_order)
+       SELECT data_rows.label, data_rows.href, data_rows.visible, data_rows.open_in_new_tab,
+              data_rows.show_desktop, data_rows.show_mobile, data_rows.sort_order
+       FROM UNNEST(
+         $1::text[], $2::text[], $3::boolean[], $4::boolean[],
+         $5::boolean[], $6::boolean[], $7::int[]
+       ) AS data_rows(label, href, visible, open_in_new_tab, show_desktop, show_mobile, sort_order)`,
+      [
+        inserts.map((item) => item.label),
+        inserts.map((item) => item.href),
+        inserts.map((item) => item.visible),
+        inserts.map((item) => item.newTab),
+        inserts.map((item) => item.desktop),
+        inserts.map((item) => item.mobile),
+        inserts.map((item) => items.indexOf(item) + 1),
+      ],
+    );
   }
   await audit(user.id, "update", "navigation", "main");
   refresh();
