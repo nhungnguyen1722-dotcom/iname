@@ -1,4 +1,4 @@
-import { Fragment } from "react";
+import { Fragment, memo } from "react";
 import type { ArticleCard, Office, OfficeLocation, PricingPlan, PublicSection, ServiceRecord } from "@/lib/content";
 import {
   OfficeLocationsSection,
@@ -23,7 +23,7 @@ import {
   ContactSection,
 } from "./sections/blocks";
 
-export function PageSections({
+export const PageSections = memo(function PageSections({
   sections,
   services,
   plans,
@@ -87,5 +87,4 @@ export function PageSections({
       })}
     </main>
   );
-}
-
+});

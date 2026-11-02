@@ -29,10 +29,19 @@ function quoteIdentifier(value) {
   return `"${value.replace(/"/g, '""')}"`;
 }
 
+function databaseIdentity(connectionString) {
+  try {
+    const url = new URL(connectionString);
+    return `${url.hostname.toLowerCase()}:${url.port || "5432"}${url.pathname}`;
+  } catch {
+    return connectionString;
+  }
+}
+
 async function getColumns(client, table) {
   const result = await client.query(
     "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1 ORDER BY ordinal_position",
-    [table]
+    [table],
   );
   return result.rows.map((row) => row.column_name);
 }
@@ -48,6 +57,24 @@ if (!neonUrl) {
 }
 if (!localUrl) {
   console.error("❌ Lỗi: Chưa có biến DATABASE_URL (hoặc LOCAL_DATABASE_URL) trong .env hoặc .env.local");
+  process.exit(1);
+}
+
+if (databaseIdentity(localUrl) === databaseIdentity(neonUrl)) {
+  console.error("❌ Lỗi nghiêm trọng: LOCAL_DATABASE_URL và NEON_DATABASE_URL đang trỏ vào cùng một database!");
+  console.error("Vui lòng kiểm tra lại file .env hoặc .env.local để tránh nguy cơ tự xóa dữ liệu.");
+  process.exit(1);
+}
+
+// Bắt buộc xác nhận để tránh vô tình xóa mất dữ liệu Local khi gõ nhầm lệnh
+if (process.env.CONFIRM_PULL_NEON !== "yes") {
+  console.error("================================================================================");
+  console.error("⚠️ CẢNH BÁO AN TOÀN DỮ LIỆU:");
+  console.error("Thao tác này sẽ XÓA TOÀN BỘ dữ liệu trên database Local để đồng bộ lại từ Neon.");
+  console.error("Để tiếp tục thực thi, vui lòng truyền biến môi trường CONFIRM_PULL_NEON=yes:");
+  console.error('  - Windows PowerShell: $env:CONFIRM_PULL_NEON="yes"; npm run db:pull-neon');
+  console.error("  - Linux/macOS/Bash:   CONFIRM_PULL_NEON=yes npm run db:pull-neon");
+  console.error("================================================================================");
   process.exit(1);
 }
 
@@ -70,6 +97,7 @@ const tableOrder = [
   "media_assets",
   "contact_requests",
   "audit_logs",
+  "login_attempts",
   "office_locations",
 ];
 
@@ -86,15 +114,15 @@ async function ensureLocalDatabase() {
     await adminClient.connect();
     const checkDb = await adminClient.query(
       "SELECT 1 FROM pg_database WHERE datname = $1",
-      [dbName]
+      [dbName],
     );
     if (checkDb.rows.length === 0) {
       console.log(`Creating database ${dbName}...`);
       await adminClient.query(`CREATE DATABASE "${dbName}"`);
       console.log(`Database ${dbName} created successfully.`);
     }
-  } catch (err) {
-    // If connecting to /postgres fails, maybe database already exists or default db differs
+  } catch {
+    // If connecting to /postgres fails, database might already exist
   } finally {
     if (adminClient) {
       try {
@@ -116,7 +144,6 @@ async function runLocalMigrations() {
 
 async function main() {
   await ensureLocalDatabase();
-  // We can skip runLocalMigrations if schema already exists, but call it safely
   await runLocalMigrations();
 
   console.log("Connecting to Neon and Local PostgreSQL...");
@@ -128,21 +155,45 @@ async function main() {
 
   // Check which tables exist in both
   const localTablesResult = await localClient.query(
-    "SELECT tablename FROM pg_tables WHERE schemaname = 'public'"
+    "SELECT tablename FROM pg_tables WHERE schemaname = 'public'",
   );
   const localTables = new Set(localTablesResult.rows.map((r) => r.tablename));
 
   const neonTablesResult = await neonClient.query(
-    "SELECT tablename FROM pg_tables WHERE schemaname = 'public'"
+    "SELECT tablename FROM pg_tables WHERE schemaname = 'public'",
   );
   const neonTables = new Set(neonTablesResult.rows.map((r) => r.tablename));
 
   // Determine tables to copy
   const tablesToCopy = tableOrder.filter(
-    (t) => localTables.has(t) && neonTables.has(t)
+    (t) => localTables.has(t) && neonTables.has(t),
   );
 
   console.log(`Found ${tablesToCopy.length} tables to sync: ${tablesToCopy.join(", ")}`);
+
+  // Kiểm tra cấu trúc các cột giữa 2 bên trước khi sao chép
+  let hasColumnWarnings = false;
+  for (const table of tablesToCopy) {
+    const neonCols = await getColumns(neonClient, table);
+    const localCols = await getColumns(localClient, table);
+    const missingInLocal = neonCols.filter((col) => !localCols.includes(col));
+    const missingInNeon = localCols.filter((col) => !neonCols.includes(col));
+
+    if (missingInLocal.length > 0 || missingInNeon.length > 0) {
+      hasColumnWarnings = true;
+      console.warn(`⚠️ Cảnh báo cấu trúc bảng '${table}' không khớp giữa Neon và Local:`);
+      if (missingInLocal.length) {
+        console.warn(`   - Có trên Neon nhưng thiếu ở Local: ${missingInLocal.join(", ")}`);
+      }
+      if (missingInNeon.length) {
+        console.warn(`   - Có ở Local nhưng thiếu trên Neon: ${missingInNeon.join(", ")}`);
+      }
+    }
+  }
+
+  if (hasColumnWarnings) {
+    console.warn("Tiến hành đồng bộ các cột chung giữa 2 bên...\n");
+  }
 
   await localClient.query("BEGIN");
   try {
@@ -166,7 +217,7 @@ async function main() {
       if (commonCols.length === 0) continue;
 
       const result = await neonClient.query(
-        `SELECT ${commonCols.map(quoteIdentifier).join(", ")} FROM public.${quoteIdentifier(table)} ORDER BY ${commonCols.includes("id") ? '"id"' : commonCols[0]}`
+        `SELECT ${commonCols.map(quoteIdentifier).join(", ")} FROM public.${quoteIdentifier(table)} ORDER BY ${commonCols.includes("id") ? '"id"' : commonCols[0]}`,
       );
       const rows = result.rows;
 
@@ -185,7 +236,7 @@ async function main() {
 
           await localClient.query(
             `INSERT INTO public.${quoteIdentifier(table)} (${commonCols.map(quoteIdentifier).join(", ")}) VALUES ${placeholders.join(", ")}`,
-            values
+            values,
           );
         }
       }
@@ -216,9 +267,9 @@ async function main() {
              COALESCE(MAX(id), 1),
              MAX(id) IS NOT NULL
            ) FROM public.${quoteIdentifier(table)}`,
-          [`public.${table}`]
+          [`public.${table}`],
         );
-      } catch (seqErr) {
+      } catch {
         // Ignore sequence error if table doesn't have a serial sequence
       }
     }

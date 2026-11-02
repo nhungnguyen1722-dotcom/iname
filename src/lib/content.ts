@@ -156,6 +156,19 @@ export type ArticleCard = {
   category_slug: string | null;
 };
 
+const defaultSettings: Record<string, string> = {
+  brand_name: "iName",
+  brand_tagline: "Văn phòng ảo & Dịch vụ kế toán trọn gói",
+  company_name: "CÔNG TY TNHH INAME VIỆT NAM",
+  company_address: "TP. Hồ Chí Minh & Hà Nội",
+  hotline: "0981988357",
+  hotline_href: "tel:0981988357",
+  email: "support@iname.vn",
+  email_href: "mailto:support@iname.vn",
+  sticky_phone_href: "tel:0981988357",
+  sticky_phone_label: "Gọi 0981988357",
+};
+
 function mapSection(row: SectionRecord): PublicSection {
   return {
     ...row,
@@ -166,20 +179,30 @@ function mapSection(row: SectionRecord): PublicSection {
 }
 
 export const getSettings = cache(async () => {
-  const rows = await sql<{ key: string; value: string }>("SELECT key, value FROM site_settings");
-  const settings: Record<string, string> = {};
-  for (const row of rows) settings[row.key] = row.value;
-  return settings;
+  try {
+    const rows = await sql<{ key: string; value: string }>("SELECT key, value FROM site_settings");
+    const settings: Record<string, string> = { ...defaultSettings };
+    for (const row of rows) settings[row.key] = row.value;
+    return settings;
+  } catch (error) {
+    console.warn("[content] getSettings fallback:", error instanceof Error ? error.message : error);
+    return defaultSettings;
+  }
 });
 
 export const getNavigation = cache(async (publicOnly = true) => {
-  const rows = await sql<NavItem>(
-    `SELECT id, label, href, open_in_new_tab, visible, show_desktop, show_mobile, parent_id, sort_order
-     FROM navigation_items
-     WHERE deleted_at IS NULL
-     ORDER BY sort_order, id`,
-  );
-  return publicOnly ? rows.filter((item) => item.visible) : rows;
+  try {
+    const rows = await sql<NavItem>(
+      `SELECT id, label, href, open_in_new_tab, visible, show_desktop, show_mobile, parent_id, sort_order
+       FROM navigation_items
+       WHERE deleted_at IS NULL
+       ORDER BY sort_order, id`,
+    );
+    return publicOnly ? rows.filter((item) => item.visible) : rows;
+  } catch (error) {
+    console.warn("[content] getNavigation fallback:", error instanceof Error ? error.message : error);
+    return [];
+  }
 });
 
 type ChromeRow = {
@@ -200,58 +223,69 @@ export function clearContentCache() {
 }
 
 async function loadPublicChrome() {
-  const rows = await sql<ChromeRow>(`
-    SELECT
-      (SELECT COALESCE(json_agg(row_to_json(s)), '[]'::json) FROM site_settings s) AS settings,
-      (SELECT COALESCE(json_agg(row_to_json(n)), '[]'::json) FROM (
-         SELECT id, label, href, open_in_new_tab, visible, show_desktop, show_mobile, parent_id, sort_order
-         FROM navigation_items
-         WHERE deleted_at IS NULL AND visible = TRUE
-         ORDER BY sort_order, id
-       ) n) AS navigation,
-      (SELECT COALESCE(json_agg(row_to_json(f)), '[]'::json) FROM (
-         SELECT id, group_key, title, body, links_json, visible, sort_order
-         FROM footer_groups
-         ORDER BY sort_order, id
-       ) f) AS footer,
-      (SELECT COALESCE(json_agg(row_to_json(p)), '[]'::json) FROM (
-         SELECT id, name, slug, category, summary, price_label, period, features_json, highlighted, badge,
-                button_label, button_url, visible, sort_order
-         FROM pricing_plans
-         WHERE deleted_at IS NULL AND visible = TRUE
-         ORDER BY sort_order, id
-       ) p) AS plans,
-      (SELECT COALESCE(json_agg(row_to_json(sv)), '[]'::json) FROM (
-         SELECT id, name, slug, summary, description, image_url, image_alt,
-                CASE category
-                  WHEN 'office' THEN CASE sort_order WHEN 1 THEN 'pin' WHEN 2 THEN 'building' WHEN 3 THEN 'monitor' WHEN 4 THEN 'mail' WHEN 5 THEN 'message' ELSE 'file' END
-                  WHEN 'accounting' THEN CASE sort_order WHEN 1 THEN 'calculator' WHEN 2 THEN 'receipt' WHEN 3 THEN 'file' WHEN 4 THEN 'search' WHEN 5 THEN 'badge' WHEN 6 THEN 'file' ELSE 'scale' END
-                  ELSE 'file'
-                END AS icon,
-                button_label, button_url, category, visible, sort_order
-         FROM services
-         WHERE deleted_at IS NULL AND visible = TRUE
-         ORDER BY sort_order, id
-       ) sv) AS services
-  `);
-  const row = rows[0];
-  const settings: Record<string, string> = {};
-  for (const item of asList<{ key: string; value: string }>(row?.settings)) settings[item.key] = item.value;
-  const groups = asList<Omit<FooterGroup, "links">>(row?.footer).map((group) => ({
-    ...group,
-    links: parseJson<{ label: string; href: string }[]>(group.links_json, []),
-  }));
-  const plans = asList<Omit<PricingPlan, "features">>(row?.plans).map((plan) => ({
-    ...plan,
-    features: parseJson<string[]>(plan.features_json, []),
-  }));
-  return {
-    settings,
-    navigation: asList<NavItem>(row?.navigation),
-    groups,
-    plans,
-    services: asList<ServiceRecord>(row?.services),
-  };
+  try {
+    const rows = await sql<ChromeRow>(`
+      SELECT
+        (SELECT COALESCE(json_agg(row_to_json(s)), '[]'::json) FROM site_settings s) AS settings,
+        (SELECT COALESCE(json_agg(row_to_json(n)), '[]'::json) FROM (
+           SELECT id, label, href, open_in_new_tab, visible, show_desktop, show_mobile, parent_id, sort_order
+           FROM navigation_items
+           WHERE deleted_at IS NULL AND visible = TRUE
+           ORDER BY sort_order, id
+         ) n) AS navigation,
+        (SELECT COALESCE(json_agg(row_to_json(f)), '[]'::json) FROM (
+           SELECT id, group_key, title, body, links_json, visible, sort_order
+           FROM footer_groups
+           ORDER BY sort_order, id
+         ) f) AS footer,
+        (SELECT COALESCE(json_agg(row_to_json(p)), '[]'::json) FROM (
+           SELECT id, name, slug, category, summary, price_label, period, features_json, highlighted, badge,
+                  button_label, button_url, visible, sort_order
+           FROM pricing_plans
+           WHERE deleted_at IS NULL AND visible = TRUE
+           ORDER BY sort_order, id
+         ) p) AS plans,
+        (SELECT COALESCE(json_agg(row_to_json(sv)), '[]'::json) FROM (
+           SELECT id, name, slug, summary, description, image_url, image_alt,
+                  CASE category
+                    WHEN 'office' THEN CASE sort_order WHEN 1 THEN 'pin' WHEN 2 THEN 'building' WHEN 3 THEN 'monitor' WHEN 4 THEN 'mail' WHEN 5 THEN 'message' ELSE 'file' END
+                    WHEN 'accounting' THEN CASE sort_order WHEN 1 THEN 'calculator' WHEN 2 THEN 'receipt' WHEN 3 THEN 'file' WHEN 4 THEN 'search' WHEN 5 THEN 'badge' WHEN 6 THEN 'file' ELSE 'scale' END
+                    ELSE 'file'
+                  END AS icon,
+                  button_label, button_url, category, visible, sort_order
+           FROM services
+           WHERE deleted_at IS NULL AND visible = TRUE
+           ORDER BY sort_order, id
+         ) sv) AS services
+    `);
+    const row = rows[0];
+    const settings: Record<string, string> = { ...defaultSettings };
+    for (const item of asList<{ key: string; value: string }>(row?.settings)) settings[item.key] = item.value;
+    const groups = asList<Omit<FooterGroup, "links">>(row?.footer).map((group) => ({
+      ...group,
+      links: parseJson<{ label: string; href: string }[]>(group.links_json, []),
+    }));
+    const plans = asList<Omit<PricingPlan, "features">>(row?.plans).map((plan) => ({
+      ...plan,
+      features: parseJson<string[]>(plan.features_json, []),
+    }));
+    return {
+      settings,
+      navigation: asList<NavItem>(row?.navigation),
+      groups,
+      plans,
+      services: asList<ServiceRecord>(row?.services),
+    };
+  } catch (error) {
+    console.warn("[content] loadPublicChrome fallback:", error instanceof Error ? error.message : error);
+    return {
+      settings: defaultSettings,
+      navigation: [],
+      groups: [],
+      plans: [],
+      services: [],
+    };
+  }
 }
 
 const cachedPublicChrome = unstable_cache(loadPublicChrome, ["site-public-chrome"], {
@@ -262,70 +296,108 @@ const cachedPublicChrome = unstable_cache(loadPublicChrome, ["site-public-chrome
 export const getPublicChrome = cache(async () => cachedPublicChrome());
 
 export const getFooterGroups = cache(async () => {
-  const rows = await sql<Omit<FooterGroup, "links">>(
-    `SELECT id, group_key, title, body, links_json, visible, sort_order
-     FROM footer_groups ORDER BY sort_order, id`,
-  );
-  return rows.map((row) => ({
-    ...row,
-    links: parseJson<{ label: string; href: string }[]>(row.links_json, []),
-  }));
+  try {
+    const rows = await sql<Omit<FooterGroup, "links">>(
+      `SELECT id, group_key, title, body, links_json, visible, sort_order
+       FROM footer_groups ORDER BY sort_order, id`,
+    );
+    return rows.map((row) => ({
+      ...row,
+      links: parseJson<{ label: string; href: string }[]>(row.links_json, []),
+    }));
+  } catch (error) {
+    console.warn("[content] getFooterGroups fallback:", error instanceof Error ? error.message : error);
+    return [];
+  }
 });
 
 export const getServices = cache(async (publicOnly = true) => {
-  const rows = await sql<ServiceRecord>(
-    `SELECT id, name, slug, summary, description, image_url, image_alt,
-            CASE category
-              WHEN 'office' THEN CASE sort_order WHEN 1 THEN 'pin' WHEN 2 THEN 'building' WHEN 3 THEN 'monitor' WHEN 4 THEN 'mail' WHEN 5 THEN 'message' ELSE 'file' END
-              WHEN 'accounting' THEN CASE sort_order WHEN 1 THEN 'calculator' WHEN 2 THEN 'receipt' WHEN 3 THEN 'file' WHEN 4 THEN 'search' WHEN 5 THEN 'badge' WHEN 6 THEN 'file' ELSE 'scale' END
-              ELSE 'file'
-            END AS icon,
-            button_label, button_url, category, visible, sort_order
-     FROM services WHERE deleted_at IS NULL ORDER BY sort_order, id`,
-  );
-  return publicOnly ? rows.filter((row) => row.visible) : rows;
+  try {
+    const rows = await sql<ServiceRecord>(
+      `SELECT id, name, slug, summary, description, image_url, image_alt,
+              CASE category
+                WHEN 'office' THEN CASE sort_order WHEN 1 THEN 'pin' WHEN 2 THEN 'building' WHEN 3 THEN 'monitor' WHEN 4 THEN 'mail' WHEN 5 THEN 'message' ELSE 'file' END
+                WHEN 'accounting' THEN CASE sort_order WHEN 1 THEN 'calculator' WHEN 2 THEN 'receipt' WHEN 3 THEN 'file' WHEN 4 THEN 'search' WHEN 5 THEN 'badge' WHEN 6 THEN 'file' ELSE 'scale' END
+                ELSE 'file'
+              END AS icon,
+              button_label, button_url, category, visible, sort_order
+       FROM services WHERE deleted_at IS NULL ORDER BY sort_order, id`,
+    );
+    return publicOnly ? rows.filter((row) => row.visible) : rows;
+  } catch (error) {
+    console.warn("[content] getServices fallback:", error instanceof Error ? error.message : error);
+    return [];
+  }
 });
 
 export const getPricingPlans = cache(async (publicOnly = true) => {
-  const rows = await sql<Omit<PricingPlan, "features">>(
-    `SELECT id, name, slug, category, summary, price_label, period, features_json, highlighted, badge, button_label, button_url, visible, sort_order
-     FROM pricing_plans WHERE deleted_at IS NULL ORDER BY sort_order, id`,
-  );
-  const plans = rows.map((row) => ({
-    ...row,
-    features: parseJson<string[]>(row.features_json, []),
-  }));
-  return publicOnly ? plans.filter((row) => row.visible) : plans;
+  try {
+    const rows = await sql<Omit<PricingPlan, "features">>(
+      `SELECT id, name, slug, category, summary, price_label, period, features_json, highlighted, badge, button_label, button_url, visible, sort_order
+       FROM pricing_plans WHERE deleted_at IS NULL ORDER BY sort_order, id`,
+    );
+    const plans = rows.map((row) => ({
+      ...row,
+      features: parseJson<string[]>(row.features_json, []),
+    }));
+    return publicOnly ? plans.filter((row) => row.visible) : plans;
+  } catch (error) {
+    console.warn("[content] getPricingPlans fallback:", error instanceof Error ? error.message : error);
+    return [];
+  }
 });
 
 type PageBundleRow = PageRecord & { sections: SectionRecord[] | string | null };
 
 async function loadPage(path: string, preview: boolean): Promise<PageData | null> {
-  const pages = await sql<PageBundleRow>(
-    `SELECT p.id, p.slug, p.path, p.title, p.seo_title, p.seo_description, p.og_image, p.status, p.is_system,
-            p.updated_at::text AS updated_at,
-            COALESCE((
-              SELECT json_agg(row_to_json(s))
-              FROM (
-                SELECT id, page_id, section_key, section_type, admin_name, eyebrow, title, subtitle, description,
-                       image_url, image_alt, button_label, button_url, secondary_button_label, secondary_button_url,
-                       items_json, gallery_json, config_json, visible, status, sort_order, updated_at::text AS updated_at
-                FROM page_sections
-                WHERE page_id = p.id AND deleted_at IS NULL
-                ORDER BY sort_order, id
-              ) s
-            ), '[]'::json) AS sections
-     FROM pages p
-     WHERE p.path = $1 AND p.deleted_at IS NULL`,
-    [path],
-  );
-  const page = pages[0];
-  if (!page) return null;
-  if (page.status !== "published" && !preview) return null;
-  const sections = asList<SectionRecord>(page.sections)
-    .filter((section) => (preview ? true : section.visible && section.status === "published"))
-    .map(mapSection);
-  return { page, sections };
+  try {
+    const pages = await sql<PageBundleRow>(
+      `SELECT p.id, p.slug, p.path, p.title, p.seo_title, p.seo_description, p.og_image, p.status, p.is_system,
+              p.updated_at::text AS updated_at,
+              COALESCE((
+                SELECT json_agg(row_to_json(s))
+                FROM (
+                  SELECT id, page_id, section_key, section_type, admin_name, eyebrow, title, subtitle, description,
+                         image_url, image_alt, button_label, button_url, secondary_button_label, secondary_button_url,
+                         items_json, gallery_json, config_json, visible, status, sort_order, updated_at::text AS updated_at
+                  FROM page_sections
+                  WHERE page_id = p.id AND deleted_at IS NULL
+                  ORDER BY sort_order, id
+                ) s
+              ), '[]'::json) AS sections
+       FROM pages p
+       WHERE p.path = $1 AND p.deleted_at IS NULL`,
+      [path],
+    );
+    const page = pages[0];
+    if (!page) return null;
+    if (page.status !== "published" && !preview) return null;
+    const sections = asList<SectionRecord>(page.sections)
+      .filter((section) => (preview ? true : section.visible && section.status === "published"))
+      .map(mapSection);
+    return { page, sections };
+  } catch (error) {
+    console.warn(`[content] Không thể tải trang '${path}' từ DB:`, error instanceof Error ? error.message : error);
+    const corePaths = new Set(["/", "/van-phong-ao", "/ke-toan", "/bang-gia", "/giai-phap-cong-nghe", "/lien-he", "/tin-tuc"]);
+    if (corePaths.has(path)) {
+      return {
+        page: {
+          id: 0,
+          slug: path === "/" ? "" : path.slice(1),
+          path,
+          title: "iName",
+          seo_title: "iName",
+          seo_description: null,
+          og_image: null,
+          status: "published",
+          is_system: true,
+          updated_at: new Date().toISOString(),
+        },
+        sections: [],
+      };
+    }
+    return null;
+  }
 }
 
 const cachedPublishedPage = unstable_cache(
@@ -346,21 +418,26 @@ export function officesFromSettings(settings: Record<string, string>): Office[] 
 }
 
 async function loadPublicOfficeLocations() {
-  const rows = await sql<Omit<OfficeLocation, "gallery" | "amenities"> & {
-    gallery_json: string | null;
-    amenities_json: string | null;
-  }>(
-    `SELECT id, title, slug, excerpt, content, address, price_label, cover_url, cover_alt, banner_url, banner_alt,
-            gallery_json::text AS gallery_json, amenities_json::text AS amenities_json, sort_order
-     FROM office_locations
-     WHERE deleted_at IS NULL AND visible = TRUE AND status = 'published'
-     ORDER BY sort_order, id`,
-  );
-  return rows.map((location) => ({
-    ...location,
-    gallery: parseJson<GalleryImage[]>(location.gallery_json, []),
-    amenities: parseJson<string[]>(location.amenities_json, []),
-  }));
+  try {
+    const rows = await sql<Omit<OfficeLocation, "gallery" | "amenities"> & {
+      gallery_json: string | null;
+      amenities_json: string | null;
+    }>(
+      `SELECT id, title, slug, excerpt, content, address, price_label, cover_url, cover_alt, banner_url, banner_alt,
+              gallery_json::text AS gallery_json, amenities_json::text AS amenities_json, sort_order
+       FROM office_locations
+       WHERE deleted_at IS NULL AND visible = TRUE AND status = 'published'
+       ORDER BY sort_order, id`,
+    );
+    return rows.map((location) => ({
+      ...location,
+      gallery: parseJson<GalleryImage[]>(location.gallery_json, []),
+      amenities: parseJson<string[]>(location.amenities_json, []),
+    }));
+  } catch (error) {
+    console.warn("[content] loadPublicOfficeLocations fallback:", error instanceof Error ? error.message : error);
+    return [];
+  }
 }
 
 const cachedOfficeLocations = unstable_cache(loadPublicOfficeLocations, ["site-office-locations"], {
@@ -371,24 +448,29 @@ const cachedOfficeLocations = unstable_cache(loadPublicOfficeLocations, ["site-o
 export const getPublicOfficeLocations = cache(async () => cachedOfficeLocations());
 
 export const getOfficeLocationBySlug = cache(async (slug: string, includeHidden = false) => {
-  const rows = await sql<Omit<OfficeLocation, "gallery" | "amenities"> & {
-    gallery_json: string | null;
-    amenities_json: string | null;
-  }>(
-    `SELECT id, title, slug, excerpt, content, address, price_label, cover_url, cover_alt, banner_url, banner_alt,
-            gallery_json::text AS gallery_json, amenities_json::text AS amenities_json, sort_order
-     FROM office_locations
-     WHERE slug = $1 AND deleted_at IS NULL${includeHidden ? "" : " AND visible = TRUE AND status = 'published'"}
-     LIMIT 1`,
-    [slug],
-  );
-  const location = rows[0];
-  if (!location) return null;
-  return {
-    ...location,
-    gallery: parseJson<GalleryImage[]>(location.gallery_json, []),
-    amenities: parseJson<string[]>(location.amenities_json, []),
-  };
+  try {
+    const rows = await sql<Omit<OfficeLocation, "gallery" | "amenities"> & {
+      gallery_json: string | null;
+      amenities_json: string | null;
+    }>(
+      `SELECT id, title, slug, excerpt, content, address, price_label, cover_url, cover_alt, banner_url, banner_alt,
+              gallery_json::text AS gallery_json, amenities_json::text AS amenities_json, sort_order
+       FROM office_locations
+       WHERE slug = $1 AND deleted_at IS NULL${includeHidden ? "" : " AND visible = TRUE AND status = 'published'"}
+       LIMIT 1`,
+      [slug],
+    );
+    const location = rows[0];
+    if (!location) return null;
+    return {
+      ...location,
+      gallery: parseJson<GalleryImage[]>(location.gallery_json, []),
+      amenities: parseJson<string[]>(location.amenities_json, []),
+    };
+  } catch (error) {
+    console.warn(`[content] getOfficeLocationBySlug fallback for '${slug}':`, error instanceof Error ? error.message : error);
+    return null;
+  }
 });
 
 export const getPublishedArticles = cache(async (filters: {
@@ -399,57 +481,74 @@ export const getPublishedArticles = cache(async (filters: {
 }) => {
   const pageSize = filters.pageSize ?? 6;
   const page = Math.max(1, filters.page ?? 1);
-  const params: unknown[] = [];
-  const where = ["a.deleted_at IS NULL", "a.status = 'published'"];
-  if (filters.q) {
-    params.push(`%${filters.q}%`);
-    where.push(`(a.title ILIKE $${params.length} OR a.excerpt ILIKE $${params.length})`);
+  try {
+    const params: unknown[] = [];
+    const where = ["a.deleted_at IS NULL", "a.status = 'published'"];
+    if (filters.q) {
+      params.push(`%${filters.q}%`);
+      where.push(`(a.title ILIKE $${params.length} OR a.excerpt ILIKE $${params.length})`);
+    }
+    if (filters.category && filters.category !== "all") {
+      params.push(filters.category);
+      where.push(`c.slug = $${params.length}`);
+    }
+    const whereSql = where.join(" AND ");
+    const listParams = [...params, pageSize, (page - 1) * pageSize];
+    const [countRows, items] = await Promise.all([
+      sql<{ total: number }>(
+        `SELECT COUNT(*)::int AS total
+         FROM articles a LEFT JOIN article_categories c ON c.id = a.category_id
+         WHERE ${whereSql}`,
+        params,
+      ),
+      sql<ArticleCard>(
+        `SELECT a.id, a.title, a.slug, a.excerpt, a.cover_url, a.cover_alt, a.seo_title, a.seo_description,
+                a.status, a.read_minutes, a.published_at::text AS published_at, c.name AS category_name, c.slug AS category_slug
+         FROM articles a LEFT JOIN article_categories c ON c.id = a.category_id
+         WHERE ${whereSql}
+         ORDER BY a.published_at DESC NULLS LAST, a.id DESC
+         LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+        listParams,
+      ),
+    ]);
+    const total = Number(countRows[0]?.total ?? 0);
+    return { items, total, page, pageSize, pages: Math.max(1, Math.ceil(total / pageSize)) };
+  } catch (error) {
+    console.warn("[content] getPublishedArticles fallback:", error instanceof Error ? error.message : error);
+    return { items: [], total: 0, page, pageSize, pages: 1 };
   }
-  if (filters.category && filters.category !== "all") {
-    params.push(filters.category);
-    where.push(`c.slug = $${params.length}`);
-  }
-  const whereSql = where.join(" AND ");
-  const listParams = [...params, pageSize, (page - 1) * pageSize];
-  const [countRows, items] = await Promise.all([
-    sql<{ total: number }>(
-      `SELECT COUNT(*)::int AS total
-       FROM articles a LEFT JOIN article_categories c ON c.id = a.category_id
-       WHERE ${whereSql}`,
-      params,
-    ),
-    sql<ArticleCard>(
-      `SELECT a.id, a.title, a.slug, a.excerpt, a.cover_url, a.cover_alt, a.seo_title, a.seo_description,
-              a.status, a.read_minutes, a.published_at::text AS published_at, c.name AS category_name, c.slug AS category_slug
-       FROM articles a LEFT JOIN article_categories c ON c.id = a.category_id
-       WHERE ${whereSql}
-       ORDER BY a.published_at DESC NULLS LAST, a.id DESC
-       LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
-      listParams,
-    ),
-  ]);
-  const total = Number(countRows[0]?.total ?? 0);
-  return { items, total, page, pageSize, pages: Math.max(1, Math.ceil(total / pageSize)) };
 });
 
 export const getArticleBySlug = cache(async (slug: string, preview = false) => {
-  const rows = await sql<ArticleCard>(
-    `SELECT a.id, a.title, a.slug, a.excerpt, a.content, a.cover_url, a.cover_alt, a.seo_title, a.seo_description,
-            a.status, a.read_minutes, a.published_at::text, c.name AS category_name, c.slug AS category_slug
-     FROM articles a LEFT JOIN article_categories c ON c.id = a.category_id
-     WHERE a.slug = $1 AND a.deleted_at IS NULL`,
-    [slug],
-  );
-  const article = rows[0];
-  if (!article) return null;
-  if (article.status !== "published" && !preview) return null;
-  return article;
+  try {
+    const rows = await sql<ArticleCard>(
+      `SELECT a.id, a.title, a.slug, a.excerpt, a.content, a.cover_url, a.cover_alt, a.seo_title, a.seo_description,
+              a.status, a.read_minutes, a.published_at::text, c.name AS category_name, c.slug AS category_slug
+       FROM articles a LEFT JOIN article_categories c ON c.id = a.category_id
+       WHERE a.slug = $1 AND a.deleted_at IS NULL`,
+      [slug],
+    );
+    const article = rows[0];
+    if (!article) return null;
+    if (article.status !== "published" && !preview) return null;
+    return article;
+  } catch (error) {
+    console.warn(`[content] getArticleBySlug fallback for '${slug}':`, error instanceof Error ? error.message : error);
+    return null;
+  }
 });
 
 const cachedCategories = unstable_cache(
-  async () => sql<{ id: number; name: string; slug: string; description: string | null; sort_order: number }>(
-    "SELECT id, name, slug, description, sort_order FROM article_categories ORDER BY sort_order, id",
-  ),
+  async () => {
+    try {
+      return await sql<{ id: number; name: string; slug: string; description: string | null; sort_order: number }>(
+        "SELECT id, name, slug, description, sort_order FROM article_categories ORDER BY sort_order, id",
+      );
+    } catch (error) {
+      console.warn("[content] cachedCategories fallback:", error instanceof Error ? error.message : error);
+      return [];
+    }
+  },
   ["site-categories"],
   { revalidate: 60, tags: [CONTENT_TAG] },
 );
@@ -457,33 +556,52 @@ const cachedCategories = unstable_cache(
 export const getCategories = cache(async () => cachedCategories());
 
 export const getRelatedArticles = cache(async (slug: string, categorySlug: string | null) => {
-  return sql<ArticleCard>(
-    `SELECT a.id, a.title, a.slug, a.excerpt, a.cover_url, a.cover_alt, a.seo_title, a.seo_description,
-            a.status, a.read_minutes, a.published_at::text, c.name AS category_name, c.slug AS category_slug
-     FROM articles a LEFT JOIN article_categories c ON c.id = a.category_id
-     WHERE a.deleted_at IS NULL AND a.status = 'published' AND a.slug <> $1
-       AND ($2::text IS NULL OR c.slug = $2)
-     ORDER BY a.published_at DESC NULLS LAST
-     LIMIT 3`,
-    [slug, categorySlug],
-  );
+  try {
+    return await sql<ArticleCard>(
+      `SELECT a.id, a.title, a.slug, a.excerpt, a.cover_url, a.cover_alt, a.seo_title, a.seo_description,
+              a.status, a.read_minutes, a.published_at::text, c.name AS category_name, c.slug AS category_slug
+       FROM articles a LEFT JOIN article_categories c ON c.id = a.category_id
+       WHERE a.deleted_at IS NULL AND a.status = 'published' AND a.slug <> $1
+         AND ($2::text IS NULL OR c.slug = $2)
+       ORDER BY a.published_at DESC NULLS LAST
+       LIMIT 3`,
+      [slug, categorySlug],
+    );
+  } catch (error) {
+    console.warn(`[content] getRelatedArticles fallback for '${slug}':`, error instanceof Error ? error.message : error);
+    return [];
+  }
 });
 
 const cachedPopularArticles = unstable_cache(
-  async () => sql<ArticleCard>(
-    `SELECT a.id, a.title, a.slug, a.excerpt, a.cover_url, a.cover_alt, a.seo_title, a.seo_description,
-            a.status, a.read_minutes, a.published_at::text, c.name AS category_name, c.slug AS category_slug
-     FROM articles a LEFT JOIN article_categories c ON c.id = a.category_id
-     WHERE a.deleted_at IS NULL AND a.status = 'published'
-     ORDER BY a.published_at DESC NULLS LAST, a.id DESC
-     LIMIT 5`,
-  ),
+  async () => {
+    try {
+      return await sql<ArticleCard>(
+        `SELECT a.id, a.title, a.slug, a.excerpt, a.cover_url, a.cover_alt, a.seo_title, a.seo_description,
+                a.status, a.read_minutes, a.published_at::text, c.name AS category_name, c.slug AS category_slug
+         FROM articles a LEFT JOIN article_categories c ON c.id = a.category_id
+         WHERE a.deleted_at IS NULL AND a.status = 'published'
+         ORDER BY a.published_at DESC NULLS LAST, a.id DESC
+         LIMIT 5`,
+      );
+    } catch (error) {
+      console.warn("[content] cachedPopularArticles fallback:", error instanceof Error ? error.message : error);
+      return [];
+    }
+  },
   ["site-popular-articles"],
   { revalidate: 60, tags: [CONTENT_TAG] },
 );
 
 export const getPopularArticles = cache(async () => cachedPopularArticles());
 
-export const getMediaAssets = cache(async () => sql<{ url: string; alt: string | null; file_name: string | null }>(
-  "SELECT url, alt, file_name FROM media_assets ORDER BY created_at DESC, id DESC LIMIT 120",
-));
+export const getMediaAssets = cache(async () => {
+  try {
+    return await sql<{ url: string; alt: string | null; file_name: string | null }>(
+      "SELECT url, alt, file_name FROM media_assets ORDER BY created_at DESC, id DESC LIMIT 120",
+    );
+  } catch (error) {
+    console.warn("[content] getMediaAssets fallback:", error instanceof Error ? error.message : error);
+    return [];
+  }
+});

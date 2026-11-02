@@ -45,6 +45,9 @@ export async function sql<T extends QueryResultRow = QueryResultRow>(
   text: string,
   params: unknown[] = [],
 ) {
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL is not configured.");
+  }
   const result = await getPool().query<T>(text, params);
   return result.rows;
 }

@@ -1,8 +1,9 @@
+import { memo } from "react";
 import Link from "next/link";
 import type { FooterGroup, Office } from "@/lib/content";
 import { FooterSocialLinks } from "./SocialLinks";
 
-export function Footer({
+export const Footer = memo(function Footer({
   settings,
   groups,
   offices,
@@ -48,52 +49,28 @@ export function Footer({
                     <span><strong className="font-semibold text-foreground">Hotline:</strong> {settings.hotline}</span>
                   </a>
                   <a href={settings.email_href} className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground">
-                    <svg viewBox="0 0 24 24" className="size-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m4 7 8 6 8-6" /></svg>
+                    <svg viewBox="0 0 24 24" className="size-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m4 7 8 6 8-6" /><rect x="3" y="5" width="18" height="14" rx="2" /></svg>
                     <span><strong className="font-semibold text-foreground">Email:</strong> {settings.email}</span>
                   </a>
-                  <FooterSocialLinks settings={{
-                    facebook_url: settings.facebook_url,
-                    youtube_url: settings.youtube_url,
-                    x_url: settings.x_url,
-                    telegram_url: settings.telegram_url,
-                  }} />
+                  <p className="flex items-start gap-2 text-muted-foreground">
+                    <svg viewBox="0 0 24 24" className="mt-0.5 size-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12s-8-7-8-12a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
+                    <span><strong className="font-semibold text-foreground">Địa chỉ:</strong> {settings.company_address}</span>
+                  </p>
+                </div>
+                <div className="mt-5">
+                  <FooterSocialLinks settings={settings} />
                 </div>
               </div>
             );
           }
-          if (group.group_key === "contact") {
-            return (
-              <div key={group.id} className="lg:col-span-3">
-                <h2 className="text-sm font-bold uppercase tracking-wide">{group.title}</h2>
-                <ul className="mt-4 space-y-4 text-sm">
-                  {offices.map((office) => (
-                    <li key={office.id}>
-                      <p className="flex items-start gap-2 font-semibold"><span className="text-accent" aria-hidden="true">⌖</span>{office.label}</p>
-                      <p className="text-muted-foreground">{office.address}</p>
-                    </li>
-                  ))}
-                  <li>
-                    <p className="flex items-center gap-2 font-semibold"><span className="text-accent" aria-hidden="true">◷</span>Giờ làm việc</p>
-                    <p className="text-muted-foreground">{settings.hours_summary}</p>
-                    <p className="text-muted-foreground">{settings.hours_saturday_summary}</p>
-                  </li>
-                </ul>
-              </div>
-            );
-          }
-          const span = group.group_key === "services" ? "lg:col-span-3" : "lg:col-span-2";
           return (
-            <div key={group.id} className={span}>
-              <h2 className="text-sm font-bold uppercase tracking-wide">{group.title}</h2>
+            <div key={group.id} className="lg:col-span-2">
+              <h2 className="font-display text-sm font-bold uppercase tracking-wider text-foreground">{group.title}</h2>
               <ul className="mt-4 space-y-2.5 text-sm">
                 {group.links.map((link) => (
-                  <li key={`${group.id}-${link.href}-${link.label}`}>
-                    <Link
-                      href={link.href}
-                      className="group inline-flex items-center gap-2 text-muted-foreground transition-colors hover:text-primary"
-                    >
-                      <span aria-hidden="true" className="text-xs font-semibold text-primary/70 transition-transform group-hover:translate-x-1 group-hover:text-primary">→</span>
-                      <span>{link.label}</span>
+                  <li key={`${group.id}-${link.label}-${link.href}`}>
+                    <Link href={link.href} className="text-muted-foreground transition-colors hover:text-foreground">
+                      {link.label}
                     </Link>
                   </li>
                 ))}
@@ -102,13 +79,12 @@ export function Footer({
           );
         })}
       </div>
-      <div className="border-t border-border">
-        <div className="section-shell py-5 text-xs text-muted-foreground">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p>{(settings.copyright || "").replace("{{year}}", String(year))}</p>
-          </div>
+      <div className="border-t border-border py-6 text-center text-xs text-muted-foreground">
+        <div className="section-shell flex flex-col items-center justify-between gap-4 sm:flex-row">
+          <p>© {year} {settings.brand_name || "iName"}. Bản quyền thuộc về iName.</p>
+          <p className="text-muted-foreground/80">{settings.legal_note || "Dịch vụ văn phòng ảo và kế toán thuế chuyên nghiệp"}</p>
         </div>
       </div>
     </footer>
   );
-}
+});
