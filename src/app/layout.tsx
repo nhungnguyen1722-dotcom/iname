@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Be_Vietnam_Pro } from "next/font/google";
 import "./globals.css";
 
@@ -18,7 +19,11 @@ export const metadata: Metadata = {
   description: "Văn phòng ảo, kế toán - thuế và giải pháp công nghệ cho doanh nghiệp.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // A nonce must be generated for each request, so this route cannot be prerendered.
+  // Next.js reads the CSP supplied by middleware and attaches the nonce to its scripts.
+  await headers();
+
   return (
     <html lang="vi">
       <body className={bodyFont.variable} style={{ ["--font-body" as string]: "var(--font-be-vietnam)", ["--font-heading" as string]: "var(--font-be-vietnam)" }}>

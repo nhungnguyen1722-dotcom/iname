@@ -14,7 +14,7 @@ function contentSecurityPolicy(nonce: string) {
   return [
     "default-src 'self'",
     isProd
-      ? `script-src 'self' 'nonce-${nonce}'`
+      ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`
       : `script-src 'self' 'nonce-${nonce}' 'unsafe-inline' 'unsafe-eval'`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
@@ -45,6 +45,7 @@ export async function middleware(request: NextRequest) {
   const nonce = createNonce();
   const policy = contentSecurityPolicy(nonce);
   const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
   requestHeaders.set("Content-Security-Policy", policy);
 
   if (pathname === "/tin-tuc") {
